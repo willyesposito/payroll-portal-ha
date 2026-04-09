@@ -1,12 +1,1196 @@
 [
-  { "texto": "La eficiencia no es hacer muchas cosas a la vez, es hacer lo que importa, bien.",                "autor": "Peter Drucker" },
-  { "texto": "El éxito es la suma de pequeños esfuerzos repetidos día tras día.",                              "autor": "Robert Collier" },
-  { "texto": "La organización no es un fin en sí mismo, es el vehículo para hacer bien el trabajo.",           "autor": "Peter Drucker" },
-  { "texto": "Un equipo no es un grupo de personas que trabajan juntas, sino un grupo que se fía mutuamente.", "autor": "Simon Sinek" },
-  { "texto": "La preparación es la llave del éxito.",                                                          "autor": "Alexander Graham Bell" },
-  { "texto": "Lo que no se puede medir no se puede mejorar.",                                                  "autor": "Lord Kelvin" },
-  { "texto": "El talento gana partidos, pero el trabajo en equipo gana campeonatos.",                          "autor": "Michael Jordan" },
-  { "texto": "No se puede construir una reputación sobre lo que uno va a hacer.",                              "autor": "Henry Ford" },
-  { "texto": "La disciplina es el puente entre las metas y los logros.",                                       "autor": "Jim Rohn" },
-  { "texto": "Primero resolvé el problema, luego escribí el código.",                                          "autor": "John Johnson" }
+  {
+    "texto": "Cada aporte que liquidamos bien es un derecho que le garantizamos a alguien. Eso no es papeleo, es justicia social hecha planilla.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "Los aportes jubilatorios son como el mate: van de ronda en ronda y al final todos se benefician, aunque algunos se quejen del gusto amargo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "G"
+  },
+  {
+    "texto": "Que las contribuciones patronales cuadren al centavo no es obsesión, es compromiso. Cada número que verificamos protege a una familia.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si por cada vez que recalculamos aportes nos dieran un peso, ya tendríamos más plata que el fondo de la obra social.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "G"
+  },
+  {
+    "texto": "Detrás de cada línea del F-931 hay personas reales esperando que su obra social funcione, que su jubilación se acumule. Eso le da sentido a lo que hacemos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "Los aportes a la Seguridad Social son como el delivery: llegan siempre, te gusten o no, y si algo falta, el quilombo es monumental.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "G"
+  },
+  {
+    "texto": "Liquidar contribuciones con precisión no es solo cumplir una norma: es construir la red de protección social de nuestros compañeros, mes a mes.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "A veces siento que conozco más las alícuotas de contribuciones que los cumpleaños de mis amigos. Pero bueno, esas alícuotas no se olvidan solas.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "G"
+  },
+  {
+    "texto": "El aporte previsional que procesamos hoy es la tranquilidad de alguien mañana. Cada liquidación bien hecha es un acto de responsabilidad silenciosa.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "La fórmula de aportes y contribuciones en Argentina tiene más variables que una ecuación de la NASA. Pero nosotros la resolvemos todos los meses, sin cohete.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "G"
+  },
+  {
+    "texto": "No liquidamos números: liquidamos el derecho de cada empleado a su cobertura de salud, a su futuro previsional. Ese es nuestro propósito.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si las contribuciones patronales fueran un deporte olímpico, Argentina ganaría oro por complejidad y bronce por puntualidad del sistema.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "G"
+  },
+  {
+    "texto": "Ser preciso con los aportes no es una opción, es una convicción. Cada centavo bien calculado refuerza la confianza en nuestro equipo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cuando un empleado recibe su recibo y todo cuadra, quizás no nos agradezca. Pero ese silencio es el mejor indicador de que hicimos bien nuestro trabajo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "Las contribuciones al INSSJyP, al PAMI, a la obra social, al sistema previsional... A veces me pregunto si no nos falta aportar también al fondo de café del equipo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "G"
+  },
+  {
+    "texto": "Conocer a fondo cada línea de aportes nos convierte en guardianes del sistema. No es burocracia, es especialización de alto impacto.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "La diferencia entre un equipo de payroll bueno y uno excelente está en los decimales: en la obsesión por que cada aporte llegue donde tiene que llegar.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "Che, si explicar la diferencia entre aportes y contribuciones fuera fácil, no tendríamos laburo. Agradecé la complejidad.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cada vez que cerramos una liquidación sin errores en contribuciones, estamos demostrando que la excelencia técnica es posible incluso en el contexto más volátil.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "Los aportes que gestionamos hoy son la infraestructura invisible del bienestar de mañana. Somos ingenieros sociales con planilla de cálculo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Contribuciones y aportes",
+    "tipo": "M"
+  },
+  {
+    "texto": "Controlar el presupuesto de nómina en Argentina es un arte: requiere precisión de relojero y visión de estratega. Y este equipo domina ambas.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "El presupuesto de nómina en Argentina se parece al WiFi: siempre promete más de lo que rinde, pero sin él no funciona nada.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cada peso bien administrado en la nómina es confianza que la empresa deposita en nosotros. No la defraudemos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si pudiera cobrar un extra por cada vez que me pidieron \"ajustar el presupuesto de personal\", me jubilaba anticipada.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "G"
+  },
+  {
+    "texto": "El control presupuestario no es recortar: es priorizar con inteligencia para que cada recurso rinda al máximo. Eso es lo que nos hace estratégicos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "En payroll argentino, \"presupuesto anual\" es una expresión de deseo más que un documento financiero. Pero le ponemos la mejor onda.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "G"
+  },
+  {
+    "texto": "Un buen control de nómina no se mide solo en números que cierran, sino en la tranquilidad que le damos a toda la organización cuando decimos \"está todo en orden\".",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "El Excel de presupuesto de nómina tiene más pestañas que un navegador de alguien con insomnio. Y cada pestaña es sagrada.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cuando el directorio confía en nuestras proyecciones de costo laboral, no confía en un número: confía en el rigor de todo un equipo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "Proyectar costos de nómina con inflación es como navegar con viento cambiante. Lo que nos mantiene a flote es la capacidad de ajustar las velas rápido.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "\"¿Podés pasarme el costo total de la nómina actualizado?\" Claro, ¿de cuándo? Porque cambió tres veces esta semana.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "G"
+  },
+  {
+    "texto": "Un presupuesto bien ejecutado no es restricción, es libertad: le da a la empresa la certeza para invertir, crecer y tomar decisiones con datos concretos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "En Argentina, hacer una proyección de costos salariales a un año es un acto de fe comparable a predecir el clima de la Patagonia.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "G"
+  },
+  {
+    "texto": "Nuestro equipo convierte la volatilidad en planificación. Donde otros ven incertidumbre, nosotros construimos escenarios y opciones.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "El verdadero control presupuestario no está en la restricción sino en la anticipación. Prever, modelar, ajustar. Ese es nuestro superpoder.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si cada vez que actualizamos el presupuesto de nómina nos pagaran horas extra, el presupuesto se descontrolaría solo. Paradoja payroll.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "G"
+  },
+  {
+    "texto": "Ser guardianes del presupuesto de personal no nos hace el área del \"no\". Nos hace el área que asegura que cada inversión en gente sea sostenible.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "La confianza de gerencia en nuestros reportes de costo laboral se construye con años de precisión. Cada cierre limpio suma a esa reputación.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "Nuestro presupuesto de nómina es como el asado del domingo: siempre parece que no va a alcanzar, pero con buena administración, comemos todos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "G"
+  },
+  {
+    "texto": "Un equipo de payroll que domina el presupuesto no solo liquida sueldos: gobierna la información salarial de toda la organización. Eso es poder estratégico.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Presupuesto y control",
+    "tipo": "M"
+  },
+  {
+    "texto": "\"Se cayó AFIP, no importa cuándo leas esto.\" La frase más atemporal del payroll argentino.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cumplir con AFIP/ARCA en tiempo y forma, mes tras mes, no es rutina: es disciplina profesional del más alto nivel.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "El día que la página de AFIP funcione bien en fecha de vencimiento, hago asado para todo el equipo. Y lo digo en serio.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "La SRT nos exige estándares que protegen a nuestra gente. Cumplir con ellos no es un trámite: es cuidar a quienes trabajan con nosotros.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cuando AFIP se transformó en ARCA, los de payroll pensamos: \"Le cambiaron el nombre, pero el F-931 sigue siendo el mismo dolor de cabeza.\"",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cada declaración jurada presentada sin observaciones es una victoria silenciosa de nuestro equipo. Silenciosa pero enorme.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si hoy ves a alguien de payroll con ojeras, miralo con cariño: probablemente estuvo esperando que AFIP levantara el sistema a las 3 de la mañana.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "El cumplimiento normativo no es un obstáculo para nuestro trabajo: es la columna vertebral. Sin él, nada de lo que hacemos tiene validez.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "La relación entre payroll y AFIP es como un tango: intensa, complicada, y siempre al borde de pisarse los pies.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Dominar el F-931, el Libro de Sueldos Digital y cada resolución de ARCA es lo que nos diferencia como especialistas. No cualquiera puede hacer lo que hacemos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Es como una cábala: cuando no funciona la página de AFIP, venimos a hacer catarsis grupal. Y después, café y seguimos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "La SRT nos recuerda que detrás de cada alícuota de ART hay un trabajador que merece volver a su casa sano. Esa perspectiva nos motiva.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si las resoluciones de AFIP tuvieran temporadas como las series, ya estaríamos en la temporada 47 y sin spoilers de lo que viene.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Presentar todo en término ante ARCA no es solo evitar multas: es demostrar que somos un equipo confiable, riguroso y profesional.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cada vez que un accidente in itinere se gestiona correctamente ante la ART, nuestro equipo demuestra que sabe proteger derechos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "El Libro de Sueldos Digital iba a \"simplificar\" todo. Los de payroll todavía estamos esperando la parte simple.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "En un país con tanta complejidad normativa, mantenernos actualizados no es un plus: es la diferencia entre ser buenos y ser indispensables.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cuando la ART rechaza un reclamo y hay que apelar, se activa el modo guerrero del equipo. Sin capa, pero con todas las resoluciones bajo el brazo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cada auditoría que pasamos limpiamente es testimonio del trabajo invisible que hacemos todos los días. No necesitamos aplausos, pero nos los merecemos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "La normativa argentina será compleja, pero la conocemos al dedillo. Ese conocimiento es nuestro mayor activo profesional.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Hay tres certezas en la vida: la muerte, los impuestos y que AFIP/ARCA va a tener un vencimiento en el peor momento posible.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Ser compliance en payroll argentino es ser especialista en adaptación constante. No conozco un entrenamiento más exigente ni más formativo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "\"¿Ya presentaste el F-931?\" es la pregunta que ningún liquidador quiere escuchar cuando recién llega el lunes con el café.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "La excelencia en cumplimiento normativo se construye con hábitos diarios: revisar, verificar, controlar. No hay atajos y eso nos dignifica.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cuando todo cuadra con ARCA y la SRT, no es suerte. Es el resultado de un equipo que trabaja con método, rigor y compromiso genuino.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si AFIP fuera una persona, sería ese compañero que te manda mails a las 23:50 del viernes con asunto \"URGENTE\".",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "La SRT no es solo un organismo de control: es el marco que nos permite garantizar condiciones dignas. Cumplir con ella es cumplir con nuestra gente.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Dicen que en otros países el payroll es predecible. Nosotros preferimos la adrenalina de no saber qué resolución nueva sale mañana.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cada multa evitada por cumplimiento correcto es dinero que la empresa puede invertir en su gente. Nuestro trabajo genera valor real, medible y concreto.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Lo que para otros es un trámite ante ARCA, para nosotros es una responsabilidad con nombre y apellido. Eso marca la diferencia.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Cumplimiento normativo",
+    "tipo": "M"
+  },
+  {
+    "texto": "El payroll no se liquida solo. Se liquida con un equipo que se banca los vencimientos, los cambios de último momento y los lunes difíciles.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Trabajar en equipo en payroll es como cebar mate: uno prepara, otro pasa, todos toman, y si alguien se quema, nos reímos juntos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "G"
+  },
+  {
+    "texto": "En este equipo, el éxito de la liquidación es de todos. Y cuando algo falla, también lo resolvemos juntos. Así se construye confianza.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si querés ir rápido, liquidá solo. Si querés llegar sin errores al cierre, liquidá con este equipazo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cada talento de este equipo aporta algo único: el que domina convenios, la que nunca se olvida un vencimiento, el que siempre encuentra el error que nadie ve.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Nuestro equipo de payroll es como una buena pizza: cada ingrediente es distinto, pero juntos somos irresistibles. Y nos comemos cualquier deadline.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Un equipo motivado logra lo que un plan perfecto solo sueña. Y este equipo tiene motivación para regalar.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "La confianza mutua es la base de un gran laburo. Y en payroll, donde un error de uno afecta a todos, esa confianza es sagrada.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "\"¿Quién revisó este cálculo?\" La pregunta que nos mantiene honestos, humildes y con el doble control como filosofía de vida.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Individualmente, somos analistas. Juntos, somos el motor que hace que toda la empresa cobre en tiempo y forma.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Compartir el esfuerzo del cierre de mes hace que los logros sepan mejor. Y los mates del equipo, también.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "En este equipo no hay jefes de la liquidación: hay una cooperativa del F-931 donde todos ponen el hombro y el Excel.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cuando todos remamos en la misma dirección, no hay paritaria que nos desestabilice ni resolución que nos agarre desprevenidos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Che, ¡qué equipo que somos! Sobrevivimos a otro cierre más y todavía nos caemos bien. Eso no es poco.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Formar especialistas dentro de nuestro equipo es el legado más valioso que podemos dejar. El conocimiento compartido multiplica nuestro impacto.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "\"Te banco\" no es solo una expresión argentina: es la actitud que define a un equipo de payroll que funciona de verdad.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Nuestro equipo debería tener su propia serie: \"Liquidadores: sobreviviendo al cierre de mes\". Capítulo 1: \"El sistema se cayó a las 17:55.\"",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Los empleados que sienten que su voz importa aportan el doble. Escuchémonos, apoyémonos y crezcamos juntos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Somos el equipo que hace que todos los demás puedan laburar tranquilos. Sin nosotros, la empresa no funciona. Punto.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "En payroll, \"trabajo en equipo\" significa que cuando uno descubre un error, todos transpiran. Solidaridad pura.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Un equipo que celebra sus logros, por chicos que sean, construye la energía para enfrentar los desafíos más grandes.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "La fortaleza de este equipo no está en que no cometamos errores, sino en cómo los detectamos, corregimos y aprendemos juntos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "El café de las 10 es nuestra reunión de directorio no oficial. Ahí se resuelven más temas de liquidación que en cualquier Zoom.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Invertir en las personas del equipo es la mejor estrategia a largo plazo. Un equipo que crece junto es un equipo imbatible.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cada integrante de este equipo es una pieza clave. No por lo que hace individualmente, sino por cómo eleva al resto.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si ponerse la camiseta fuera literal, la nuestra diría: \"Payroll Team — Sobrevivimos a otro cierre de mes\" con la fecha estampada.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "G"
+  },
+  {
+    "texto": "La liquidación de sueldos es un proceso invisible que todos necesitan pero pocos entienden. Nuestro orgullo está en hacer lo difícil parecer fácil.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Ningún sistema automático reemplaza la inteligencia colectiva de un equipo que se conoce, se cuida y se potencia.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "En este equipo, \"urgente\" es una palabra tan frecuente que ya debería ser nuestro segundo nombre. Pero siempre respondemos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "G"
+  },
+  {
+    "texto": "Hoy nos ganamos el asado. Otro cierre impecable que demuestra de qué estamos hechos como equipo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Trabajo en equipo",
+    "tipo": "M"
+  },
+  {
+    "texto": "Liquidar sueldos en Argentina es un deporte de alto rendimiento. Y este equipo entrena todos los días para dar lo mejor.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "El cierre de mes en payroll argentino es como una montaña rusa: subidas de presión, bajadas de sistema, y al final, aplausos de alivio.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "La resiliencia no es aguantar sin quejarse. Es caer, levantarse, ajustar la planilla y seguir adelante con profesionalismo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Así andamos en los cierres de mes: pelo revuelto, ocho ventanas de Excel abiertas, y un mate que ya está lavado pero nadie lo cambia.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "No hay nada permanente salvo el cambio. Y si alguien sabe adaptarse al cambio constante, somos nosotros: el equipo de nómina argentino.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cuando alguien del equipo dice \"estoy tranquilo con el cierre de este mes\", todos lo miramos como a un unicornio.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "Las tormentas normativas hacen que nuestras raíces profesionales sean más profundas. Cada crisis superada nos hace más fuertes.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "El estrés del cierre es real, pero también lo es la satisfacción de haber cumplido. No olvidemos celebrar cada logro.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "\"Cierre de mes: no molestar.\" Debería ser un cartel oficial en la puerta del área de payroll. Con candado incluido.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cuidar al equipo no es un lujo: es una necesidad. Sin bienestar no hay productividad, y sin productividad no hay cierre que cierre.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "El café es nuestro combustible, el Excel es nuestra cancha y el vencimiento es nuestro rival. Pero siempre ganamos. Bueno, casi siempre.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "Caer está permitido. Quedarse en el suelo, no. En payroll argentino, nos levantamos, ajustamos y seguimos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Más vale trote constante que galope que agote. La clave no es correr al cierre sino mantener un ritmo sostenible todo el mes.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si le saltó la térmica a alguien del equipo, pará todo, cerrá Excel, y poné la pava. El mate sana más que cualquier deadline.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "Un tropezón en la liquidación no es una caída. Es una oportunidad de mejorar el proceso para que no vuelva a pasar.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cuando el estrés del cierre es mucho, recordá: los aviones despegan contra el viento. Nosotros también.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "La verdadera fortaleza no es no sentir presión: es sentirla y aun así entregar con calidad, precisión y compromiso.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Después de cada cierre difícil, somos un equipo más experimentado. Las batallas nos forjan.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Mi terapeuta no entiende por qué me estreso tanto un día al mes. Le mostré el calendario de vencimientos y ahora me entiende perfecto.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "Respirá hondo, revisá los números, pedí ayuda si la necesitás. Nadie tiene que resolver todo solo. Para eso somos equipo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si sobrevivimos a liquidar sueldos con inflación de tres dígitos, podemos con cualquier cosa que nos ponga el destino.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "El agotamiento se combate con reconocimiento, con pausas necesarias y con la certeza de que lo que hacemos tiene un impacto real.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cuando todo parezca desbordarse, recordá por qué empezaste: porque sos un profesional que elige hacer bien las cosas difíciles.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "\"Estamos al horno con el cierre.\" — Frase oficial del equipo de payroll entre el 1 y el 15 de cada mes. Los otros días, también.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "La flexibilidad es nuestra herramienta más poderosa. En un contexto que cambia todo el tiempo, ser rígido no es una opción.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cada dificultad prepara a personas comunes para destinos extraordinarios. Y en payroll argentino, dificultades nos sobran.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si el estrés del payroll se vendiera como energía, podríamos abastecer a todo Buenos Aires en fecha de vencimiento.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cuidémonos entre nosotros. Preguntar \"¿cómo estás?\" no es perder tiempo: es invertir en la salud del equipo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "La resiliencia del equipo de nómina argentino no tiene parangón. Trabajar con lo que tenemos y entregar excelencia: esa es nuestra marca registrada.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "M"
+  },
+  {
+    "texto": "Un síntoma de que te acercás a una crisis nerviosa es creer que tu trabajo es tremendamente importante. Spoiler: en payroll, sí lo es.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Estrés y resiliencia",
+    "tipo": "G"
+  },
+  {
+    "texto": "En Argentina, las normas cambian de un día para el otro. Estar actualizados no es un mérito extra: es supervivencia profesional.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Nuevo mes, nueva resolución. Si la AFIP publicara un álbum de figuritas con sus resoluciones, no nos alcanzaría la vida para llenarlo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "G"
+  },
+  {
+    "texto": "La capacitación continua no es un gasto, es una inversión. En payroll argentino, el que no se actualiza, se queda afuera.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Otra vez sopa: publicaron la nueva escala salarial del convenio a tres días del cierre. Pero acá estamos, recalculando como campeones.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "G"
+  },
+  {
+    "texto": "De cada 100 profesionales de payroll, 59 van a necesitar actualizar sus habilidades antes de 2030. Empecemos hoy, no mañana.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Las paritarias son como la serie que nunca termina: cuando pensás que se cerró la temporada, sale un nuevo capítulo con aumento retroactivo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "G"
+  },
+  {
+    "texto": "Dominar los cambios normativos no es opcional en Argentina. Es lo que separa a un liquidador competente de uno excepcional.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si existiera un Guinness Record por cantidad de cambios normativos procesados en un año, Argentina ganaría sin despeinarse.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cada nueva regulación es una oportunidad de demostrar nuestra capacidad de respuesta. No la suframos: capitalizémosla.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Reaccionar con agilidad ante cambios normativos no es improvisación. Es preparación, conocimiento y un equipo que sabe trabajar bajo presión.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cuando te dicen \"hay una nueva resolución de ARCA\", el primer reflejo del equipo es mirar el calendario para ver cuánto queda hasta el vencimiento.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "G"
+  },
+  {
+    "texto": "El pensamiento analítico, la resiliencia y la flexibilidad son las competencias clave de nuestro tiempo. Y las tres las entrenamos cada cierre.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Soy liquidador de sueldos en Argentina. Mi LinkedIn debería decir \"Especialista en adaptación a cambios regulatorios imprevistos y frecuentes.\"",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "G"
+  },
+  {
+    "texto": "Publicar las normas con la antelación suficiente sería ideal. Como eso no pasa, nuestra velocidad de reacción es nuestra ventaja competitiva.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Los cambios de Ganancias 4ta categoría merecen su propia saga. Parte 1: \"La promesa.\" Parte 2: \"El retroactivo.\" Parte 3: \"El parche del parche.\"",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "G"
+  },
+  {
+    "texto": "El contexto laboral y tributario argentino es especialmente complejo y dinámico. Y nosotros lo navegamos con conocimiento, no con miedo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Mantenerse actualizado en legislación laboral argentina requiere disciplina de atleta. Y este equipo compite todos los días.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Los 200+ convenios colectivos de trabajo, cada uno con sus reglas, son como 200 recetas distintas. Y nosotros somos los chefs que las cocinan todas.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cuando el hartazgo por los cambios constantes aparece, recordemos: nuestra especialización en este caos nos hace únicos e irremplazables.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "No alcanza con saber la norma de hoy: hay que anticipar la de mañana. Esa visión proactiva es lo que distingue a los mejores equipos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Me dijeron que estudiara algo estable. Elegí payroll en Argentina. Todavía me río de la ironía.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "G"
+  },
+  {
+    "texto": "La convergencia entre inflación proyectada y ajustes salariales finalmente permite salir de la lógica reactiva. Aprovechemos este momento para pensar estratégicamente.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si cada actualización normativa viniera con un manual claro y tiempo de implementación razonable, esto sería Suiza. Pero estamos en Argentina, y lo resolvemos igual.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "G"
+  },
+  {
+    "texto": "Formarnos permanentemente es honrar nuestra profesión. En un país que cambia sus reglas todo el tiempo, el conocimiento fresco es poder.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Los equipos que invierten en capacitación ante cada cambio normativo no solo cumplen: lideran. Seamos de esos equipos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Actualizaciones y cambios",
+    "tipo": "M"
+  },
+  {
+    "texto": "Gestionar la nómina en Argentina puede ser endiabladamente difícil, pero lo hacemos todos los meses. Y lo hacemos bien.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "M"
+  },
+  {
+    "texto": "Liquidar sueldos en Argentina es como bailar tango: intenso, apasionado, y siempre al borde de pisar al compañero. Pero se baila hermoso.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "G"
+  },
+  {
+    "texto": "Si podemos liquidar payroll con la complejidad argentina, podemos con cualquier desafío profesional que se nos ponga enfrente.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "M"
+  },
+  {
+    "texto": "En otros países, el payroll es predecible. Nosotros preferimos la adrenalina de no saber si mañana cambia el mínimo no imponible, la alícuota o el convenio.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "G"
+  },
+  {
+    "texto": "La economía argentina puede ser errática, pero nuestro compromiso con la precisión es inquebrantable. Eso no fluctúa.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "M"
+  },
+  {
+    "texto": "Más rápidos que el dólar blue y más resilientes que el peso: así somos en payroll argentino.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "G"
+  },
+  {
+    "texto": "Mientras en otros países la mayor complejidad del payroll es el cálculo de vacaciones, nosotros manejamos paritarias, inflación, convenios y regulaciones cambiantes. Somos profesionales de otro nivel.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "M"
+  },
+  {
+    "texto": "Lo atamo' con alambre y seguimos. La frase más honesta del payroll argentino. No es improvisación, es ingenio bajo presión.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "G"
+  },
+  {
+    "texto": "El payroll es una de las funciones más delicadas de cualquier organización. En Argentina, esa delicadeza se multiplica por diez. Y nosotros la gestionamos con maestría.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "M"
+  },
+  {
+    "texto": "Dicen que hacer proyecciones salariales a un año en Argentina es un acto de fe. Yo digo que es más bien un acto de coraje con Excel.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "G"
+  },
+  {
+    "texto": "La realidad argentina nos entrena en algo que no se aprende en ningún libro: resolver lo imposible con plazos reales y recursos finitos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "M"
+  },
+  {
+    "texto": "\"El sueldo ya se depreció antes de depositarse\" es el chiste que solo los de payroll argentino entienden en toda su profundidad.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "G"
+  },
+  {
+    "texto": "El 88% de las empresas argentinas quiere mejorar sus procesos de nómina. Nosotros ya estamos en ese camino, un cierre a la vez.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "M"
+  },
+  {
+    "texto": "En Argentina, \"liquidar sueldos\" debería considerarse deporte extremo y otorgar puntos para la jubilación anticipada.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "G"
+  },
+  {
+    "texto": "La baja de inflación nos da la oportunidad histórica de dejar de correr detrás de los números y empezar a diseñar estrategias de compensación reales.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "M"
+  },
+  {
+    "texto": "Los equipos de payroll argentinos merecen un monumento: una estatua de alguien con un café, tres pantallas abiertas y cara de \"ya casi termino el cierre\".",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "G"
+  },
+  {
+    "texto": "Somos profesionales que operamos en uno de los entornos de payroll más complejos del mundo. Eso no es una queja: es un orgullo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si Argentina fuera fácil para hacer payroll, cualquiera lo haría. Nosotros lo hacemos porque somos los mejores en lo difícil.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cada crisis económica que atravesamos como equipo nos deja más preparados, más ágiles y más unidos. La adversidad forja especialistas.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "M"
+  },
+  {
+    "texto": "No todo proceso manual es vulnerable a errores, pero sí lo son las excusas para no automatizar. Apostemos a la tecnología sin perder el factor humano.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Realidad argentina",
+    "tipo": "M"
+  },
+  {
+    "texto": "Detrás de cada recibo de sueldo que llega puntual hay un equipo invisible que hizo posible lo que parece simple. Somos ese equipo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "\"¿Qué hacés en payroll?\" — \"Básicamente, hago que 300 personas cobren bien, a tiempo, con todos los aportes, y sin que nadie sepa que existo.\"",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "G"
+  },
+  {
+    "texto": "El trabajo más productivo es el que sale de las manos de alguien comprometido. Y en este equipo, compromiso nos sobra.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "¿Sin ganas de laburar hoy? Un \"dale, que esto sale\" de un compañero cambia más que tres reuniones de productividad.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "G"
+  },
+  {
+    "texto": "No atamos con alambre: construimos con precisión. Bueno, a veces un poquito de alambre para lo urgente. Pero siempre con criterio.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "¡Aguante el equipo de liquidaciones! Si el aguante fuera una categoría profesional, seríamos nivel olímpico.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "G"
+  },
+  {
+    "texto": "Cada persona de esta organización es una pieza clave. Nuestro laburo es que esa pieza reciba lo que le corresponde, sin faltas y sin demoras.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "El recibo de sueldo es la historia que nosotros escribimos cada mes. A veces es un thriller, a veces comedia, pero siempre tiene final feliz.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "G"
+  },
+  {
+    "texto": "Elegí un trabajo que te desafíe todos los días y nunca tendrás un día aburrido. Bienvenido a payroll en Argentina.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cuando alguien me pregunta si mi trabajo es repetitivo, me río. En payroll argentino, cada mes es una aventura nueva con reglas nuevas.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "G"
+  },
+  {
+    "texto": "El payroll no se terceriza solo por operatividad: se cuida con especialistas porque impacta directamente en el bienestar de cada colaborador.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "En este equipo, \"agenda tranquila\" es una leyenda urbana como el Yeti o la resolución de AFIP que no cambia al mes siguiente.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "G"
+  },
+  {
+    "texto": "La tecnología no puede implementarse sin una estrategia centrada en las personas. En payroll, la herramienta potencia al equipo, no lo reemplaza.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "Reconocer el esfuerzo no cuesta nada, pero motiva como si valiera oro. Digamos más \"buen laburo\" dentro del equipo.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "Mi sueño más grande como liquidador es un mes donde no salga ninguna resolución nueva, no se caiga el sistema y el F-931 cierre a la primera. Sigo soñando.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "G"
+  },
+  {
+    "texto": "El éxito no es definitivo y el fracaso no es fatal: lo que cuenta es el coraje para continuar. Y en payroll argentino, coraje nos sobra.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "Si el payroll argentino fuera un juego de mesa, las instrucciones cambiarían en cada turno y la caja diría: \"Para profesionales extremos. Se requiere café.\"",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "G"
+  },
+  {
+    "texto": "La liquidación de sueldos es ese eslabón capaz de transformar números abstractos en bienestar concreto para las personas. Valoremos nuestra función.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "No importa lo lento que avancemos con un proceso de mejora, lo importante es no detenernos. Cada paso cuenta.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "Cuando el jefe pida milagros, recordá: vos controlás tu ritmo, no sus urgencias. Y los milagros se cobran aparte.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "G"
+  },
+  {
+    "texto": "Hoy el payroll no es solo operativo: es estratégico. Cada dato que procesamos alimenta decisiones de negocio. Estamos en el centro, no en la periferia.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  },
+  {
+    "texto": "Mientras el salario llegue puntual cada mes, todo parece simple. Solo nosotros sabemos lo que hay detrás. Y eso nos enorgullece.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "G"
+  },
+  {
+    "texto": "\"Esto también va a pasar\" es el mantra del equipo de payroll argentino. Y si no pasa, lo atamo' con alambre y lo empujamos.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "G"
+  },
+  {
+    "texto": "A este equipo no lo define la complejidad del entorno sino la calidad de su respuesta. Seguimos eligiendo la excelencia, un cierre a la vez.",
+    "autor": "Equipo Hidalgo & Asociados",
+    "tema": "Mix transversal",
+    "tipo": "M"
+  }
 ]
