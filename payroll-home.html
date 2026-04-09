@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payroll · Hidalgo & Asociados</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+  <style>
+    /* ═══════════════════════════════════════
+       TOKENS
+    ═══════════════════════════════════════ */
+    :root {
+      --blue:        #18B7E8;
+      --blue-dark:   #0E9BBE;
+      --blue-dim:    rgba(24,183,232,0.12);
+      --blue-glow:   rgba(24,183,232,0.22);
+      --navy:        #1E3A5F;
+      --navy-deep:   #0F2133;
+      --white:       #ffffff;
+      --off:         #F4F7FA;
+      --surface:     #ffffff;
+      --border:      #DDE5EF;
+      --border-soft: #EEF3F8;
+      --text-1:      #1E3A5F;
+      --text-2:      #4A6080;
+      --text-3:      #8FA3BA;
+      --urgent:      #E85518;
+      --urgent-dim:  rgba(232,85,24,0.1);
+      --green:       #22C55E;
+      --green-dim:   rgba(34,197,94,0.1);
+      --amber:       #F59E0B;
+      --amber-dim:   rgba(245,158,11,0.12);
+      --purple:      #8B5CF6;
+      --r-sm:  8px;
+      --r:     14px;
+      --r-lg:  20px;
+      --sh-sm: 0 1px 4px rgba(30,58,95,0.07);
+      --sh:    0 4px 16px rgba(30,58,95,0.10);
+      --sh-lg: 0 12px 40px rgba(30,58,95,0.15);
+      --font:  'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-d:'DM Serif Display', Georgia, serif;
+      --ease:  cubic-bezier(.4,0,.2,1);
+      --t:     0.22s;
+    }
+
+    /* ═══════════════════════════════════════
+       RESET
+    ═══════════════════════════════════════ */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--off);
+      color: var(--text-1);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { font-family: var(--font); cursor: pointer; border: none; background: none; }
+
+    /* ═══════════════════════════════════════
+       SCROLLBAR
+    ═══════════════════════════════════════ */
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+    /* ═══════════════════════════════════════
+       TOP NAV (simula SharePoint nav moderna)
+    ═══════════════════════════════════════ */
+    .sp-nav {
+      background: var(--navy);
+      height: 50px;
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding-right: 24px;
+      margin-right: 8px;
+      border-right: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .nav-logo {
+      width: 32px; height: 32px;
+      background: var(--blue);
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 10px; font-weight: 800;
+      color: white;
+      letter-spacing: -0.02em;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(24,183,232,0.35);
+    }
+
+    .nav-brand-text { line-height: 1.2; }
+    .nav-brand-text .site  { font-size: 0.82rem; font-weight: 700; color: white; }
+    .nav-brand-text .sub   { font-size: 0.62rem; color: rgba(255,255,255,0.45); font-weight: 400; }
+
+    .nav-links { display:flex; }
+    .nav-link {
+      font-size: 0.78rem; font-weight: 500;
+      color: rgba(255,255,255,0.6);
+      padding: 0 16px;
+      height: 50px;
+      display: flex; align-items: center;
+      border-bottom: 2px solid transparent;
+      transition: color var(--t) var(--ease), border-color var(--t) var(--ease);
+      white-space: nowrap;
+    }
+    .nav-link:hover  { color: white; }
+    .nav-link.active { color: white; border-bottom-color: var(--blue); font-weight: 600; }
+
+    .nav-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .nav-search {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 0.75rem; color: rgba(255,255,255,0.45);
+      transition: var(--t);
+    }
+    .nav-search:hover { background: rgba(255,255,255,0.12); }
+
+    .nav-avatar {
+      width: 30px; height: 30px;
+      background: var(--blue);
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 0.65rem; font-weight: 700; color: white;
+    }
+
+    /* ═══════════════════════════════════════
+       HERO BANNER
+    ═══════════════════════════════════════ */
+    .hero {
+      background: linear-gradient(118deg, var(--navy-deep) 0%, var(--navy) 55%, #0D3D6B 100%);
+      padding: 36px 28px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* decorative circles */
+    .hero::before {
+      content:'';
+      position:absolute; top:-80px; right:-80px;
+      width:400px; height:400px;
+      background: radial-gradient(circle, rgba(24,183,232,0.14) 0%, transparent 65%);
+      pointer-events:none;
+    }
+    .hero::after {
+      content:'';
+      position:absolute; bottom:-60px; left:38%;
+      width:300px; height:300px;
+      background: radial-gradient(circle, rgba(24,183,232,0.07) 0%, transparent 65%);
+      pointer-events:none;
+    }
+
+    /* animated grid lines */
+    .hero-grid {
+      position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(24,183,232,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(24,183,232,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events:none;
+    }
+
+    .hero-inner {
+      position:relative; z-index:1;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:24px;
+    }
+
+    .hero-left { flex:1; }
+
+    .hero-eyebrow {
+      display:inline-flex; align-items:center; gap:7px;
+      background: rgba(24,183,232,0.15);
+      border: 1px solid rgba(24,183,232,0.28);
+      border-radius:20px;
+      padding: 4px 14px;
+      font-size: 0.7rem; font-weight: 700;
+      color: var(--blue); letter-spacing:0.05em;
+      text-transform:uppercase;
+      margin-bottom:14px;
+      animation: fadeUp 0.5s var(--ease) both;
+    }
+
+    .hero-title {
+      font-family: var(--font-d);
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      color: white; line-height:1.1;
+      letter-spacing:-0.02em;
+      margin-bottom: 8px;
+      animation: fadeUp 0.5s 0.08s var(--ease) both;
+    }
+    .hero-title .accent { color: var(--blue); }
+
+    .hero-subtitle {
+      font-size: 0.88rem; font-weight:300;
+      color: rgba(255,255,255,0.5);
+      margin-bottom:22px;
+      animation: fadeUp 0.5s 0.15s var(--ease) both;
+    }
+
+    .hero-badges {
+      display:flex; gap:8px; flex-wrap:wrap;
+      animation: fadeUp 0.5s 0.22s var(--ease) both;
+    }
+
+    .hbadge {
+      display:inline-flex; align-items:center; gap:6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.74rem; font-weight:600;
+      border: 1px solid;
+    }
+    .hbadge-urgent { background:var(--urgent-dim); border-color:rgba(232,85,24,0.35); color:#FF7A4A; }
+    .hbadge-info   { background:var(--blue-dim);   border-color:rgba(24,183,232,0.3); color:#7CD8F5; }
+    .hbadge-ok     { background:var(--green-dim);  border-color:rgba(34,197,94,0.3);  color:#4ADE80; }
+
+    .hero-right {
+      display:flex; flex-direction:column; align-items:flex-end; gap:12px;
+      animation: fadeUp 0.5s 0.1s var(--ease) both;
+      flex-shrink:0;
+    }
+
+    .hero-date {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: var(--r);
+      padding:16px 22px;
+      text-align:right;
+    }
+    .hero-date .month { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--blue); font-weight:700; }
+    .hero-date .day   { font-size:3rem; font-family:var(--font-d); color:white; line-height:1; }
+    .hero-date .wday  { font-size:0.65rem; color:rgba(255,255,255,0.4); margin-top:2px; }
+
+    .hero-kpis { display:flex; gap:10px; }
+    .kpi-chip {
+      background: rgba(255,255,255,0.07);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:var(--r-sm);
+      padding:10px 16px; text-align:center;
+    }
+    .kpi-chip .n { font-size:1.5rem; font-weight:800; color:white; line-height:1; }
+    .kpi-chip .l { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.07em; color:rgba(255,255,255,0.45); margin-top:3px; }
+    .kpi-chip.urgent .n { color:#FF7A4A; }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(14px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ═══════════════════════════════════════
+       PAGE SHELL
+    ═══════════════════════════════════════ */
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 28px 60px;
+    }
+
+    /* ═══════════════════════════════════════
+       SECTION LABEL
+    ═══════════════════════════════════════ */
+    .sec-label {
+      font-size:0.68rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.09em;
+      color: var(--blue);
+      margin-bottom:14px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .sec-label::after {
+      content:''; flex:1; height:1px; background:var(--border-soft);
+    }
+
+    /* ═══════════════════════════════════════
+       TWO-COL LAYOUT
+    ═══════════════════════════════════════ */
+    .layout-main {
+      display: grid;
+      grid-template-columns: 1fr 290px;
+      gap: 24px;
+    }
+
+    .main-col { min-width:0; }
+
+    /* ═══════════════════════════════════════
+       APP GRID (Quick Links – Tiles)
+    ═══════════════════════════════════════ */
+    .app-grid {
+      display:grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 12px;
+      margin-bottom:28px;
+    }
+
+    .app-tile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px 14px 14px;
+      text-align:center;
+      cursor:pointer;
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+      box-shadow: var(--sh-sm);
+      transition: transform var(--t) var(--ease),
+                  border-color var(--t) var(--ease),
+                  box-shadow var(--t) var(--ease);
+      animation: fadeUp 0.4s var(--ease) both;
+      position:relative; overflow:hidden;
+      text-decoration:none; color:inherit;
+    }
+
+    .app-tile::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background: linear-gradient(90deg, var(--blue), var(--blue-dark));
+      transform: scaleX(0); transform-origin:left;
+      transition: transform var(--t) var(--ease);
+      border-radius:var(--r) var(--r) 0 0;
+    }
+
+    .app-tile:hover { transform:translateY(-4px); border-color:var(--blue); box-shadow:0 8px 28px rgba(24,183,232,0.15); }
+    .app-tile:hover::before { transform:scaleX(1); }
+
+    .app-tile .t-icon { font-size:2rem; line-height:1; filter:saturate(0.9); }
+    .app-tile .t-name { font-size:0.74rem; font-weight:700; color:var(--text-1); line-height:1.3; }
+    .app-tile .t-ver  { font-size:0.6rem; color:var(--text-3); font-weight:500; }
+    .app-tile .t-cat  {
+      font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;
+      background:var(--blue-dim); color:var(--blue);
+      padding:2px 8px; border-radius:10px;
+    }
+    .app-tile.ext .t-cat { background:rgba(30,58,95,0.08); color:var(--navy); }
+    .app-tile.beta .t-cat { background:var(--amber-dim); color:var(--amber); }
+
+    /* ═══════════════════════════════════════
+       FAQ
+    ═══════════════════════════════════════ */
+    .faq-wrap {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      box-shadow:var(--sh-sm);
+      overflow:hidden;
+      margin-bottom:28px;
+    }
+
+    .faq-item { border-bottom:1px solid var(--border-soft); }
+    .faq-item:last-child { border-bottom:none; }
+
+    .faq-q {
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:14px 20px;
+      cursor:pointer;
+      transition: background var(--t);
+    }
+    .faq-q:hover { background:var(--off); }
+    .faq-q:focus { outline:2px solid var(--blue); outline-offset:-2px; }
+
+    .faq-q-ico { font-size:1rem; flex-shrink:0; }
+    .faq-q-text { font-size:0.82rem; font-weight:600; color:var(--text-1); flex:1; }
+    .faq-chevron {
+      width:22px; height:22px;
+      background:var(--blue-dim); color:var(--blue);
+      border-radius:50%; display:grid; place-items:center;
+      font-size:0.65rem; flex-shrink:0;
+      transition:transform var(--t) var(--ease), background var(--t);
+    }
+    .faq-item.open .faq-chevron { transform:rotate(180deg); background:var(--blue); color:white; }
+
+    .faq-a {
+      max-height:0; overflow:hidden;
+      transition: max-height 0.3s var(--ease), padding 0.3s var(--ease);
+      padding:0 20px 0 48px;
+    }
+    .faq-item.open .faq-a { max-height:200px; padding:0 20px 14px 48px; }
+    .faq-a p { font-size:0.78rem; color:var(--text-2); line-height:1.65; }
+
+    /* ═══════════════════════════════════════
+       OCIO ROW (3 cols)
+    ═══════════════════════════════════════ */
+    .ocio-row {
+      display:grid;
+      grid-template-columns: repeat(3,1fr);
+      gap:16px;
+    }
+
+    .card {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      box-shadow:var(--sh-sm);
+      overflow:hidden;
+    }
+
+    .card-header {
+      background: var(--navy);
+      padding:12px 16px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .card-header .ch-ico { font-size:1rem; }
+    .card-header h3 { font-size:0.75rem; font-weight:700; color:white; }
+    .card-header .ch-pill {
+      margin-left:auto;
+      background:var(--blue); color:white;
+      font-size:0.58rem; font-weight:700;
+      padding:2px 9px; border-radius:10px;
+      text-transform:uppercase; letter-spacing:0.05em;
+    }
+
+    .card-body { padding:16px; }
+
+    /* Quote */
+    .quote-wrap {
+      background: linear-gradient(135deg, var(--off) 0%, #EAF4FB 100%);
+      border-radius:var(--r-sm);
+      padding:16px;
+      text-align:center;
+    }
+    .quote-marks { font-size:2rem; color:var(--blue); opacity:0.3; line-height:0.6; margin-bottom:10px; font-family:var(--font-d); }
+    .quote-text  { font-family:var(--font-d); font-style:italic; font-size:0.9rem; color:var(--text-1); line-height:1.55; margin-bottom:10px; }
+    .quote-author { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--blue); }
+    .quote-refresh {
+      margin-top:12px;
+      font-size:0.68rem; color:var(--text-3);
+      display:flex; align-items:center; justify-content:flex-end; gap:4px;
+      cursor:pointer; transition:color var(--t);
+    }
+    .quote-refresh:hover { color:var(--blue); }
+
+    /* Music player */
+    .music-player {
+      background:#0D1117;
+      border-radius:var(--r-sm);
+      padding:14px 16px;
+    }
+    .music-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .music-cover {
+      width:46px; height:46px; border-radius:8px; flex-shrink:0;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--navy) 100%);
+      display:grid; place-items:center; font-size:1.3rem;
+      box-shadow: 0 4px 12px rgba(24,183,232,0.3);
+    }
+    .music-info { flex:1; min-width:0; }
+    .music-track  { font-size:0.78rem; font-weight:700; color:white; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .music-artist { font-size:0.65rem; color:rgba(255,255,255,0.45); margin-top:2px; }
+    .music-ctrl { display:flex; align-items:center; gap:10px; }
+    .music-ctrl button {
+      color:rgba(255,255,255,0.5); font-size:0.85rem;
+      transition:color var(--t);
+      padding:4px;
+    }
+    .music-ctrl button:hover  { color:white; }
+    .music-ctrl .play-btn {
+      width:28px; height:28px; border-radius:50%;
+      background:var(--blue); color:white;
+      display:grid; place-items:center; font-size:0.75rem;
+      transition:transform var(--t), background var(--t);
+    }
+    .music-ctrl .play-btn:hover { transform:scale(1.1); background:var(--blue-dark); }
+    .music-prog { height:3px; background:rgba(255,255,255,0.12); border-radius:2px; margin-top:10px; cursor:pointer; position:relative; }
+    .music-fill { height:100%; width:35%; background:var(--blue); border-radius:2px; position:relative; transition:width 0.1s; }
+    .music-fill::after {
+      content:''; position:absolute; right:-5px; top:50%;
+      transform:translateY(-50%);
+      width:10px; height:10px; border-radius:50%;
+      background:var(--blue); opacity:0;
+      transition:opacity var(--t);
+    }
+    .music-prog:hover .music-fill::after { opacity:1; }
+    .music-time { display:flex; justify-content:space-between; font-size:0.6rem; color:rgba(255,255,255,0.3); margin-top:5px; }
+
+    .music-type-toggle {
+      display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;
+    }
+    .toggle-btn {
+      font-size:0.65rem; font-weight:600;
+      padding:4px 12px; border-radius:20px;
+      border:1px solid rgba(255,255,255,0.12);
+      color:rgba(255,255,255,0.45);
+      transition:all var(--t);
+    }
+    .toggle-btn:hover { color:white; border-color:rgba(255,255,255,0.3); }
+    .toggle-btn.active { background:var(--blue); color:white; border-color:var(--blue); }
+
+    /* News */
+    .news-item {
+      padding:9px 0;
+      border-bottom:1px solid var(--border-soft);
+      cursor:pointer;
+      transition:background var(--t);
+    }
+    .news-item:last-child { border-bottom:none; }
+    .news-item:hover { }
+
+    .news-source {
+      font-size:0.6rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.07em; color:var(--blue); margin-bottom:2px;
+    }
+    .news-hl { font-size:0.74rem; color:var(--text-1); line-height:1.4; font-weight:500; margin-bottom:3px; }
+    .news-meta { font-size:0.62rem; color:var(--text-3); display:flex; align-items:center; gap:6px; }
+    .news-dot { width:3px; height:3px; border-radius:50%; background:var(--border); }
+
+    /* ═══════════════════════════════════════
+       SIDEBAR
+    ═══════════════════════════════════════ */
+    .sidebar { display:flex; flex-direction:column; gap:20px; }
+
+    /* Birthday widget */
+    .bday-card {
+      background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+      border:1px solid #FDE68A;
+      border-radius:var(--r);
+      overflow:hidden;
+    }
+
+    .bday-header {
+      background: linear-gradient(90deg, #F59E0B, #FBBF24);
+      padding:11px 16px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .bday-header h3 { font-size:0.75rem; font-weight:700; color:white; }
+    .bday-header .bday-ico { font-size:1rem; }
+    .bday-count {
+      margin-left:auto; background:rgba(255,255,255,0.3);
+      color:white; font-size:0.6rem; font-weight:700;
+      padding:2px 9px; border-radius:10px;
+    }
+
+    .bday-list { padding:10px 14px; display:flex; flex-direction:column; gap:2px; }
+
+    .bday-item {
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px;
+      border-radius:var(--r-sm);
+      transition:background var(--t);
+    }
+    .bday-item:hover { background:rgba(245,158,11,0.07); }
+    .bday-item.today { background:rgba(245,158,11,0.12); }
+
+    .bday-av {
+      width:34px; height:34px; border-radius:50%;
+      display:grid; place-items:center;
+      font-size:0.7rem; font-weight:700; color:white;
+      flex-shrink:0; text-transform:uppercase;
+    }
+
+    .bday-info { flex:1; min-width:0; }
+    .bday-name { font-size:0.76rem; font-weight:600; color:#78350F; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .bday-date { font-size:0.63rem; color:#B45309; margin-top:1px; }
+
+    .bday-badge {
+      flex-shrink:0;
+      background:var(--amber); color:white;
+      font-size:0.58rem; font-weight:700;
+      padding:3px 9px; border-radius:10px;
+      text-transform:uppercase; letter-spacing:0.04em;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,0.4); }
+      50%      { box-shadow:0 0 0 6px rgba(245,158,11,0); }
+    }
+
+    /* Eventos / Vencimientos */
+    .eventos-card {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      box-shadow:var(--sh-sm);
+      overflow:hidden;
+    }
+
+    .eventos-header {
+      background:var(--navy);
+      padding:11px 16px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .eventos-header h3 { font-size:0.75rem; font-weight:700; color:white; }
+    .eventos-header .ev-ico { font-size:1rem; }
+
+    .eventos-list { padding:10px 14px; display:flex; flex-direction:column; gap:2px; }
+
+    .ev-item {
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px;
+      border-radius:var(--r-sm);
+      transition:background var(--t);
+      cursor:default;
+    }
+    .ev-item:hover { background:var(--off); }
+
+    .ev-pill {
+      min-width:38px;
+      background:var(--blue); color:white;
+      border-radius:var(--r-sm);
+      padding:5px 8px; text-align:center;
+      flex-shrink:0;
+    }
+    .ev-pill .d { font-size:0.9rem; font-weight:800; line-height:1; }
+    .ev-pill .m { font-size:0.55rem; text-transform:uppercase; opacity:0.8; letter-spacing:0.05em; }
+    .ev-pill.urgent { background:var(--urgent); }
+
+    .ev-info { flex:1; min-width:0; }
+    .ev-title { font-size:0.76rem; font-weight:600; color:var(--text-1); }
+    .ev-sub   { font-size:0.63rem; color:var(--text-3); margin-top:1px; }
+
+    .ev-tag {
+      font-size:0.58rem; font-weight:700; text-transform:uppercase;
+      padding:2px 8px; border-radius:10px; flex-shrink:0;
+    }
+    .ev-tag-fiscal  { background:var(--blue-dim);   color:var(--blue); }
+    .ev-tag-nomina  { background:var(--green-dim);  color:#16A34A; }
+    .ev-tag-interno { background:rgba(139,92,246,0.1); color:var(--purple); }
+
+    /* Quick links externos pequeños */
+    .ext-links {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      box-shadow:var(--sh-sm);
+      padding:14px 16px;
+    }
+    .ext-links h3 { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--blue); margin-bottom:12px; }
+    .ext-link-btn {
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px; border-radius:var(--r-sm);
+      transition:background var(--t);
+      cursor:pointer; margin-bottom:4px;
+      text-decoration:none; color:inherit;
+    }
+    .ext-link-btn:hover { background:var(--off); }
+    .ext-link-ico { width:28px; height:28px; border-radius:6px; display:grid; place-items:center; font-size:1rem; flex-shrink:0; }
+    .ext-link-name { font-size:0.76rem; font-weight:600; color:var(--text-1); }
+    .ext-link-url  { font-size:0.62rem; color:var(--text-3); }
+    .ext-link-arr  { margin-left:auto; font-size:0.7rem; color:var(--text-3); transition:color var(--t), transform var(--t); }
+    .ext-link-btn:hover .ext-link-arr { color:var(--blue); transform:translateX(3px); }
+
+    /* ═══════════════════════════════════════
+       CONFETTI OVERLAY
+    ═══════════════════════════════════════ */
+    #confetti-canvas {
+      position:fixed; inset:0;
+      pointer-events:none;
+      z-index:9999;
+      display:none;
+    }
+
+    /* ═══════════════════════════════════════
+       BIRTHDAY TOAST
+    ═══════════════════════════════════════ */
+    .bday-toast {
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+      background:linear-gradient(135deg, #F59E0B, #FBBF24);
+      color:white;
+      padding:14px 24px;
+      border-radius:var(--r);
+      box-shadow:0 8px 32px rgba(245,158,11,0.4);
+      display:flex; align-items:center; gap:12px;
+      font-size:0.85rem; font-weight:600;
+      z-index:200;
+      opacity:0;
+      transition:all 0.4s var(--ease);
+      pointer-events:none;
+      max-width:90vw;
+    }
+    .bday-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .bday-toast .t-close { margin-left:8px; opacity:0.7; cursor:pointer; pointer-events:all; font-size:1rem; }
+
+    /* ═══════════════════════════════════════
+       SHAREPOINT IFRAME — auto altura + nav oculta
+    ═══════════════════════════════════════ */
+    /* Cuando el portal corre dentro del iframe de SharePoint
+       ocultamos la nav interna (ya existe la de SP arriba)
+       y ajustamos el padding del hero */
+    html, body { height: auto; overflow-x: hidden; }
+
+    @media (max-width: 1260px) {
+      .sp-nav { display: none !important; }
+    }
+
+    /* ═══════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════ */
+    @media (max-width: 1024px) {
+      .layout-main { grid-template-columns:1fr; }
+      .sidebar { display:grid; grid-template-columns:1fr 1fr; }
+      .ocio-row { grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .app-grid { grid-template-columns:repeat(2,1fr); }
+      .sidebar { grid-template-columns:1fr; }
+      .ocio-row { grid-template-columns:1fr; }
+      .nav-links { display:none; }
+      .hero-kpis { flex-wrap:wrap; }
+    }
+    @media (max-width: 480px) {
+      .page { padding:16px 16px 48px; }
+      .hero { padding:24px 16px; }
+      .hero-right { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ╔═══════════════════════════════════════╗ -->
+<!-- ║  TOP NAV                              ║ -->
+<!-- ╚═══════════════════════════════════════╝ -->
+<nav class="sp-nav">
+  <div class="nav-brand">
+    <div class="nav-logo">H&A</div>
+    <div class="nav-brand-text">
+      <div class="site">Payroll · H&A</div>
+      <div class="sub">Hidalgo & Asociados</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link active" href="#">Inicio</a>
+    <a class="nav-link" href="#">Documentos</a>
+    <a class="nav-link" href="#">Nómina</a>
+    <a class="nav-link" href="#">Novedades</a>
+    <a class="nav-link" href="#">ARCA / AFIP</a>
+    <a class="nav-link" href="#">Implementaciones</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-search">🔎&nbsp; Buscar...</div>
+    <div class="nav-avatar" id="userAvatar">GE</div>
+  </div>
+</nav>
+
+<!-- ╔═══════════════════════════════════════╗ -->
+<!-- ║  HERO BANNER                          ║ -->
+<!-- ╚═══════════════════════════════════════╝ -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <img src="data:image/jpeg;base64,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" style="width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0;box-shadow:0 0 0 3px rgba(24,183,232,0.4)" alt="H&A Logo">
+        <div>
+          <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.45);font-weight:600;font-family:var(--font)">Hidalgo & Asociados</div>
+          <div class="hero-eyebrow" style="margin-bottom:0;margin-top:4px">
+            <span>👋</span> <span id="heroGreeting">Buen día, equipo Payroll</span>
+          </div>
+        </div>
+      </div>
+      <h1 class="hero-title">Portal <span class="accent">Hidalgo</span><br>& Asociados</h1>
+      <p class="hero-subtitle">Herramientas internas · Nómina · Automatizaciones · Implementaciones</p>
+      <div class="hero-badges" id="heroBadges">
+        <span class="hbadge hbadge-urgent">⚠️ F931 SUSS – vence 10 abr</span>
+        <span class="hbadge hbadge-info">📅 Cierre nómina – 25 abr</span>
+        <span class="hbadge hbadge-ok">✅ 6 clientes activos</span>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-date">
+        <div class="month" id="heroMonth"></div>
+        <div class="day"   id="heroDay"></div>
+        <div class="wday"  id="heroWday"></div>
+      </div>
+      <div class="hero-kpis">
+        <div class="kpi-chip">
+          <div class="n" id="daysToClose">—</div>
+          <div class="l">días cierre</div>
+        </div>
+        <div class="kpi-chip urgent">
+          <div class="n" id="daysToVcto">—</div>
+          <div class="l">días vcto</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ╔═══════════════════════════════════════╗ -->
+<!-- ║  PAGE CONTENT                         ║ -->
+<!-- ╚═══════════════════════════════════════╝ -->
+<main class="page">
+  <div class="layout-main">
+
+    <!-- ─── COLUMNA PRINCIPAL ─── -->
+    <div class="main-col">
+
+      <!-- APPS INTERNAS -->
+      <div class="sec-label">🚀 Apps internas · Accesos directos</div>
+      <div class="app-grid" id="appGrid">
+        <!-- rendered by JS from CONFIG.apps -->
+      </div>
+
+      <!-- FAQ -->
+      <div class="sec-label">❓ FAQ · Preguntas frecuentes del equipo</div>
+      <div class="faq-wrap" id="faqWrap">
+        <!-- rendered by JS from CONFIG.faqs -->
+      </div>
+
+      <!-- OCIO ROW -->
+      <div class="sec-label" style="margin-top:28px">🎯 Espacio del equipo</div>
+      <div class="ocio-row">
+
+        <!-- FRASE DEL DÍA -->
+        <div class="card">
+          <div class="card-header">
+            <span class="ch-ico">💬</span>
+            <h3>Frase del día</h3>
+          </div>
+          <div class="card-body">
+            <div class="quote-wrap">
+              <div class="quote-marks">"</div>
+              <p class="quote-text" id="quoteText">Cargando frase…</p>
+              <div class="quote-author" id="quoteAuthor">—</div>
+            </div>
+            <div class="quote-refresh" onclick="nextQuote()" title="Nueva frase">
+              🔄&nbsp;Otra frase
+            </div>
+          </div>
+        </div>
+
+        <!-- MÚSICA -->
+        <div class="card">
+          <div class="card-header">
+            <span class="ch-ico">🎵</span>
+            <h3>Música del equipo</h3>
+            <span class="ch-pill" id="musicSource">YouTube</span>
+          </div>
+          <div class="card-body">
+            <div class="music-player">
+              <div class="music-top">
+                <div class="music-cover">🎵</div>
+                <div class="music-info">
+                  <div class="music-track" id="musicTrack">Lo-fi Beats to Work</div>
+                  <div class="music-artist" id="musicArtist">Playlist Payroll · H&A</div>
+                </div>
+              </div>
+              <div class="music-ctrl">
+                <button title="Anterior">⏮</button>
+                <button class="play-btn" id="playBtn" onclick="togglePlay()" title="Reproducir/Pausar">▶</button>
+                <button title="Siguiente">⏭</button>
+                <button title="Volumen" style="margin-left:auto">🔊</button>
+              </div>
+              <div class="music-prog" onclick="seekMusic(event)">
+                <div class="music-fill" id="musicFill"></div>
+              </div>
+              <div class="music-time">
+                <span id="musicCurrent">0:00</span>
+                <span id="musicTotal">—</span>
+              </div>
+            </div>
+            <div class="music-type-toggle">
+              <button class="toggle-btn active" onclick="setMusicType('youtube',this)">📺 YouTube</button>
+              <button class="toggle-btn" onclick="setMusicType('spotify',this)">🟢 Spotify</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- NOTICIAS LABORALES -->
+        <div class="card">
+          <div class="card-header">
+            <span class="ch-ico">📰</span>
+            <h3>Noticias laborales AR</h3>
+            <span class="ch-pill">RSS</span>
+          </div>
+          <div class="card-body" id="newsBody">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+
+      </div><!-- /ocio-row -->
+    </div><!-- /main-col -->
+
+    <!-- ─── SIDEBAR ─── -->
+    <aside class="sidebar">
+
+      <!-- CUMPLEAÑOS -->
+      <div class="bday-card">
+        <div class="bday-header">
+          <span class="bday-ico">🎂</span>
+          <h3>Cumpleaños del mes</h3>
+          <span class="bday-count" id="bdayCount">0</span>
+        </div>
+        <div class="bday-list" id="bdayList">
+          <!-- rendered by JS -->
+        </div>
+      </div>
+
+      <!-- EVENTOS / VENCIMIENTOS -->
+      <div class="eventos-card">
+        <div class="eventos-header">
+          <span class="ev-ico">📆</span>
+          <h3>Próximos vencimientos</h3>
+        </div>
+        <div class="eventos-list" id="eventosList">
+          <!-- rendered by JS -->
+        </div>
+      </div>
+
+      <!-- LINKS EXTERNOS -->
+      <div class="ext-links">
+        <h3>Apps externas</h3>
+        <a class="ext-link-btn" href="https://app.monday.com" target="_blank" rel="noopener">
+          <div class="ext-link-ico" style="background:#FF3D57">🟠</div>
+          <div>
+            <div class="ext-link-name">monday.com</div>
+            <div class="ext-link-url">app.monday.com</div>
+          </div>
+          <span class="ext-link-arr">→</span>
+        </a>
+        <a class="ext-link-btn" href="#" target="_blank" rel="noopener">
+          <div class="ext-link-ico" style="background:#1E3A5F">💼</div>
+          <div>
+            <div class="ext-link-name">Axton</div>
+            <div class="ext-link-url">Liquidación de sueldos</div>
+          </div>
+          <span class="ext-link-arr">→</span>
+        </a>
+        <a class="ext-link-btn" href="https://www.afip.gob.ar/landing/default.asp" target="_blank" rel="noopener">
+          <div class="ext-link-ico" style="background:#18B7E8">🏛️</div>
+          <div>
+            <div class="ext-link-name">ARCA (ex-AFIP)</div>
+            <div class="ext-link-url">afip.gob.ar</div>
+          </div>
+          <span class="ext-link-arr">→</span>
+        </a>
+        <a class="ext-link-btn" href="https://www.anses.gob.ar" target="_blank" rel="noopener">
+          <div class="ext-link-ico" style="background:#22C55E">🏢</div>
+          <div>
+            <div class="ext-link-name">ANSES</div>
+            <div class="ext-link-url">anses.gob.ar</div>
+          </div>
+          <span class="ext-link-arr">→</span>
+        </a>
+      </div>
+
+    </aside>
+  </div>
+</main>
+
+<!-- CONFETTI CANVAS -->
+<canvas id="confetti-canvas"></canvas>
+
+<!-- BIRTHDAY TOAST -->
+<div class="bday-toast" id="bdayToast">
+  <span>🎉</span>
+  <span id="bdayToastMsg">¡Feliz cumpleaños!</span>
+  <span class="t-close" onclick="closeBdayToast()">✕</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<script>
+/* ═══════════════════════════════════════════════════════════
+   ⚙️  CONFIGURACIÓN — Editá estos datos para tu equipo
+   ═══════════════════════════════════════════════════════════ */
+const CONFIG = {
+
+  /* ── Datos del usuario logueado ───────────────────────────
+     En producción con SharePoint, reemplazá estos valores
+     usando la API: /_api/web/currentUser
+  ─────────────────────────────────────────────────────────── */
+  user: {
+    displayName: 'Guillermo Esposito',
+    initials:    'GE',
+  },
+
+  /* ── Apps internas ────────────────────────────────────────
+     Estas se cargan desde apps.json en producción.
+     url: ruta relativa a cada app HTML.
+  ─────────────────────────────────────────────────────────── */
+  apps: [
+    { id:1, nombre:'Calculadora de Nómina',    icono:'🧮', url:'./apps/calculadora-nomina/index.html',  version:'2.1', categoria:'Nómina',     estado:'activo' },
+    { id:2, nombre:'Generador de Reportes',    icono:'📊', url:'./apps/generador-reportes/index.html',  version:'1.3', categoria:'Reportes',   estado:'activo' },
+    { id:3, nombre:'Gestor de Tickets',        icono:'🎫', url:'./apps/gestor-tickets/index.html',       version:'1.0', categoria:'Gestión',    estado:'activo' },
+    { id:4, nombre:'Calendario Vencimientos',  icono:'📅', url:'./apps/calendario/index.html',           version:'1.2', categoria:'Gestión',    estado:'activo' },
+    { id:5, nombre:'Validador CUIL/CUIT',      icono:'🔍', url:'./apps/validador-cuil/index.html',       version:'1.0', categoria:'Utilidades', estado:'activo' },
+    { id:6, nombre:'Tablero Implementaciones', icono:'🚀', url:'./apps/tablero-impl/index.html',         version:'0.9', categoria:'Gestión',    estado:'beta'   },
+  ],
+
+  /* ── Cumpleaños del equipo ────────────────────────────────
+     Formato de fecha: 'MM-DD' (sin año, recurrente).
+     En producción: reemplazá por llamada a la lista SharePoint
+     via REST API: /_api/lists/getbytitle('CumpleañosPayroll')/items
+  ─────────────────────────────────────────────────────────── */
+  cumpleanios: [
+    { nombre:'María González',  iniciales:'MG', fecha:'04-08', color:'#18B7E8', area:'Analista Payroll' },
+    { nombre:'Javier Romero',   iniciales:'JR', fecha:'04-15', color:'#1E3A5F', area:'Implementaciones' },
+    { nombre:'Laura Pereyra',   iniciales:'LP', fecha:'04-22', color:'#8B5CF6', area:'Analista Sr.'     },
+    { nombre:'Carlos Medina',   iniciales:'CM', fecha:'05-03', color:'#22C55E', area:'Soporte'          },
+    { nombre:'Sofía Albornoz',  iniciales:'SA', fecha:'06-17', color:'#E85518', area:'RRHH'             },
+  ],
+
+  /* ── Vencimientos / eventos ───────────────────────────────
+     En producción: lista SharePoint 'EventosVencimientos'
+  ─────────────────────────────────────────────────────────── */
+  eventos: [
+    { titulo:'F931 SUSS',             fecha:'2026-04-10', tipo:'fiscal',  urgente:true,  sub:'Presentación mensual ARCA'       },
+    { titulo:'Ganancias 4° categoría', fecha:'2026-04-15', tipo:'fiscal',  urgente:false, sub:'Retenciones empleados en relación de dependencia' },
+    { titulo:'Cierre de Nómina',       fecha:'2026-04-25', tipo:'nomina',  urgente:false, sub:'Límite carga de novedades Axton' },
+    { titulo:'Acreditación bancaria',  fecha:'2026-04-30', tipo:'nomina',  urgente:false, sub:'Liquidación sueldos abril'       },
+    { titulo:'F1357 Ganancias',        fecha:'2026-05-05', tipo:'fiscal',  urgente:false, sub:'Retenciones 3° categoría'        },
+    { titulo:'Reunión de equipo',      fecha:'2026-04-14', tipo:'interno', urgente:false, sub:'Revisión de implementaciones'    },
+  ],
+
+  /* ── FAQ ──────────────────────────────────────────────────
+     En producción: lista SharePoint 'FAQPayroll'
+  ─────────────────────────────────────────────────────────── */
+  faqs: [
+    {
+      icono:'📅',
+      pregunta:'¿Cuándo cierran las nóminas mensuales?',
+      respuesta:'El cierre de nómina se realiza el día 25 de cada mes. Los legajos con novedades deben estar ingresados en Axton antes del día 22. En meses con feriados se notifica con anticipación por el canal de Teams del equipo.',
+    },
+    {
+      icono:'💼',
+      pregunta:'¿Cómo se carga una novedad en Axton?',
+      respuesta:'Acceder a Axton → Módulo Novedades → seleccionar empresa → ingresar CUIL del empleado y tipo de novedad. Adjuntar comprobante escaneado si el tipo de novedad lo requiere. Guardar y confirmar.',
+    },
+    {
+      icono:'🏛️',
+      pregunta:'¿Qué presentaciones se hacen ante ARCA cada mes?',
+      respuesta:'F931 (SUSS – aportes y contribuciones), F1357 (Ganancias 4° categoría), SIPA (aportes autónomos si aplica) y retenciones de 3° categoría según cada cliente. El calendario exacto está en el Calendario de Vencimientos.',
+    },
+    {
+      icono:'🔍',
+      pregunta:'¿Cómo valido un CUIL/CUIT con dígito verificador?',
+      respuesta:'Usá la app "Validador CUIL/CUIT" del portal (acceso directo en la grilla de apps). También podés consultar directamente en ARCA (ex-AFIP) con el número de documento del empleado.',
+    },
+    {
+      icono:'🟠',
+      pregunta:'¿Dónde cargo las tareas de implementación nuevas?',
+      respuesta:'En monday.com, dentro del board "Implementaciones Clientes". Cada cliente tiene su grupo de tareas. Asignale el responsable, la fecha de entrega y el estado. Ante dudas, consultá el Tablero de Implementaciones del portal.',
+    },
+  ],
+
+  /* ── Frases del día ───────────────────────────────────────
+     En producción: lista SharePoint 'FrasesDelDía'
+     filtrada por fecha o rotación aleatoria.
+  ─────────────────────────────────────────────────────────── */
+  frases: [
+    { texto:'La eficiencia no es hacer muchas cosas a la vez, es hacer lo que importa, bien.',                autor:'Peter Drucker' },
+    { texto:'El éxito es la suma de pequeños esfuerzos repetidos día tras día.',                              autor:'Robert Collier' },
+    { texto:'La organización no es un fin en sí mismo, es el vehículo para hacer bien el trabajo.',           autor:'Peter Drucker' },
+    { texto:'Un equipo no es un grupo de personas que trabajan juntas, sino un grupo que se fía mutuamente.', autor:'Simon Sinek' },
+    { texto:'La preparación es la llave del éxito.',                                                          autor:'Alexander Graham Bell' },
+    { texto:'Lo que no se puede medir no se puede mejorar.',                                                   autor:'Lord Kelvin' },
+    { texto:'El talento gana partidos, pero el trabajo en equipo gana campeonatos.',                          autor:'Michael Jordan' },
+  ],
+
+  /* ── Noticias laborales ───────────────────────────────────
+     En producción: lista SharePoint 'NoticiasLaborales'
+     alimentada por flujo Power Automate desde RSS.
+     Acá usamos datos de demostración.
+  ─────────────────────────────────────────────────────────── */
+  noticias: [
+    { fuente:'iProfesional', titulo:'ARCA actualizó los topes de retenciones de Ganancias para el período 2026', hace:'Hace 2 h',  url:'https://www.iprofesional.com/impuestos' },
+    { fuente:'Ámbito',       titulo:'Paritarias comercio: acuerdo salarial del 8% para abril',                   hace:'Ayer',     url:'https://www.ambito.com' },
+    { fuente:'El Cronista',  titulo:'SIPA: nueva base imponible máxima a partir de mayo 2026',                   hace:'Ayer',     url:'https://www.cronista.com' },
+    { fuente:'iProfesional', titulo:'Monotributo: recategorización obligatoria antes del 30 de abril',           hace:'2 días',   url:'https://www.iprofesional.com/impuestos' },
+  ],
+
+  /* ── Música ───────────────────────────────────────────────
+     Playlist de YouTube embebida. Para Spotify, agregar
+     el embed URL de spotify y habilitar el dominio en
+     SharePoint Admin → HTML Field Security.
+  ─────────────────────────────────────────────────────────── */
+  musicaYoutube: {
+    embedUrl: 'https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0&list=PLofht4PTcKYnaH8w5olJCI-wUBGMO3Zqg',
+    track:    'Lo-fi Beats to Work',
+    artist:   'Playlist Payroll · H&A',
+    total:    '3 h 42 min',
+  },
+  musicaSpotify: {
+    embedUrl: 'https://open.spotify.com/embed/playlist/37i9dQZF1DX8NTLI2TtZa6',
+    track:    'Productive Morning',
+    artist:   'Spotify · Work Playlist',
+    total:    '4 h 10 min',
+  },
+};
+
+/* ═══════════════════════════════════════════════════════════
+   FECHA & HORA
+═══════════════════════════════════════════════════════════ */
+(function initDate() {
+  const now   = new Date();
+  const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  const dias  = ['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'];
+
+  document.getElementById('heroMonth').textContent = meses[now.getMonth()] + ' ' + now.getFullYear();
+  document.getElementById('heroDay').textContent   = String(now.getDate()).padStart(2,'0');
+  document.getElementById('heroWday').textContent  = dias[now.getDay()];
+
+  // Saludo según hora
+  const h = now.getHours();
+  const greet = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  document.getElementById('heroGreeting').textContent = `${greet}, equipo Payroll`;
+
+  // Días hasta cierre y vcto más próximo
+  // Comparamos solo fechas (sin hora) para evitar problemas de timezone en SharePoint
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const thisMonth = now.getMonth();
+  const thisYear  = now.getFullYear();
+  const cierre    = new Date(thisYear, thisMonth, 25);
+  if (cierre <= todayMidnight) cierre.setMonth(cierre.getMonth() + 1);
+  const daysClose = Math.ceil((cierre - todayMidnight) / 86400000);
+  document.getElementById('daysToClose').textContent = daysClose > 0 ? daysClose : '0';
+
+  // Días al próximo vencimiento urgente (cualquiera, no solo los marcados)
+  // Primero buscamos urgentes, si no hay mostramos el próximo evento
+  const eventsFuture = CONFIG.eventos
+    .map(e => ({ ...e, d: new Date(e.fecha.split('-')[0], e.fecha.split('-')[1]-1, e.fecha.split('-')[2]) }))
+    .filter(e => e.d >= todayMidnight)
+    .sort((a,b) => a.d - b.d);
+
+  const urgente = eventsFuture.find(e => e.urgente) || eventsFuture[0];
+  if (urgente) {
+    const diff = Math.ceil((urgente.d - todayMidnight) / 86400000);
+    document.getElementById('daysToVcto').textContent = diff > 0 ? diff : '¡Hoy!';
+  } else {
+    document.getElementById('daysToVcto').textContent = '—';
+  }
+
+  // Avatar
+  document.getElementById('userAvatar').textContent = CONFIG.user.initials;
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   APPS GRID
+═══════════════════════════════════════════════════════════ */
+(function renderApps() {
+  const grid = document.getElementById('appGrid');
+  grid.innerHTML = CONFIG.apps.map((a, i) => {
+    const catClass = a.estado === 'beta' ? 'beta' : '';
+    const catLabel = a.estado === 'beta' ? 'Beta' : a.categoria;
+    return `
+      <a class="app-tile ${catClass}" href="${a.url}" target="_blank" rel="noopener"
+         style="animation-delay:${i * 0.07}s" title="Abrir ${a.nombre}">
+        <span class="t-icon">${a.icono}</span>
+        <span class="t-name">${a.nombre}</span>
+        <span class="t-cat">${catLabel}</span>
+        <span class="t-ver">v${a.version}</span>
+      </a>`;
+  }).join('');
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   FAQ
+═══════════════════════════════════════════════════════════ */
+(function renderFaq() {
+  const wrap = document.getElementById('faqWrap');
+  wrap.innerHTML = CONFIG.faqs.map((f, i) => `
+    <div class="faq-item" id="faq-${i}">
+      <div class="faq-q" onclick="toggleFaq(${i})" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')toggleFaq(${i})">
+        <span class="faq-q-ico">${f.icono}</span>
+        <span class="faq-q-text">${f.pregunta}</span>
+        <span class="faq-chevron">▼</span>
+      </div>
+      <div class="faq-a"><p>${f.respuesta}</p></div>
+    </div>`).join('');
+})();
+
+function toggleFaq(i) {
+  const item = document.getElementById('faq-' + i);
+  item.classList.toggle('open');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CUMPLEAÑOS
+═══════════════════════════════════════════════════════════ */
+(function renderBirthdays() {
+  const now   = new Date();
+  const month = String(now.getMonth() + 1).padStart(2,'0');
+  const today = String(now.getDate()).padStart(2,'0');
+  const todayStr = `${month}-${today}`;
+
+  const thisMonth = CONFIG.cumpleanios
+    .filter(b => b.fecha.startsWith(month))
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+  document.getElementById('bdayCount').textContent = thisMonth.length + ' este mes';
+
+  const list = document.getElementById('bdayList');
+
+  if (!thisMonth.length) {
+    list.innerHTML = '<p style="font-size:0.74rem;color:#B45309;padding:10px 10px 14px;text-align:center">Sin cumpleaños este mes 🎈</p>';
+    return;
+  }
+
+  list.innerHTML = thisMonth.map(b => {
+    const isToday = b.fecha === todayStr;
+    return `
+      <div class="bday-item ${isToday ? 'today' : ''}">
+        <div class="bday-av" style="background:${b.color}">${b.iniciales}</div>
+        <div class="bday-info">
+          <div class="bday-name">${b.nombre}</div>
+          <div class="bday-date">${b.area} · ${isToday ? '🎉 ¡Hoy!' : formatBdayDate(b.fecha)}</div>
+        </div>
+        ${isToday ? '<span class="bday-badge">HOY 🎂</span>' : ''}
+      </div>`;
+  }).join('');
+
+  // Si hay cumpleaños hoy → toast + confeti
+  const todayBdays = thisMonth.filter(b => b.fecha === todayStr);
+  if (todayBdays.length) {
+    setTimeout(() => {
+      const names = todayBdays.map(b => b.nombre.split(' ')[0]).join(' y ');
+      document.getElementById('bdayToastMsg').textContent = `¡Feliz cumpleaños, ${names}! 🎂🎉`;
+      document.getElementById('bdayToast').classList.add('show');
+      launchConfetti();
+    }, 800);
+  }
+})();
+
+function formatBdayDate(str) {
+  const [m, d] = str.split('-');
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `📅 ${parseInt(d)} ${meses[parseInt(m)-1]}`;
+}
+
+function closeBdayToast() {
+  document.getElementById('bdayToast').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EVENTOS / VENCIMIENTOS
+═══════════════════════════════════════════════════════════ */
+(function renderEventos() {
+  const now = new Date();
+  now.setHours(0,0,0,0);
+
+  const upcoming = CONFIG.eventos
+    .map(e => {
+      const [y,m,d] = e.fecha.split('-').map(Number);
+      return { ...e, dateObj: new Date(y, m-1, d) };   // local date, no UTC shift
+    })
+    .filter(e => e.dateObj >= now)
+    .sort((a,b) => a.dateObj - b.dateObj)
+    .slice(0, 6);
+
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const tags  = { fiscal:'ev-tag-fiscal', nomina:'ev-tag-nomina', interno:'ev-tag-interno' };
+  const labels = { fiscal:'Fiscal', nomina:'Nómina', interno:'Interno' };
+
+  document.getElementById('eventosList').innerHTML = upcoming.map(e => `
+    <div class="ev-item">
+      <div class="ev-pill ${e.urgente ? 'urgent' : ''}">
+        <div class="d">${e.dateObj.getDate()}</div>
+        <div class="m">${meses[e.dateObj.getMonth()]}</div>
+      </div>
+      <div class="ev-info">
+        <div class="ev-title">${e.titulo}</div>
+        <div class="ev-sub">${e.sub}</div>
+      </div>
+      <span class="ev-tag ${tags[e.tipo]}">${labels[e.tipo]}</span>
+    </div>`).join('');
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   FRASES DEL DÍA
+═══════════════════════════════════════════════════════════ */
+let quoteIdx = Math.floor(Math.random() * CONFIG.frases.length);
+
+function renderQuote() {
+  const q = CONFIG.frases[quoteIdx];
+  document.getElementById('quoteText').textContent   = q.texto;
+  document.getElementById('quoteAuthor').textContent = '— ' + q.autor;
+}
+
+function nextQuote() {
+  quoteIdx = (quoteIdx + 1) % CONFIG.frases.length;
+  renderQuote();
+}
+
+renderQuote();
+
+/* ═══════════════════════════════════════════════════════════
+   NOTICIAS
+═══════════════════════════════════════════════════════════ */
+(function renderNoticias() {
+  const body = document.getElementById('newsBody');
+  body.innerHTML = CONFIG.noticias.map(n => `
+    <div class="news-item" onclick="window.open('${n.url}','_blank')">
+      <div class="news-source">${n.fuente}</div>
+      <div class="news-hl">${n.titulo}</div>
+      <div class="news-meta"><span>${n.hace}</span></div>
+    </div>`).join('');
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   MÚSICA — reproductor simulado (sin iframe por defecto,
+   en SharePoint usar el web part Embed con la URL)
+═══════════════════════════════════════════════════════════ */
+let isPlaying = false;
+let musicProgress = 35; // % inicial demo
+let musicTimer = null;
+let currentMusicType = 'youtube';
+
+function togglePlay() {
+  isPlaying = !isPlaying;
+  document.getElementById('playBtn').textContent = isPlaying ? '⏸' : '▶';
+  if (isPlaying) {
+    musicTimer = setInterval(() => {
+      musicProgress = Math.min(musicProgress + 0.2, 100);
+      document.getElementById('musicFill').style.width = musicProgress + '%';
+      const total = 222 * 60; // 3h42m in seconds (demo)
+      const current = Math.floor(total * musicProgress / 100);
+      document.getElementById('musicCurrent').textContent = secToTime(current);
+      if (musicProgress >= 100) { clearInterval(musicTimer); isPlaying = false; document.getElementById('playBtn').textContent = '▶'; }
+    }, 500);
+  } else {
+    clearInterval(musicTimer);
+  }
+}
+
+function secToTime(s) {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+    : `${m}:${String(sec).padStart(2,'0')}`;
+}
+
+function seekMusic(e) {
+  const bar = e.currentTarget;
+  const rect = bar.getBoundingClientRect();
+  musicProgress = Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width * 100));
+  document.getElementById('musicFill').style.width = musicProgress + '%';
+}
+
+function setMusicType(type, btn) {
+  currentMusicType = type;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const data = type === 'spotify' ? CONFIG.musicaSpotify : CONFIG.musicaYoutube;
+  document.getElementById('musicTrack').textContent  = data.track;
+  document.getElementById('musicArtist').textContent = data.artist;
+  document.getElementById('musicTotal').textContent  = data.total;
+  document.getElementById('musicSource').textContent = type === 'spotify' ? 'Spotify' : 'YouTube';
+  musicProgress = 0;
+  document.getElementById('musicFill').style.width = '0%';
+  document.getElementById('musicCurrent').textContent = '0:00';
+  if (isPlaying) { clearInterval(musicTimer); isPlaying = false; document.getElementById('playBtn').textContent = '▶'; }
+}
+
+// init total time
+document.getElementById('musicTotal').textContent = CONFIG.musicaYoutube.total;
+
+/* ═══════════════════════════════════════════════════════════
+   CONFETTI — canvas puro, sin dependencias externas
+   (En SharePoint via SPFx se usa la librería react-confetti)
+═══════════════════════════════════════════════════════════ */
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.style.display = 'block';
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+
+  const colors = ['#18B7E8','#1E3A5F','#F59E0B','#22C55E','#8B5CF6','#E85518','#ffffff'];
+  const pieces = Array.from({ length: 160 }, () => ({
+    x:     Math.random() * canvas.width,
+    y:     Math.random() * -canvas.height,
+    w:     Math.random() * 10 + 4,
+    h:     Math.random() * 5  + 3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rot:   Math.random() * Math.PI * 2,
+    vx:    (Math.random() - 0.5) * 2,
+    vy:    Math.random() * 3 + 2,
+    vr:    (Math.random() - 0.5) * 0.15,
+    alpha: 1,
+  }));
+
+  let frame = 0;
+  const totalFrames = 220;
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    frame++;
+    pieces.forEach(p => {
+      p.x   += p.vx;
+      p.y   += p.vy;
+      p.rot += p.vr;
+      if (frame > totalFrames * 0.6) p.alpha = Math.max(0, p.alpha - 0.015);
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    if (frame < totalFrames) requestAnimationFrame(draw);
+    else { ctx.clearRect(0,0,canvas.width,canvas.height); canvas.style.display = 'none'; }
+  }
+
+  draw();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STAGGERED ANIMATIONS para las app tiles
+═══════════════════════════════════════════════════════════ */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.style.animationPlayState = 'running'; });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.app-tile').forEach(t => {
+  t.style.animationPlayState = 'paused';
+  observer.observe(t);
+});
+</script>
+</body>
+</html>
