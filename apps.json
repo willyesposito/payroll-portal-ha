@@ -3,14 +3,14 @@
     "titulo": "Portal Hidalgo & Asociados",
     "subtitulo": "Herramientas internas del equipo",
     "version": "1.0",
-    "ultimaActualizacion": "2026-04-06"
+    "ultimaActualizacion": "2026-04-09"
   },
   "apps": [
     {
       "id": 1,
       "nombre": "SIRADIG Engine",
       "descripcion": "Comparador de SIRADIG entre períodos",
-      "url": "https://github.com/willyesposito/herramientas-ha/blob/main/siradig_engine_hya.html",
+      "url": "https://willyesposito.github.io/herramientas-ha/siradig_engine_hya.html",
       "icono": "🧮",
       "version": "2.6",
       "categoria": "Nómina",
