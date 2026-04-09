@@ -981,60 +981,32 @@
 <!-- ════════════════════════════════════════════════════════════ -->
 <script>
 /* ═══════════════════════════════════════════════════════════
-   ⚙️  CONFIGURACIÓN — Editá estos datos para tu equipo
+   ⚙️  CONFIGURACIÓN ESTÁTICA — Solo lo que nunca cambia.
+       Los datos dinámicos (cumpleaños, eventos, frases)
+       se cargan desde archivos JSON en /data/.
+       Para actualizar datos: editá el JSON en GitHub,
+       el portal lo refleja en el siguiente reload.
    ═══════════════════════════════════════════════════════════ */
 const CONFIG = {
 
-  /* ── Datos del usuario logueado ───────────────────────────
-     En producción con SharePoint, reemplazá estos valores
-     usando la API: /_api/web/currentUser
+  /* ── Usuario (hardcodeado; se puede reemplazar con
+        SharePoint /_api/web/currentUser si el portal
+        se mueve al mismo tenant en el futuro)
   ─────────────────────────────────────────────────────────── */
   user: {
     displayName: 'Guillermo Esposito',
     initials:    'GE',
   },
 
-  /* ── Apps internas ────────────────────────────────────────
-     Estas se cargan desde apps.json en producción.
-     url: ruta relativa a cada app HTML.
-  ─────────────────────────────────────────────────────────── */
-  apps: [
-    { id:1, nombre:'Calculadora de Nómina',    icono:'🧮', url:'./apps/calculadora-nomina/index.html',  version:'2.1', categoria:'Nómina',     estado:'activo' },
-    { id:2, nombre:'Generador de Reportes',    icono:'📊', url:'./apps/generador-reportes/index.html',  version:'1.3', categoria:'Reportes',   estado:'activo' },
-    { id:3, nombre:'Gestor de Tickets',        icono:'🎫', url:'./apps/gestor-tickets/index.html',       version:'1.0', categoria:'Gestión',    estado:'activo' },
-    { id:4, nombre:'Calendario Vencimientos',  icono:'📅', url:'./apps/calendario/index.html',           version:'1.2', categoria:'Gestión',    estado:'activo' },
-    { id:5, nombre:'Validador CUIL/CUIT',      icono:'🔍', url:'./apps/validador-cuil/index.html',       version:'1.0', categoria:'Utilidades', estado:'activo' },
-    { id:6, nombre:'Tablero Implementaciones', icono:'🚀', url:'./apps/tablero-impl/index.html',         version:'0.9', categoria:'Gestión',    estado:'beta'   },
-  ],
+  /* ── Apps internas — se cargan desde apps.json ──────────── */
+  apps: [],
 
-  /* ── Cumpleaños del equipo ────────────────────────────────
-     Formato de fecha: 'MM-DD' (sin año, recurrente).
-     En producción: reemplazá por llamada a la lista SharePoint
-     via REST API: /_api/lists/getbytitle('CumpleañosPayroll')/items
-  ─────────────────────────────────────────────────────────── */
-  cumpleanios: [
-    { nombre:'María González',  iniciales:'MG', fecha:'04-08', color:'#18B7E8', area:'Analista Payroll' },
-    { nombre:'Javier Romero',   iniciales:'JR', fecha:'04-15', color:'#1E3A5F', area:'Implementaciones' },
-    { nombre:'Laura Pereyra',   iniciales:'LP', fecha:'04-22', color:'#8B5CF6', area:'Analista Sr.'     },
-    { nombre:'Carlos Medina',   iniciales:'CM', fecha:'05-03', color:'#22C55E', area:'Soporte'          },
-    { nombre:'Sofía Albornoz',  iniciales:'SA', fecha:'06-17', color:'#E85518', area:'RRHH'             },
-  ],
+  /* ── Datos dinámicos — se cargan desde /data/*.json ─────── */
+  cumpleanios: [],
+  eventos:     [],
+  frases:      [],
 
-  /* ── Vencimientos / eventos ───────────────────────────────
-     En producción: lista SharePoint 'EventosVencimientos'
-  ─────────────────────────────────────────────────────────── */
-  eventos: [
-    { titulo:'F931 SUSS',             fecha:'2026-04-10', tipo:'fiscal',  urgente:true,  sub:'Presentación mensual ARCA'       },
-    { titulo:'Ganancias 4° categoría', fecha:'2026-04-15', tipo:'fiscal',  urgente:false, sub:'Retenciones empleados en relación de dependencia' },
-    { titulo:'Cierre de Nómina',       fecha:'2026-04-25', tipo:'nomina',  urgente:false, sub:'Límite carga de novedades Axton' },
-    { titulo:'Acreditación bancaria',  fecha:'2026-04-30', tipo:'nomina',  urgente:false, sub:'Liquidación sueldos abril'       },
-    { titulo:'F1357 Ganancias',        fecha:'2026-05-05', tipo:'fiscal',  urgente:false, sub:'Retenciones 3° categoría'        },
-    { titulo:'Reunión de equipo',      fecha:'2026-04-14', tipo:'interno', urgente:false, sub:'Revisión de implementaciones'    },
-  ],
-
-  /* ── FAQ ──────────────────────────────────────────────────
-     En producción: lista SharePoint 'FAQPayroll'
-  ─────────────────────────────────────────────────────────── */
+  /* ── FAQ — cambia poco, queda inline ────────────────────── */
   faqs: [
     {
       icono:'📅',
@@ -1063,25 +1035,7 @@ const CONFIG = {
     },
   ],
 
-  /* ── Frases del día ───────────────────────────────────────
-     En producción: lista SharePoint 'FrasesDelDía'
-     filtrada por fecha o rotación aleatoria.
-  ─────────────────────────────────────────────────────────── */
-  frases: [
-    { texto:'La eficiencia no es hacer muchas cosas a la vez, es hacer lo que importa, bien.',                autor:'Peter Drucker' },
-    { texto:'El éxito es la suma de pequeños esfuerzos repetidos día tras día.',                              autor:'Robert Collier' },
-    { texto:'La organización no es un fin en sí mismo, es el vehículo para hacer bien el trabajo.',           autor:'Peter Drucker' },
-    { texto:'Un equipo no es un grupo de personas que trabajan juntas, sino un grupo que se fía mutuamente.', autor:'Simon Sinek' },
-    { texto:'La preparación es la llave del éxito.',                                                          autor:'Alexander Graham Bell' },
-    { texto:'Lo que no se puede medir no se puede mejorar.',                                                   autor:'Lord Kelvin' },
-    { texto:'El talento gana partidos, pero el trabajo en equipo gana campeonatos.',                          autor:'Michael Jordan' },
-  ],
-
-  /* ── Noticias laborales ───────────────────────────────────
-     En producción: lista SharePoint 'NoticiasLaborales'
-     alimentada por flujo Power Automate desde RSS.
-     Acá usamos datos de demostración.
-  ─────────────────────────────────────────────────────────── */
+  /* ── Noticias laborales — datos fijos de demostración ───── */
   noticias: [
     { fuente:'iProfesional', titulo:'ARCA actualizó los topes de retenciones de Ganancias para el período 2026', hace:'Hace 2 h',  url:'https://www.iprofesional.com/impuestos' },
     { fuente:'Ámbito',       titulo:'Paritarias comercio: acuerdo salarial del 8% para abril',                   hace:'Ayer',     url:'https://www.ambito.com' },
@@ -1089,11 +1043,7 @@ const CONFIG = {
     { fuente:'iProfesional', titulo:'Monotributo: recategorización obligatoria antes del 30 de abril',           hace:'2 días',   url:'https://www.iprofesional.com/impuestos' },
   ],
 
-  /* ── Música ───────────────────────────────────────────────
-     Playlist de YouTube embebida. Para Spotify, agregar
-     el embed URL de spotify y habilitar el dominio en
-     SharePoint Admin → HTML Field Security.
-  ─────────────────────────────────────────────────────────── */
+  /* ── Música ──────────────────────────────────────────────── */
   musicaYoutube: {
     embedUrl: 'https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=0&list=PLofht4PTcKYnaH8w5olJCI-wUBGMO3Zqg',
     track:    'Lo-fi Beats to Work',
@@ -1109,9 +1059,63 @@ const CONFIG = {
 };
 
 /* ═══════════════════════════════════════════════════════════
+   📦  CARGA DE DATOS DINÁMICOS DESDE JSON
+   
+   Todos los fetch() corren en paralelo con Promise.all() para
+   no bloquear la UI. Si un archivo falla, el portal sigue
+   funcionando con datos vacíos (degradación elegante).
+   
+   Para actualizar datos: editá el JSON correspondiente en
+   GitHub → /data/cumpleanios.json, eventos.json, frases.json
+   GitHub Pages lo publica en ~30 segundos sin tocar el HTML.
+   ═══════════════════════════════════════════════════════════ */
+async function cargarDatos() {
+  // Cache-busting: evitamos que el navegador muestre datos viejos
+  const ts = Date.now();
+
+  // Fetch paralelo de los tres archivos + apps.json
+  const BASE = 'https://willyesposito.github.io/payroll-portal-ha/';
+  const [resCump, resEv, resFr, resApps] = await Promise.allSettled([
+    fetch(`${BASE}cumpleanios.json?_t=${ts}`).then(r => r.json()),
+    fetch(`${BASE}eventos.json?_t=${ts}`).then(r => r.json()),
+    fetch(`${BASE}frases.json?_t=${ts}`).then(r => r.json()),
+    fetch(`${BASE}apps.json?_t=${ts}`).then(r => r.json()),
+  ]);
+
+  // Asignamos al CONFIG solo si el fetch fue exitoso.
+  // Si falla (archivo no existe, JSON malformado), el array
+  // queda vacío y el portal muestra un estado vacío limpio.
+  if (resCump.status  === 'fulfilled') CONFIG.cumpleanios = resCump.value;
+  if (resEv.status    === 'fulfilled') CONFIG.eventos     = resEv.value;
+  if (resFr.status    === 'fulfilled') {
+    CONFIG.frases = resFr.value;
+    quoteIdx = Math.floor(Math.random() * CONFIG.frases.length);
+  }
+  if (resApps.status  === 'fulfilled' && resApps.value.apps) {
+    CONFIG.apps = resApps.value.apps.filter(a => a.estado !== 'inactivo');
+  }
+
+  // Con los datos cargados, renderizamos todo
+  initDate();
+  renderApps();
+  renderFaq();
+  renderBirthdays();
+  renderEventos();
+  renderQuote();
+  renderNoticias();
+
+  // Notificamos la altura al iframe de SharePoint
+  // (lo hacemos después del render para que el DOM esté completo)
+  reportHeight();
+}
+
+// Iniciamos la carga al cargar la página
+cargarDatos();
+
+/* ═══════════════════════════════════════════════════════════
    FECHA & HORA
 ═══════════════════════════════════════════════════════════ */
-(function initDate() {
+function initDate() {
   const now   = new Date();
   const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
   const dias  = ['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'];
@@ -1152,12 +1156,12 @@ const CONFIG = {
 
   // Avatar
   document.getElementById('userAvatar').textContent = CONFIG.user.initials;
-})();
+}
 
 /* ═══════════════════════════════════════════════════════════
    APPS GRID
 ═══════════════════════════════════════════════════════════ */
-(function renderApps() {
+function renderApps() {
   const grid = document.getElementById('appGrid');
   grid.innerHTML = CONFIG.apps.map((a, i) => {
     const catClass = a.estado === 'beta' ? 'beta' : '';
@@ -1171,12 +1175,21 @@ const CONFIG = {
         <span class="t-ver">v${a.version}</span>
       </a>`;
   }).join('');
-})();
+
+  // Staggered animations: observamos los tiles recién creados
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.style.animationPlayState = 'running'; });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.app-tile').forEach(t => {
+    t.style.animationPlayState = 'paused';
+    observer.observe(t);
+  });
+}
 
 /* ═══════════════════════════════════════════════════════════
    FAQ
 ═══════════════════════════════════════════════════════════ */
-(function renderFaq() {
+function renderFaq() {
   const wrap = document.getElementById('faqWrap');
   wrap.innerHTML = CONFIG.faqs.map((f, i) => `
     <div class="faq-item" id="faq-${i}">
@@ -1188,7 +1201,7 @@ const CONFIG = {
       </div>
       <div class="faq-a"><p>${f.respuesta}</p></div>
     </div>`).join('');
-})();
+}
 
 function toggleFaq(i) {
   const item = document.getElementById('faq-' + i);
@@ -1198,7 +1211,7 @@ function toggleFaq(i) {
 /* ═══════════════════════════════════════════════════════════
    CUMPLEAÑOS
 ═══════════════════════════════════════════════════════════ */
-(function renderBirthdays() {
+function renderBirthdays() {
   const now   = new Date();
   const month = String(now.getMonth() + 1).padStart(2,'0');
   const today = String(now.getDate()).padStart(2,'0');
@@ -1240,7 +1253,7 @@ function toggleFaq(i) {
       launchConfetti();
     }, 800);
   }
-})();
+}
 
 function formatBdayDate(str) {
   const [m, d] = str.split('-');
@@ -1255,7 +1268,7 @@ function closeBdayToast() {
 /* ═══════════════════════════════════════════════════════════
    EVENTOS / VENCIMIENTOS
 ═══════════════════════════════════════════════════════════ */
-(function renderEventos() {
+function renderEventos() {
   const now = new Date();
   now.setHours(0,0,0,0);
 
@@ -1284,30 +1297,30 @@ function closeBdayToast() {
       </div>
       <span class="ev-tag ${tags[e.tipo]}">${labels[e.tipo]}</span>
     </div>`).join('');
-})();
+}
 
 /* ═══════════════════════════════════════════════════════════
    FRASES DEL DÍA
 ═══════════════════════════════════════════════════════════ */
-let quoteIdx = Math.floor(Math.random() * CONFIG.frases.length);
+let quoteIdx = 0; // Se inicializa al azar en cargarDatos() cuando las frases están disponibles
 
 function renderQuote() {
+  if (!CONFIG.frases.length) return;
   const q = CONFIG.frases[quoteIdx];
   document.getElementById('quoteText').textContent   = q.texto;
   document.getElementById('quoteAuthor').textContent = '— ' + q.autor;
 }
 
 function nextQuote() {
+  if (!CONFIG.frases.length) return;
   quoteIdx = (quoteIdx + 1) % CONFIG.frases.length;
   renderQuote();
 }
 
-renderQuote();
-
 /* ═══════════════════════════════════════════════════════════
    NOTICIAS
 ═══════════════════════════════════════════════════════════ */
-(function renderNoticias() {
+function renderNoticias() {
   const body = document.getElementById('newsBody');
   body.innerHTML = CONFIG.noticias.map(n => `
     <div class="news-item" onclick="window.open('${n.url}','_blank')">
@@ -1315,7 +1328,7 @@ renderQuote();
       <div class="news-hl">${n.titulo}</div>
       <div class="news-meta"><span>${n.hace}</span></div>
     </div>`).join('');
-})();
+}
 
 /* ═══════════════════════════════════════════════════════════
    MÚSICA — reproductor simulado (sin iframe por defecto,
@@ -1427,18 +1440,6 @@ function launchConfetti() {
 
   draw();
 }
-
-/* ═══════════════════════════════════════════════════════════
-   STAGGERED ANIMATIONS para las app tiles
-═══════════════════════════════════════════════════════════ */
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.style.animationPlayState = 'running'; });
-}, { threshold: 0.1 });
-
-document.querySelectorAll('.app-tile').forEach(t => {
-  t.style.animationPlayState = 'paused';
-  observer.observe(t);
-});
 
 /* ═══════════════════════════════════════════════════════════
    IFRAME AUTO-RESIZE via postMessage
