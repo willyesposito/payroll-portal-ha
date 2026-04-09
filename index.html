@@ -1425,6 +1425,27 @@ document.querySelectorAll('.app-tile').forEach(t => {
   t.style.animationPlayState = 'paused';
   observer.observe(t);
 });
+
+/* ═══════════════════════════════════════════════════════════
+   IFRAME AUTO-RESIZE via postMessage
+   Mide el alto real del contenido y se lo comunica a SharePoint
+   para que el iframe se ajuste y desaparezca el scroll interno.
+═══════════════════════════════════════════════════════════ */
+function reportHeight() {
+  const height = document.documentElement.scrollHeight + 40;
+  window.parent.postMessage({ type: 'iframeResize', height: height }, '*');
+}
+
+window.addEventListener('load', reportHeight);
+window.addEventListener('resize', reportHeight);
+
+// Verificaciones durante los primeros 3s para capturar
+// cambios de altura causados por animaciones o lazy loading
+let checks = 0;
+const poll = setInterval(function() {
+  reportHeight();
+  if (++checks >= 6) clearInterval(poll);
+}, 500);
 </script>
 </body>
 </html>
