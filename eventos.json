@@ -1,0 +1,44 @@
+[
+  {
+    "titulo": "Vencimiento LSD - Día 1",
+    "fecha": "2026-04-07",
+    "tipo": "fiscal",
+    "urgente": true,
+    "sub": "Presentación mensual ARCA"
+  },
+  {
+    "titulo": "Vencimiento LSD - Día 2",
+    "fecha": "2026-04-08",
+    "tipo": "fiscal",
+    "urgente": true,
+    "sub": "Presentación mensual ARCA"
+  },
+  {
+    "titulo": "Vencimiento LSD - Día 3",
+    "fecha": "2026-04-09",
+    "tipo": "fiscal",
+    "urgente": true,
+    "sub": "Presentación mensual ARCA"
+  },
+  {
+    "titulo": "F1359 Ganancias",
+    "fecha": "2026-05-01",
+    "tipo": "fiscal",
+    "urgente": false,
+    "sub": "Envío de Formularios"
+  },
+  {
+    "titulo": "Acreditación de Sueldos",
+    "fecha": "2026-05-05",
+    "tipo": "interno",
+    "urgente": false,
+    "sub": "Liquidación sueldos Abril"
+  },
+  {
+    "titulo": "Ganancias 4° categoría",
+    "fecha": "2026-05-15",
+    "tipo": "fiscal",
+    "urgente": false,
+    "sub": "Retenciones dependencia"
+  }
+]

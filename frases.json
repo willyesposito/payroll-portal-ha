@@ -1,0 +1,12 @@
+[
+  { "texto": "La eficiencia no es hacer muchas cosas a la vez, es hacer lo que importa, bien.",                "autor": "Peter Drucker" },
+  { "texto": "El éxito es la suma de pequeños esfuerzos repetidos día tras día.",                              "autor": "Robert Collier" },
+  { "texto": "La organización no es un fin en sí mismo, es el vehículo para hacer bien el trabajo.",           "autor": "Peter Drucker" },
+  { "texto": "Un equipo no es un grupo de personas que trabajan juntas, sino un grupo que se fía mutuamente.", "autor": "Simon Sinek" },
+  { "texto": "La preparación es la llave del éxito.",                                                          "autor": "Alexander Graham Bell" },
+  { "texto": "Lo que no se puede medir no se puede mejorar.",                                                  "autor": "Lord Kelvin" },
+  { "texto": "El talento gana partidos, pero el trabajo en equipo gana campeonatos.",                          "autor": "Michael Jordan" },
+  { "texto": "No se puede construir una reputación sobre lo que uno va a hacer.",                              "autor": "Henry Ford" },
+  { "texto": "La disciplina es el puente entre las metas y los logros.",                                       "autor": "Jim Rohn" },
+  { "texto": "Primero resolvé el problema, luego escribí el código.",                                          "autor": "John Johnson" }
+]

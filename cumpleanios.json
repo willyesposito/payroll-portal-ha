@@ -1,0 +1,51 @@
+[
+  {
+    "nombre": "Matías Marcus",
+    "fecha": "04-08",
+    "iniciales": "MM",
+    "color": "#e46f21",
+    "area": "Eventuales"
+  },
+  {
+    "nombre": "Florencia Marchisone",
+    "fecha": "04-09",
+    "iniciales": "FM",
+    "color": "#2fe817",
+    "area": "Payroll"
+  },
+  {
+    "nombre": "Araceli Pedraza",
+    "fecha": "05-04",
+    "iniciales": "AP",
+    "color": "#2fe817",
+    "area": "Payroll"
+  },
+  {
+    "nombre": "Veronica Piasco",
+    "fecha": "05-28",
+    "iniciales": "VP",
+    "color": "#323433",
+    "area": "Global Finder"
+  },
+  {
+    "nombre": "Guillermo Esposito",
+    "fecha": "06-17",
+    "iniciales": "GE",
+    "color": "#15d5c9",
+    "area": "Operaciones"
+  },
+  {
+    "nombre": "Juan Vitali",
+    "fecha": "06-19",
+    "iniciales": "JV",
+    "color": "#15d5c9",
+    "area": "Administracion"
+  },
+  {
+    "nombre": "Natalia Guasch",
+    "fecha": "06-28",
+    "iniciales": "NG",
+    "color": "#15d5c9",
+    "area": "Administración"
+  }
+]
