@@ -12,25 +12,25 @@
       "descripcion": "Comparador de SIRADIG entre períodos",
       "url": "https://willyesposito.github.io/herramientas-ha/siradig_engine_hya.html",
       "icono": "🧮",
-      "version": "2.6",
+      "version": "1.0",
       "categoria": "Nómina",
       "estado": "activo"
     },
     {
       "id": 2,
-      "nombre": "Generador de Reportes",
-      "descripcion": "Exporta reportes personalizados en Excel y PDF desde datos de nómina.",
-      "url": "./apps/generador-reportes/index.html",
+      "nombre": "Validador F. 1359",
+      "descripcion": "Cruza txt de 1359 contra Impgan y reglas de ARCA",
+      "url": "https://willyesposito.github.io/herramientas-ha/validador-f1359.html",
       "icono": "📊",
-      "version": "1.3",
+      "version": "2.5",
       "categoria": "Reportes",
       "estado": "activo"
     },
     {
       "id": 3,
-      "nombre": "Gestor de Tickets",
+      "nombre": "monday.com",
       "descripcion": "Seguimiento de tickets de soporte con proveedores y clientes.",
-      "url": "./apps/gestor-tickets/index.html",
+      "url": "https://bhidalgo.monday.com/",
       "icono": "🎫",
       "version": "1.0",
       "categoria": "Gestión",
@@ -44,7 +44,7 @@
       "icono": "📅",
       "version": "1.2",
       "categoria": "Gestión",
-      "estado": "activo"
+      "estado": "Inactivo"
     },
     {
       "id": 5,
@@ -54,7 +54,7 @@
       "icono": "🔍",
       "version": "1.0",
       "categoria": "Utilidades",
-      "estado": "activo"
+      "estado": "Inactivo"
     },
     {
       "id": 6,
@@ -64,7 +64,7 @@
       "icono": "🚀",
       "version": "0.9",
       "categoria": "Gestión",
-      "estado": "beta"
+      "estado": "Inactivo"
     }
   ]
 }
