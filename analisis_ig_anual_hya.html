@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H&A — Análisis Reliquidación Anual IG 4ta Categoría</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--cyan:#00AECC;--navy:#1A2E40;--navy2:#2a4a65;--green:#2e7d32;--green-bg:#e8f5e9;--green-light:#f1f8e9;--red:#c62828;--red-bg:#ffebee;--amber:#e65100;--amber-bg:#fff8e1;--amber-border:#ffe082;--gray:#607d8b;--gray-bg:#f7f9fb;--border:#e1e8ed;--text:#1a2332}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:#eef2f7;color:var(--text);min-height:100vh}
+#import-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;background:linear-gradient(160deg,#0f2035 0%,#1a3a55 55%,#0d1f2d 100%)}
+.import-card{background:white;border-radius:20px;padding:48px 44px;width:100%;max-width:740px;box-shadow:0 32px 80px rgba(0,0,0,.4)}
+.import-header{text-align:center;margin-bottom:36px}
+.import-header .logo-wrap{width:68px;height:68px;margin:0 auto 16px;border-radius:50%;background:var(--cyan);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,174,204,.35);font-size:28px;font-weight:900;color:white}
+.import-header .brand{font-size:11px;font-weight:800;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.import-header h2{font-size:22px;font-weight:700;color:var(--navy);line-height:1.25;margin-bottom:6px}
+.import-header p{font-size:13px;color:var(--gray)}
+.file-inputs{display:flex;flex-direction:column;gap:14px;margin-bottom:28px}
+.section-label{font-size:12px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:1.2px;padding:10px 0 4px;border-bottom:2px solid var(--border);margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.section-label .opt-tag{font-size:10px;font-weight:600;color:var(--cyan);background:#e0f7fa;padding:2px 8px;border-radius:10px;text-transform:uppercase}
+.file-row{display:flex;gap:12px}
+.file-row>div{flex:1;display:flex;flex-direction:column;gap:4px}
+.file-row label{font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:6px}
+.file-row .req{color:var(--red);font-size:10px}
+.file-row .opt{color:var(--cyan);font-size:10px}
+.file-drop{border:2px dashed var(--border);border-radius:12px;padding:16px 18px;cursor:pointer;transition:all .2s;background:#fafcfd;display:flex;align-items:center;gap:12px;position:relative;min-height:62px}
+.file-drop:hover,.file-drop.dragover{border-color:var(--cyan);background:#f0fafd}
+.file-drop.filled{border-color:var(--green);background:var(--green-light);border-style:solid}
+.file-drop .drop-icon{font-size:22px;flex-shrink:0}
+.file-drop .drop-text{flex:1}
+.file-drop .drop-title{font-size:12px;font-weight:600;color:var(--navy2)}
+.file-drop .drop-sub{font-size:11px;color:var(--gray);margin-top:1px}
+.file-drop .drop-name{font-size:11px;font-weight:600;color:var(--green);margin-top:1px}
+.file-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.file-drop .clear-btn{background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:4px;border-radius:4px;flex-shrink:0;line-height:1}
+.file-drop .clear-btn:hover{background:#ffebee}
+.client-row{display:flex;gap:12px;margin-bottom:18px}
+.client-row>div{flex:1;display:flex;flex-direction:column;gap:4px}
+.client-row label{font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px}
+.import-input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;background:#f8fafc;color:var(--text);transition:border-color .2s}
+.import-input:focus{border-color:var(--cyan);background:white}
+.btn-process{width:100%;padding:15px;background:var(--cyan);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;transition:background .2s,transform .1s;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-process:hover{background:#0098b5}
+.btn-process:disabled{background:#b0bec5;cursor:not-allowed}
+.btn-process:active{transform:scale(.99)}
+#progress-screen{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#0f2035 0%,#1a3a55 55%,#0d1f2d 100%)}
+.progress-card{background:white;border-radius:20px;padding:48px 44px;width:100%;max-width:480px;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.4)}
+.progress-card h3{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.progress-card .prog-sub{font-size:13px;color:var(--gray);margin-bottom:28px}
+.prog-bar-wrap{background:#e0e7ed;border-radius:8px;height:10px;overflow:hidden;margin-bottom:16px}
+.prog-bar{height:100%;background:var(--cyan);border-radius:8px;transition:width .3s;width:0%}
+.prog-status{font-size:13px;color:var(--gray);min-height:20px}
+.prog-count{font-size:12px;color:var(--cyan);font-weight:600;margin-top:6px}
+
+/* ── GAUGE SCREEN ── */
+#gauge-screen{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;background:linear-gradient(160deg,#0f2035 0%,#1a3a55 55%,#0d1f2d 100%)}
+.gauge-card{background:white;border-radius:20px;padding:48px 44px;width:100%;max-width:720px;box-shadow:0 32px 80px rgba(0,0,0,.4);text-align:center}
+.gauge-card h3{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.gauge-card .gauge-sub{font-size:13px;color:var(--gray);margin-bottom:32px}
+.gauge-battery{display:flex;gap:0;border-radius:16px;overflow:hidden;height:56px;margin-bottom:28px;box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.gauge-seg{display:flex;align-items:center;justify-content:center;flex-direction:column;transition:width .8s ease-out;min-width:0;overflow:hidden}
+.gauge-seg .g-pct{font-size:20px;font-weight:900;color:white;line-height:1}
+.gauge-seg .g-label{font-size:9px;font-weight:700;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+.gauge-seg.seg-ok{background:linear-gradient(135deg,#43a047,#2e7d32)}
+.gauge-seg.seg-review{background:linear-gradient(135deg,#ffa726,#e65100)}
+.gauge-seg.seg-warn{background:linear-gradient(135deg,#ef5350,#c62828)}
+.gauge-legend{display:flex;justify-content:center;gap:28px;margin-bottom:32px;flex-wrap:wrap}
+.gauge-legend-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--navy)}
+.gauge-legend-item .legend-dot{width:14px;height:14px;border-radius:4px;flex-shrink:0}
+.gauge-legend-item .legend-n{font-size:20px;font-weight:800}
+.gauge-legend-item.ok .legend-dot{background:var(--green)}.gauge-legend-item.ok .legend-n{color:var(--green)}
+.gauge-legend-item.review .legend-dot{background:var(--amber)}.gauge-legend-item.review .legend-n{color:var(--amber)}
+.gauge-legend-item.warn .legend-dot{background:var(--red)}.gauge-legend-item.warn .legend-n{color:var(--red)}
+.gauge-detail{display:flex;gap:16px;margin-bottom:32px;flex-wrap:wrap;justify-content:center}
+.gauge-detail-card{flex:1;min-width:180px;max-width:220px;padding:16px;border-radius:12px;border:1.5px solid var(--border);text-align:center}
+.gauge-detail-card .gd-icon{font-size:28px;margin-bottom:6px}
+.gauge-detail-card .gd-val{font-size:24px;font-weight:800;line-height:1}
+.gauge-detail-card .gd-label{font-size:11px;color:var(--gray);font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.gauge-detail-card.ok .gd-val{color:var(--green)}.gauge-detail-card.review .gd-val{color:var(--amber)}.gauge-detail-card.warn .gd-val{color:var(--red)}
+.btn-continue{padding:15px 48px;background:var(--cyan);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;transition:background .2s}
+.btn-continue:hover{background:#0098b5}
+
+/* ── APP ── */
+header{background:var(--navy);color:white;padding:0 28px;display:flex;align-items:center;gap:14px;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.3)}
+header .logo-sm{width:36px;height:36px;border-radius:50%;background:var(--cyan);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:white;flex-shrink:0}
+header .hdr-title{flex:1}
+header .hdr-client{font-size:11px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px}
+header h1{font-size:15px;font-weight:700;letter-spacing:-.1px}
+header .hdr-period{font-size:11px;color:#7fa8c0;margin-top:1px}
+header .hdr-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.btn-excel{background:var(--cyan);color:white;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .2s;white-space:nowrap}
+.btn-excel:hover{background:#0098b5}
+.btn-reset{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:8px;font-size:12px;cursor:pointer;transition:background .2s;white-space:nowrap}
+.btn-reset:hover{background:rgba(255,255,255,.2)}
+.stats-bar{background:white;border-bottom:1px solid var(--border);display:flex;overflow-x:auto}
+.stat-item{flex:1;min-width:140px;padding:14px 16px;border-right:1px solid var(--border)}
+.stat-item:last-child{border-right:none}
+.stat-item .s-label{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.stat-item .s-val{font-size:22px;font-weight:800;color:var(--navy);line-height:1}
+.stat-item .s-val.green{color:var(--green)}.stat-item .s-val.red{color:var(--red)}
+.stat-item .s-val.warn{color:var(--amber)}.stat-item .s-val.muted{color:var(--gray);font-size:18px}
+.stat-item .s-name{font-size:12px;font-weight:700;color:var(--navy);margin-top:4px;line-height:1.2}
+.stat-item .s-sub{font-size:12px;color:var(--green);font-weight:600}
+.stat-item .s-sub.red{color:var(--red)}
+.tabs{background:white;border-bottom:2px solid var(--border);display:flex;padding:0 28px;overflow-x:auto}
+.tab{padding:15px 20px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--gray);transition:all .15s;white-space:nowrap}
+.tab.active{color:var(--navy);border-bottom-color:var(--cyan);font-weight:700}
+.tab:hover:not(.active){color:var(--navy2)}
+.tab-badge{background:var(--amber);color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px;vertical-align:middle}
+.main{padding:20px 28px}.tab-panel{display:none}.tab-panel.active{display:block}
+.filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.filter-bar input,.filter-bar select{padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;outline:none;background:white;color:var(--text);transition:border-color .2s}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--cyan)}
+.filter-bar input.main-search{flex:1;min-width:240px}
+.fc-count{font-size:12px;color:var(--gray);white-space:nowrap;margin-left:4px}
+.emp-list{display:flex;flex-direction:column;gap:10px}
+.emp-card{background:white;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;transition:box-shadow .2s,border-color .2s}
+.emp-card:hover{box-shadow:0 4px 20px rgba(26,46,64,.1);border-color:#c5d4df}
+.emp-card.baja{border-left:4px solid var(--amber)}
+.emp-card.open{border-color:#b2d4e0;box-shadow:0 6px 24px rgba(0,174,204,.12)}
+.emp-header{padding:14px 18px;cursor:pointer;display:flex;align-items:center;gap:12px;user-select:none}
+.emp-header:hover{background:#fafcfd}
+.emp-badge{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;color:white;line-height:1;font-size:13px}
+.badge-ok{background:linear-gradient(135deg,#66bb6a,#2e7d32)}
+.badge-review{background:linear-gradient(135deg,#ffa726,var(--amber))}
+.badge-warn{background:linear-gradient(135deg,#ef5350,#c62828)}
+.badge-neutral{background:linear-gradient(135deg,#90a4ae,#607d8b)}
+.badge-baja{background:linear-gradient(135deg,#ffa726,var(--amber))}
+.emp-info{flex:1;min-width:0}
+.emp-name-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px}
+.emp-fullname{font-size:14px;font-weight:700;color:var(--navy)}
+.pill{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+.pill-ok{background:#e8f5e9;color:var(--green)}.pill-review{background:var(--amber-bg);color:var(--amber)}.pill-warn{background:var(--red-bg);color:var(--red)}.pill-baja{background:#fff3e0;color:var(--amber)}.pill-info{background:#e3f2fd;color:#1565c0}
+.emp-sub{font-size:11px;color:var(--gray);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.meta-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.mpill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px;background:#eceff1;color:#455a64}
+.emp-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.status-pill{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;white-space:nowrap}
+.status-con{background:#e0f7fa;color:#006064}.status-sin{background:#eceff1;color:#546e7a}
+.emp-dif{font-size:16px;font-weight:800;white-space:nowrap}
+.emp-dif.pos{color:var(--green)}.emp-dif.neg{color:var(--red)}.emp-dif.zero{color:var(--gray);font-size:13px}
+.chevron{color:#b0bec5;font-size:11px;transition:transform .2s;margin-left:4px}
+.emp-card.open .chevron{transform:rotate(180deg)}
+.emp-body{display:none;border-top:1.5px solid var(--border)}.emp-card.open .emp-body{display:block}
+.section-title{padding:12px 18px 8px;font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.section-title .st-icon{font-size:14px}
+.group-header{padding:10px 18px;font-size:12px;font-weight:700;color:var(--navy);background:#f8fafc;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
+.group-header:hover{background:#f0f4f8}
+.group-header .gh-icon{font-size:16px}
+.group-header .gh-chev{margin-left:auto;font-size:10px;color:#b0bec5;transition:transform .2s}
+.group-header.collapsed .gh-chev{transform:rotate(-90deg)}
+.group-content.collapsed{display:none}
+.ded-table{width:100%;border-collapse:collapse;font-size:13px}
+.ded-table th{background:#f0f4f8;color:var(--gray);padding:9px 16px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid var(--border)}
+.ded-table th:not(:first-child){text-align:right}
+.ded-table td{padding:10px 16px;border-bottom:1px solid var(--border)}
+.ded-table tr:last-child td{border-bottom:none}
+.ded-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.ded-table .dif-pos{color:var(--green);font-weight:700;text-align:right}.ded-table .dif-neg{color:var(--red);font-weight:700;text-align:right}.ded-table .dif-zero{color:#b0bec5;text-align:right;font-style:italic}
+.ded-table tr.row-pos td{background:var(--green-light)}.ded-table tr.row-neg td{background:#fff5f5}
+.ded-table .rubro-name{color:var(--navy2)}
+.ded-table tfoot tr td{background:#f0f4f8;font-weight:700;border-top:2px solid var(--border)}
+
+/* ── INSIGHTS ── */
+.insight-list{padding:12px 18px;display:flex;flex-direction:column;gap:8px}
+.insight-card{padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.5;display:flex;align-items:flex-start;gap:10px;border:1px solid}
+.insight-card .ic-icon{font-size:18px;flex-shrink:0;margin-top:-1px}
+.insight-card.favorable{background:#e8f5e9;border-color:#a5d6a7;color:#1b5e20}
+.insight-card.unfavorable{background:#ffebee;border-color:#ef9a9a;color:#b71c1c}
+.insight-card.warning{background:#fff8e1;border-color:var(--amber-border);color:#5d2f00}
+.insight-card.info{background:#e3f2fd;border-color:#90caf9;color:#0d47a1}
+
+/* ── RANKING ── */
+.ranking-table{width:100%;border-collapse:collapse;font-size:13px;background:white;border-radius:10px;overflow:hidden;border:1.5px solid var(--border)}
+.ranking-table th{background:var(--navy);color:white;padding:11px 14px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+.ranking-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ranking-table tr:last-child td{border-bottom:none}.ranking-table tr:hover td{background:var(--gray-bg)}
+.ranking-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.bar-cell{width:90px}.bar-wrap{width:100%;background:#e0e7ed;border-radius:4px;height:7px;overflow:hidden}
+.bar-inner{height:100%;border-radius:4px}.bar-pos{background:var(--green)}.bar-neg{background:var(--red)}
+
+/* ── SIRADIG ── */
+.cargas-table{width:100%;border-collapse:collapse;font-size:13px}
+.cargas-table th{background:#f0f4f8;color:var(--gray);padding:9px 16px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid var(--border);text-align:left}
+.cargas-table td{padding:10px 16px;border-bottom:1px solid var(--border);vertical-align:top}
+.cargas-table tr:last-child td{border-bottom:none}
+
+/* ── AUDIT ── */
+.audit-section{margin-bottom:28px}
+.audit-section h3{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.audit-table{width:100%;border-collapse:collapse;font-size:13px;background:white;border-radius:10px;overflow:hidden;border:1.5px solid var(--border)}
+.audit-table th{background:var(--navy);color:white;padding:10px 16px;font-weight:700;font-size:11px;text-align:left;text-transform:uppercase;letter-spacing:.5px}
+.audit-table td{padding:9px 16px;border-bottom:1px solid var(--border)}
+.audit-table tr:last-child td{border-bottom:none}.audit-table tr:hover td{background:var(--gray-bg)}
+.no-results{text-align:center;color:var(--gray);padding:48px;font-size:14px;background:white;border-radius:10px;border:1.5px solid var(--border)}
+.pagination{display:flex;gap:6px;align-items:center;justify-content:center;padding:14px 0 4px;flex-wrap:wrap}
+.pagination button{padding:6px 13px;border:1.5px solid var(--border);border-radius:8px;background:white;font-size:13px;cursor:pointer;transition:all .15s}
+.pagination button.active{background:var(--cyan);color:white;border-color:var(--cyan)}
+.pagination button:hover:not(.active){border-color:var(--cyan);color:var(--cyan)}
+.page-size-bar{display:flex;align-items:center;gap:8px;padding:8px 0 18px;font-size:12px;color:var(--gray);flex-wrap:wrap}
+.ps-btn{padding:5px 14px;border:1.5px solid var(--border);border-radius:8px;background:white;font-size:12px;cursor:pointer;transition:all .15s}
+.ps-btn.active{background:var(--cyan);color:white;border-color:var(--cyan)}
+.ps-btn:hover:not(.active){border-color:var(--cyan);color:var(--cyan)}
+/* ── RESUMEN RUBROS ── */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.summary-group-card{background:white;border:1.5px solid var(--border);border-radius:12px;overflow:hidden}
+.summary-group-card .sgc-header{padding:14px 18px;background:#f8fafc;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.summary-group-card .sgc-icon{font-size:20px}
+.summary-group-card .sgc-title{font-size:13px;font-weight:700;color:var(--navy)}
+.summary-group-card .sgc-body{padding:0}
+.summary-group-card .sgc-row{display:flex;padding:10px 18px;border-bottom:1px solid var(--border);align-items:center;gap:8px;font-size:13px}
+.summary-group-card .sgc-row:last-child{border-bottom:none}
+.summary-group-card .sgc-row .sgc-label{flex:1;color:var(--navy2)}
+.summary-group-card .sgc-row .sgc-val{font-weight:700;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ GATE ══════════════ -->
+<div id="gate-screen" style="position:fixed;inset:0;background:linear-gradient(160deg,#0f2035 0%,#1a3a55 55%,#0d1f2d 100%);display:flex;align-items:center;justify-content:center;z-index:9999">
+ <div style="background:white;border-radius:20px;padding:48px 44px;width:100%;max-width:400px;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.4)">
+  <div style="width:68px;height:68px;margin:0 auto 20px;border-radius:50%;background:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:white;box-shadow:0 8px 24px rgba(0,174,204,.35)">H&A</div>
+  <h2 style="font-size:20px;font-weight:700;color:var(--navy);margin-bottom:6px">Análisis Reliquidación Anual</h2>
+  <p style="font-size:13px;color:var(--gray);margin-bottom:28px">Impuesto a las Ganancias — 4ta Categoría</p>
+  <input id="gate-pwd" type="password" placeholder="Contraseña" class="import-input" style="margin-bottom:12px;text-align:center" onkeydown="if(event.key==='Enter')checkGate()">
+  <button onclick="checkGate()" class="btn-process" style="margin-bottom:8px">Ingresar</button>
+  <div id="gate-err" style="font-size:12px;color:var(--red);min-height:20px"></div>
+ </div>
+</div>
+
+<!-- ══════════════ IMPORT ══════════════ -->
+<div id="import-screen" style="display:none">
+ <div class="import-card">
+  <div class="import-header">
+   <div class="logo-wrap">H&A</div>
+   <div class="brand">Hidalgo & Asociados</div>
+   <h2>Análisis Reliquidación Anual</h2>
+   <p>Impuesto a las Ganancias 4ta Categoría — Comparativa Diciembre vs. Anual</p>
+  </div>
+  <div class="client-row">
+   <div><label>Cliente</label><input id="client-name" class="import-input" placeholder="Nombre del cliente"></div>
+  </div>
+  <div class="file-inputs">
+   <!-- IMPGAN -->
+   <div class="section-label">Liquidación IMPGAN <span class="req">obligatorio</span></div>
+   <div class="file-row">
+    <div>
+     <label>IMPGAN Diciembre <span class="req">*</span></label>
+     <div class="file-drop" id="zone-impgan-dic"><span class="drop-icon">📊</span><div class="drop-text"><div class="drop-title">IMPGAN Diciembre</div><div class="drop-sub">Arrastrá o hacé click para seleccionar</div><div class="drop-name"></div></div><input type="file" accept=".xlsx,.xls"><button class="clear-btn" title="Quitar">&times;</button></div>
+    </div>
+    <div>
+     <label>IMPGAN Anual / Liq. 99 <span class="req">*</span></label>
+     <div class="file-drop" id="zone-impgan-anual"><span class="drop-icon">📊</span><div class="drop-text"><div class="drop-title">IMPGAN Anual / 99</div><div class="drop-sub">Arrastrá o hacé click para seleccionar</div><div class="drop-name"></div></div><input type="file" accept=".xlsx,.xls"><button class="clear-btn" title="Quitar">&times;</button></div>
+    </div>
+   </div>
+   <!-- SIRADIG -->
+   <div class="section-label">SIRADIG XML <span class="opt-tag">opcional</span></div>
+   <div class="file-row">
+    <div>
+     <label>XMLs Diciembre <span class="opt">opcional</span></label>
+     <div class="file-drop" id="zone-siradig-dic"><span class="drop-icon">📁</span><div class="drop-text"><div class="drop-title">ZIP SIRADIG Diciembre</div><div class="drop-sub">Arrastrá o hacé click</div><div class="drop-name"></div></div><input type="file" accept=".zip"><button class="clear-btn" title="Quitar">&times;</button></div>
+    </div>
+    <div>
+     <label>XMLs Anual <span class="opt">opcional</span></label>
+     <div class="file-drop" id="zone-siradig-anual"><span class="drop-icon">📁</span><div class="drop-text"><div class="drop-title">ZIP SIRADIG Anual</div><div class="drop-sub">Arrastrá o hacé click</div><div class="drop-name"></div></div><input type="file" accept=".zip"><button class="clear-btn" title="Quitar">&times;</button></div>
+    </div>
+   </div>
+   <!-- NOMINA -->
+   <div class="section-label">Nómina <span class="opt-tag">opcional</span></div>
+   <div class="file-row">
+    <div>
+     <label>Excel Nómina <span class="opt">opcional</span></label>
+     <div class="file-drop" id="zone-nomina"><span class="drop-icon">👥</span><div class="drop-text"><div class="drop-title">Nómina empleados</div><div class="drop-sub">Arrastrá o hacé click</div><div class="drop-name"></div></div><input type="file" accept=".xlsx,.xls"><button class="clear-btn" title="Quitar">&times;</button></div>
+    </div>
+   </div>
+  </div>
+  <button id="btn-process" class="btn-process" disabled onclick="processFiles()">Procesar comparativa</button>
+ </div>
+</div>
+
+<!-- ══════════════ PROGRESS ══════════════ -->
+<div id="progress-screen">
+ <div class="progress-card">
+  <h3>Procesando archivos</h3>
+  <div class="prog-sub">Analizando liquidaciones y generando insights…</div>
+  <div class="prog-bar-wrap"><div class="prog-bar"></div></div>
+  <div class="prog-status"></div>
+  <div class="prog-count"></div>
+ </div>
+</div>
+
+<!-- ══════════════ GAUGE ══════════════ -->
+<div id="gauge-screen">
+ <div class="gauge-card">
+  <h3>Resultado del Análisis</h3>
+  <div class="gauge-sub" id="gauge-sub-text"></div>
+  <div class="gauge-battery" id="gauge-battery"></div>
+  <div class="gauge-legend" id="gauge-legend"></div>
+  <div class="gauge-detail" id="gauge-detail"></div>
+  <button class="btn-continue" onclick="showApp()">Ver detalle por empleado</button>
+ </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app" style="display:none">
+ <header>
+  <div class="logo-sm">H&A</div>
+  <div class="hdr-title">
+   <div class="hdr-client" id="hdr-client"></div>
+   <h1>Reliquidación Anual IG 4ta Categoría</h1>
+   <div class="hdr-period">Diciembre vs. Anual</div>
+  </div>
+  <div class="hdr-right">
+   <button class="btn-excel" onclick="downloadExcel()">Descargar Excel</button>
+   <button class="btn-reset" onclick="location.reload()">Reiniciar</button>
+  </div>
+ </header>
+ <div class="stats-bar" id="stats-bar"></div>
+ <div class="tabs" id="tab-nav"></div>
+ <div class="main" id="tab-content"></div>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════
+   CONSTANTS & CONFIG
+   ═══════════════════════════════════════════ */
+
+const TIPO_LABELS={1:"Cuotas médico-asistenciales",2:"Seguro de vida/muerte",3:"Donaciones",4:"Intereses hipotecario",5:"Sepelio",7:"Gastos médicos/paramédicos",8:"Servicio doméstico",9:"SGR",10:"Vehículos corredor/viajante",11:"Combustible/nafta",21:"Indumentaria/equipamiento laboral",22:"Alquiler inmueble (40%)",23:"Seguros mixtos/ahorro",24:"Seguro de retiro privado",25:"FCI",32:"Gastos de educación",33:"Alquiler",34:"Alquiler (otro)",99:"Otras deducciones"};
+
+const IMPGAN_GROUPS=[
+ {id:'haberes',label:'Haberes / Ingresos',icon:'💰',keys:[
+  {k:'TOT_CON_IMP',l:'Total con impuesto (mes)',dir:'income'},
+  {k:'IG_TOT_C_IM_ST',l:'Total acumulado con impuesto',dir:'income'},
+  {k:'IG_CUOT_PRORRA',l:'Cuota prorrateo',dir:'income'},
+  {k:'IG_SAC_PRES',l:'SAC presunto',dir:'income'},
+  {k:'TOT_SAC_PRORRA',l:'Total SAC prorrateo',dir:'income'},
+  {k:'PREM_PROD_NG',l:'Premios / Producción',dir:'income'},
+  {k:'PLUS_HS_100',l:'Horas extra 100%',dir:'income'},
+ ]},
+ {id:'aportes',label:'Aportes Legales',icon:'🏛️',keys:[
+  {k:'TOT_JUBILACION',l:'Jubilación',dir:'ded'},
+  {k:'TOT_LEY_19032',l:'Ley 19.032 (PAMI)',dir:'ded'},
+  {k:'TOT_OBRA_SOC',l:'Obra Social',dir:'ded'},
+  {k:'TOT_OTRAS_DED',l:'Otras deducciones legales',dir:'ded'},
+  {k:'JUBILACION',l:'Jubilación (SAC)',dir:'ded'},
+  {k:'LEY_19032',l:'Ley 19.032 (SAC)',dir:'ded'},
+  {k:'OBRA_SOCIAL',l:'Obra Social (SAC)',dir:'ded'},
+ ]},
+ {id:'siradig_ded',label:'Deducciones SIRADIG',icon:'📝',keys:[
+  {k:'IG_ALQUILER',l:'Alquiler',dir:'ded'},
+  {k:'IG_INT_HIP',l:'Intereses hipotecarios',dir:'ded'},
+  {k:'IMP_DED_HON_MED',l:'Honorarios médicos',dir:'ded'},
+  {k:'DED_SER_DOM_ST',l:'Servicio doméstico',dir:'ded'},
+  {k:'GASTOS_EDUC',l:'Gastos de educación',dir:'ded'},
+  {k:'IG_DONAC_REMUN',l:'Donaciones',dir:'ded'},
+  {k:'IG_SEGURO_REMUN',l:'Seguros de vida',dir:'ded'},
+  {k:'IG_SEPELIO_REM',l:'Sepelio',dir:'ded'},
+  {k:'IG_RETIRO_REMUN',l:'Seguro de retiro',dir:'ded'},
+  {k:'IG_SEGURO_MIXTO',l:'Seguros mixtos',dir:'ded'},
+  {k:'IG_AP_VOL_REM',l:'Aportes voluntarios',dir:'ded'},
+  {k:'IG_CMASIS_REMUN',l:'Cuota médico-asistencial',dir:'ded'},
+ ]},
+ {id:'personales',label:'Deducciones Personales',icon:'👤',keys:[
+  {k:'IG_G_NO_IMP',l:'Ganancia No Imponible',dir:'ded'},
+  {k:'IG_DED_ESP',l:'Deducción Especial',dir:'ded'},
+  {k:'IG_DEDPER_12',l:'Ded. Personales Art.23',dir:'ded'},
+  {k:'IG_CONYUGE_REM',l:'Cónyuge',dir:'ded'},
+  {k:'IG_HIJOS_REM',l:'Hijos',dir:'ded'},
+  {k:'IG_OCARGAS_REM',l:'Otras cargas de familia',dir:'ded'},
+ ]},
+ {id:'otros_emp',label:'Otros Empleadores',icon:'🏢',keys:[
+  {k:'BASE_ANT_EMP',l:'Base anterior empleador',dir:'income'},
+  {k:'IMP_ANT_EMP',l:'Impuesto anterior empleador',dir:'tax'},
+  {k:'REM_ANT_EMP',l:'Remuneración anterior empleador',dir:'income'},
+ ]},
+ {id:'impuesto',label:'Impuesto',icon:'🧾',keys:[
+  {k:'BASE_IMPUESTO',l:'Base imponible',dir:'tax'},
+  {k:'IMPUESTO_TOTAL',l:'Impuesto determinado total',dir:'tax'},
+  {k:'ACM_IMPUESTO',l:'Impuesto acumulado retenido',dir:'tax'},
+  {k:'IMPUESTO',l:'Ajuste final (retención/devolución)',dir:'final'},
+  {k:'IMP_DEB_BAN_ST',l:'Crédito/débito bancario',dir:'ded'},
+ ]},
+];
+
+// Map SIRADIG tipo -> IMPGAN column for cross-reference
+const SIRADIG_IMPGAN_MAP={
+ 1:'IG_CMASIS_REMUN',2:'IG_SEGURO_REMUN',3:'IG_DONAC_REMUN',
+ 4:'IG_INT_HIP',5:'IG_SEPELIO_REM',7:'IMP_DED_HON_MED',
+ 8:'DED_SER_DOM_ST',22:'IG_ALQUILER',23:'IG_SEGURO_MIXTO',
+ 24:'IG_RETIRO_REMUN',32:'GASTOS_EDUC',33:'IG_ALQUILER'
+};
+
+// All possible column names we care about
+const COLUMN_ALIASES={
+ ID_EMPLEADO:['ID_EMPLEADO'],NOMBRE:['NOMBRE'],ID_EMPRESA:['ID_EMPRESA'],N_EMPRESA:['N_EMPRESA'],
+ FECHA_ALTA:['FECHA_ALTA'],FECHA_BAJA:['FECHA_BAJA'],FEC_PAGO:['FEC_PAGO'],FEC_IMPUTACION:['FEC_IMPUTACION'],
+ TOT_CON_IMP:['TOT_CON_IMP'],IG_TOT_C_IM_ST:['IG_TOT_C_IM_ST'],IG_CUOT_PRORRA:['IG_CUOT_PRORRA'],
+ IG_SAC_PRES:['IG_SAC_PRES'],TOT_SAC_PRORRA:['TOT_SAC_PRORRA'],
+ TOT_JUBILACION:['TOT_JUBILACION'],TOT_LEY_19032:['TOT_LEY_19032'],TOT_OBRA_SOC:['TOT_OBRA_SOC'],
+ TOT_OTRAS_DED:['TOT_OTRAS_DED'],JUBILACION:['JUBILACION'],LEY_19032:['LEY_19032'],OBRA_SOCIAL:['OBRA_SOCIAL'],
+ IG_ALQUILER:['IG_ALQUILER'],IG_INT_HIP:['IG_INT_HIP','INT_CRED_HIPOT'],
+ IMP_DED_HON_MED:['IMP_DED_HON_MED'],DED_SER_DOM_ST:['DED_SER_DOM_ST','IG_SERV_DOMES'],
+ GASTOS_EDUC:['GASTOS_EDUC'],IG_DONAC_REMUN:['IG_DONAC_REMUN'],IG_SEGURO_REMUN:['IG_SEGURO_REMUN'],
+ IG_SEPELIO_REM:['IG_SEPELIO_REM'],IG_RETIRO_REMUN:['IG_RETIRO_REMUN'],
+ IG_SEGURO_MIXTO:['IG_SEGURO_MIXTO'],IG_AP_VOL_REM:['IG_AP_VOL_REM','JUR_AP_VOLUNT'],
+ IG_CMASIS_REMUN:['IG_CMASIS_REMUN'],
+ IG_G_NO_IMP:['IG_G_NO_IMP'],IG_DED_ESP:['IG_DED_ESP'],IG_DEDPER_12:['IG_DEDPER_12'],
+ IG_CONYUGE_REM:['IG_CONYUGE_REM'],IG_HIJOS_REM:['IG_HIJOS_REM'],IG_OCARGAS_REM:['IG_OCARGAS_REM'],
+ BASE_ANT_EMP:['BASE_ANT_EMP'],IMP_ANT_EMP:['IMP_ANT_EMP'],REM_ANT_EMP:['REM_ANT_EMP'],
+ BASE_IMPUESTO:['BASE_IMPUESTO'],IMPUESTO_TOTAL:['IMPUESTO_TOTAL'],
+ ACM_IMPUESTO:['ACM_IMPUESTO'],IMPUESTO:['IMPUESTO'],IMP_DEB_BAN_ST:['IMP_DEB_BAN_ST','IG_CRED_DEB_BAN'],
+ PREM_PROD_NG:['PREM_PROD_NG'],PLUS_HS_100:['PLUS_HS_100'],
+ BASE_IMPON_SEX:['BASE_IMPON_SEX'],
+ IMP_HIJO_100:['IMP_HIJO_100'],IMP_HIJO_INC_50:['IMP_HIJO_INC_50'],
+};
+
+var FILES={impgan_dic:null,impgan_anual:null,siradig_dic:null,siradig_anual:null,nomina:null};
+var _APP=null;
+var _PAGE=0,_PS=20;
+
+/* ═══════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════ */
+const fmt=v=>{if(v==null)return'-';const n=parseFloat(v);if(isNaN(n))return'-';return n.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2})};
+const fmtInt=v=>v==null?'-':parseInt(v).toLocaleString('es-AR');
+const abs=Math.abs;
+
+function resolveColumns(headers){
+ const map={};
+ const headerSet=new Set(headers.map(h=>String(h).trim()));
+ for(const [canonical,aliases] of Object.entries(COLUMN_ALIASES)){
+  for(const alias of aliases){
+   if(headerSet.has(alias)){map[canonical]=alias;break;}
+  }
+ }
+ return map;
+}
+
+function difClass(key,dif){
+ if(abs(dif)<0.01)return 'dif-zero';
+ const info=findKeyInfo(key);
+ if(!info)return dif>0?'dif-pos':'dif-neg';
+ if(info.dir==='final')return dif<0?'dif-pos':'dif-neg'; // negative IMPUESTO = devolucion = green
+ if(info.dir==='ded')return dif>0?'dif-pos':'dif-neg';   // more deduction = green
+ if(info.dir==='income')return dif>0?'dif-neg':'dif-pos'; // more income = red
+ if(info.dir==='tax')return dif>0?'dif-neg':'dif-pos';    // more tax = red
+ return dif>0?'dif-pos':'dif-neg';
+}
+
+function rowClass(key,dif){
+ if(abs(dif)<0.01)return '';
+ const dc=difClass(key,dif);
+ return dc==='dif-pos'?'row-pos':'row-neg';
+}
+
+function findKeyInfo(key){
+ for(const g of IMPGAN_GROUPS) for(const k of g.keys) if(k.k===key)return k;
+ return null;
+}
+
+/* ═══════════════════════════════════════════
+   FILE UPLOAD
+   ═══════════════════════════════════════════ */
+function setupDrop(zoneId,key,acceptExts){
+ const zone=document.getElementById(zoneId);
+ const input=zone.querySelector('input[type=file]');
+ const update=file=>{
+  FILES[key]=file;
+  zone.classList.toggle('filled',!!file);
+  zone.querySelector('.drop-name').textContent=file?'✓ '+file.name:'';
+  zone.querySelector('.drop-sub').textContent=file?'':'Arrastrá o hacé click';
+  checkReady();
+ };
+ input.addEventListener('change',e=>update(e.target.files[0]||null));
+ zone.querySelector('.clear-btn')?.addEventListener('click',e=>{e.stopPropagation();input.value='';update(null)});
+ zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('dragover')});
+ zone.addEventListener('dragleave',()=>zone.classList.remove('dragover'));
+ zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('dragover');
+  const f=e.dataTransfer.files[0];
+  if(f){const ext='.'+f.name.split('.').pop().toLowerCase();if(acceptExts.includes(ext))update(f);}
+ });
+}
+
+function checkReady(){
+ document.getElementById('btn-process').disabled=!(FILES.impgan_dic&&FILES.impgan_anual);
+}
+
+/* ═══════════════════════════════════════════
+   EXCEL PARSING — IMPGAN
+   ═══════════════════════════════════════════ */
+function parseIMPGAN(file){
+ return new Promise((resolve,reject)=>{
+  const reader=new FileReader();
+  reader.onload=e=>{
+   try{
+    const data=new Uint8Array(e.target.result);
+    const wb=XLSX.read(data,{type:'array',cellDates:false,raw:true});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{defval:null,raw:true});
+    if(!rows.length){resolve({employees:{},headers:[],unmapped:[]});return;}
+    const headers=Object.keys(rows[0]);
+    const colMap=resolveColumns(headers);
+    const mapped=new Set(Object.values(colMap));
+    const unmapped=headers.filter(h=>!mapped.has(h)&&h!=='__rowNum__');
+    const employees={};
+    for(const row of rows){
+     const idRaw=colMap.ID_EMPLEADO?row[colMap.ID_EMPLEADO]:null;
+     const id=normalizeId(idRaw);
+     if(!id)continue;
+     const emp={_id:id};
+     for(const [canonical,alias] of Object.entries(colMap)){
+      const v=row[alias];
+      if(canonical==='NOMBRE'||canonical==='N_EMPRESA'||canonical==='ID_EMPRESA'||canonical==='FECHA_ALTA'||canonical==='FECHA_BAJA')
+       emp[canonical]=v!=null?String(v):'';
+      else
+       emp[canonical]=v!=null?parseFloat(v)||0:0;
+     }
+     if(!emp.NOMBRE)emp.NOMBRE='';
+     employees[id]=emp;
+    }
+    resolve({employees,headers,unmapped,colMap});
+   }catch(err){reject(err);}
+  };
+  reader.onerror=()=>reject(new Error('Error leyendo archivo'));
+  reader.readAsArrayBuffer(file);
+ });
+}
+
+function normalizeId(raw){
+ if(raw==null)return null;
+ if(typeof raw==='number')return Math.round(raw);
+ const s=String(raw).trim();
+ const n=parseInt(s);
+ return isNaN(n)?null:n;
+}
+
+/* ═══════════════════════════════════════════
+   EXCEL PARSING — NOMINA
+   ═══════════════════════════════════════════ */
+function parseNomina(file){
+ return new Promise(resolve=>{
+  const reader=new FileReader();
+  reader.onload=e=>{
+   try{
+    const data=new Uint8Array(e.target.result);
+    const wb=XLSX.read(data,{type:'array',cellDates:false,raw:true});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+    const byId={},byCuil={};
+    for(const r of rows){
+     const idRaw=r.ID_EMPLEADO||r.id_empleado||r.Legajo||r.legajo||r.LEGAJO;
+     const id=normalizeId(idRaw);
+     const cuil=String(r.CUIL||r.Cuil||r.cuil||r['CUIL ']||'').trim().replace(/\D/g,'');
+     const emp={
+      id,cuil,
+      nombre:String(r.NOMBRE||r.Nombre||r.nombre||''),
+      apellido1:String(r.APELLIDO_1||r.APELLIDO||r.Apellido||''),
+      apellido2:String(r.APELLIDO_2||''),
+      fecAlta:r.FEC_ALTA_EMPLEADO||r.FEC_ALTA||'',
+      fecBaja:r.FEC_BAJA||r.FECHA_BAJA||null,
+      convenio:r.ID_CONVENIO||r.CONVENIO||'',
+      categoria:String(r.N_CATEGORIA||r.CATEGORIA||r.Categoria||''),
+      centroCosto:String(r.N_CENTRO_COSTO||r.CENTRO_COSTO||''),
+      obraSocial:String(r.N_OBRA_SOCIAL||r.OBRA_SOCIAL||''),
+      contrato:String(r.N_CONTRATO_INTERNO||r.CONTRATO||''),
+      nroDoc:String(r.NUM_DOCUMENTO||r.DNI||r.DOCUMENTO||''),
+     };
+     emp.activo=!emp.fecBaja||emp.fecBaja===''||emp.fecBaja===null||emp.fecBaja===0;
+     emp.fullName=(emp.apellido1+(emp.apellido2?' '+emp.apellido2:'')+', '+emp.nombre).trim().replace(/^,\s*/,'');
+     if(id)byId[id]=emp;
+     if(cuil&&cuil.length>=10)byCuil[cuil]=emp;
+    }
+    resolve({byId,byCuil});
+   }catch(err){console.error('Nómina error:',err);resolve({byId:{},byCuil:{}});}
+  };
+  reader.onerror=()=>resolve({byId:{},byCuil:{}});
+  reader.readAsArrayBuffer(file);
+ });
+}
+
+/* ═══════════════════════════════════════════
+   XML PARSING — SIRADIG
+   ═══════════════════════════════════════════ */
+function parseXML(xmlStr){
+ const doc=new DOMParser().parseFromString(xmlStr,'application/xml');
+ const tag=(p,n)=>{const els=p.getElementsByTagName(n);return els.length?els[0].textContent||'':''};
+ const tagf=(p,n)=>{const v=tag(p,n);return v?parseFloat(v)||0:0};
+ const data={};
+ data.periodo=tag(doc,'periodo');data.nroPresentacion=tag(doc,'nroPresentacion');data.fechaPresentacion=tag(doc,'fechaPresentacion');
+ const emps=doc.getElementsByTagName('empleado');
+ if(!emps.length)return null;
+ const emp=emps[0];
+ data.cuit=tag(emp,'cuit');data.apellido=tag(emp,'apellido');data.nombre=tag(emp,'nombre');
+ const deds={};const t99=[];
+ const dedNodes=doc.getElementsByTagName('deduccion');
+ for(let i=0;i<dedNodes.length;i++){
+  const d=dedNodes[i];const tipo=parseInt(d.getAttribute('tipo')||'0');const monto=tagf(d,'montoTotal');
+  deds[tipo]=(deds[tipo]||0)+monto;
+  if(tipo===99&&monto>0)t99.push({denom:tag(d,'denominacion'),monto});
+ }
+ data.deducciones=deds;data.tipo99_detail=t99;
+ const ret=[];
+ const retNodes=doc.getElementsByTagName('retPerPago');
+ for(let i=0;i<retNodes.length;i++){
+  const r=retNodes[i];const monto=tagf(r,'montoTotal');
+  if(monto>0)ret.push({tipo:r.getAttribute('tipo')||'',denominacion:tag(r,'denominacion'),monto});
+ }
+ data.retPerPagos=ret;
+ const cargas=[];
+ const cfNodes=doc.getElementsByTagName('cargaFamilia');
+ for(let i=0;i<cfNodes.length;i++){
+  const cf=cfNodes[i];
+  cargas.push({apellido:tag(cf,'apellido'),nombre:tag(cf,'nombre'),nroDoc:tag(cf,'nroDoc'),parentesco:tag(cf,'parentesco'),
+   mesDesde:tag(cf,'mesDesde')||'1',mesHasta:tag(cf,'mesHasta')||'12',porcentaje:tag(cf,'porcentajeDeduccion')||'100'});
+ }
+ data.cargasFamilia=cargas;
+ const empEntNodes=doc.getElementsByTagName('empEnt');
+ const ganLiq=[];
+ for(let i=0;i<empEntNodes.length;i++){
+  const ee=empEntNodes[i];
+  const obj={cuit:tag(ee,'cuit'),denominacion:tag(ee,'denominacion'),meses:[]};
+  const ias=ee.getElementsByTagName('ingAp');
+  for(let j=0;j<ias.length;j++){
+   const ia=ias[j];
+   obj.meses.push({mes:ia.getAttribute('mes')||'',ganBrut:tagf(ia,'ganBrut'),retGan:tagf(ia,'retGan'),obraSoc:tagf(ia,'obraSoc'),segSocANSES:tagf(ia,'segSocANSES'),sind:tagf(ia,'sind'),sac:tagf(ia,'sac')});
+  }
+  ganLiq.push(obj);
+ }
+ data.ganLiqOtros=ganLiq;
+ return data;
+}
+
+function parseZip(zipFile){
+ return JSZip.loadAsync(zipFile).then(zip=>{
+  const xmlFiles=Object.keys(zip.files).filter(n=>n.toLowerCase().endsWith('.xml'));
+  const results={};
+  const promises=xmlFiles.map(name=>
+   zip.files[name].async('string').then(content=>{
+    const p=parseXML(content);
+    if(p&&p.cuit){
+     const existing=results[p.cuit];
+     if(!existing||parseInt(p.nroPresentacion||0)>parseInt(existing.nroPresentacion||0))results[p.cuit]=p;
+    }
+   })
+  );
+  return Promise.all(promises).then(()=>({results,total:xmlFiles.length}));
+ });
+}
+
+/* ═══════════════════════════════════════════
+   INSIGHT ENGINE
+   ═══════════════════════════════════════════ */
+function generateInsights(emp){
+ const insights=[];
+ const dic=emp.dic||{};
+ const anual=emp.anual||{};
+ const sd=emp.siradig_dic;
+ const sa=emp.siradig_anual;
+
+ // Rule 1-3: SIRADIG deduction changes
+ if(sd||sa){
+  const allTipos=new Set([...Object.keys(sd?.deducciones||{}),...Object.keys(sa?.deducciones||{})]);
+  for(const t of allTipos){
+   const tipo=parseInt(t);
+   const vd=(sd?.deducciones||{})[tipo]||0;
+   const va=(sa?.deducciones||{})[tipo]||0;
+   const label=TIPO_LABELS[tipo]||('Tipo '+tipo);
+   if(vd>0&&va===0){
+    insights.push({type:'unfavorable',text:`Dejó de declarar ${label} ($${fmt(vd)}) en el SIRADIG anual. Se espera mayor retención.`});
+   } else if(vd===0&&va>0){
+    insights.push({type:'favorable',text:`Agregó ${label} ($${fmt(va)}) en el SIRADIG anual. Se espera menor retención.`});
+   } else if(vd>0&&va>0&&abs(va-vd)>100){
+    const dir=va>vd?'favorable':'unfavorable';
+    insights.push({type:dir,text:`${label}: cambió de $${fmt(vd)} a $${fmt(va)} (dif: $${fmt(va-vd)}). ${dir==='favorable'?'Reduce':'Aumenta'} base imponible.`});
+   }
+  }
+  // Cargas de familia
+  const cDic=(sd?.cargasFamilia||[]).length;
+  const cAnu=(sa?.cargasFamilia||[]).length;
+  if(cAnu>cDic)insights.push({type:'favorable',text:`Sumó ${cAnu-cDic} carga(s) de familia. Se espera menor retención.`});
+  if(cAnu<cDic)insights.push({type:'unfavorable',text:`Quitó ${cDic-cAnu} carga(s) de familia. Se espera mayor retención.`});
+  // Otros empleadores
+  const oeDic=(sd?.ganLiqOtros||[]).length;
+  const oeAnu=(sa?.ganLiqOtros||[]).length;
+  if(oeAnu>oeDic)insights.push({type:'unfavorable',text:`Declaró ${oeAnu-oeDic} empleador(es) adicional(es). Base imponible sube.`});
+ }
+
+ // Rule 4: IMPGAN personal deduction changes
+ const hijDif=(anual.IG_HIJOS_REM||0)-(dic.IG_HIJOS_REM||0);
+ if(abs(hijDif)>100){
+  insights.push({type:hijDif>0?'favorable':'unfavorable',
+   text:`Deducción por hijos ${hijDif>0?'aumentó':'disminuyó'} $${fmt(abs(hijDif))}. ${hijDif>0?'Menor':'Mayor'} retención esperada.`});
+ }
+ const conyDif=(anual.IG_CONYUGE_REM||0)-(dic.IG_CONYUGE_REM||0);
+ if(abs(conyDif)>100){
+  insights.push({type:conyDif>0?'favorable':'unfavorable',
+   text:`Deducción por cónyuge ${conyDif>0?'aumentó':'disminuyó'} $${fmt(abs(conyDif))}.`});
+ }
+
+ // Rule 5: Other employer income
+ const basAntDif=(anual.BASE_ANT_EMP||0)-(dic.BASE_ANT_EMP||0);
+ if(abs(basAntDif)>100){
+  insights.push({type:basAntDif>0?'unfavorable':'favorable',
+   text:`Remuneración de otro empleador ${basAntDif>0?'aumentó':'disminuyó'} $${fmt(abs(basAntDif))}. Base imponible ${basAntDif>0?'sube':'baja'}.`});
+ }
+
+ // Rule 6: Income change
+ const incDif=(anual.IG_TOT_C_IM_ST||0)-(dic.IG_TOT_C_IM_ST||0);
+ if(abs(incDif)>1000){
+  insights.push({type:'info',text:`Haberes acumulados variaron $${fmt(incDif)} (${incDif>0?'aumento':'disminución'}).`});
+ }
+
+ // Rule 7: GNI / Deduccion Especial
+ const gniDif=(anual.IG_G_NO_IMP||0)-(dic.IG_G_NO_IMP||0);
+ if(abs(gniDif)>100){
+  insights.push({type:gniDif>0?'favorable':'unfavorable',
+   text:`Ganancia No Imponible cambió $${fmt(gniDif)}. ${gniDif>0?'Reduce':'Aumenta'} base imponible.`});
+ }
+ const dedEspDif=(anual.IG_DED_ESP||0)-(dic.IG_DED_ESP||0);
+ if(abs(dedEspDif)>100){
+  insights.push({type:dedEspDif>0?'favorable':'unfavorable',
+   text:`Deducción Especial cambió $${fmt(dedEspDif)}.`});
+ }
+
+ // Rule 8: Cross-reference SIRADIG vs IMPGAN
+ if(sa&&anual){
+  for(const [tipo,impKey] of Object.entries(SIRADIG_IMPGAN_MAP)){
+   const sVal=sa.deducciones?.[parseInt(tipo)]||0;
+   const iVal=anual[impKey]||0;
+   if(sVal>1000&&iVal===0){
+    insights.push({type:'warning',text:`SIRADIG declara ${TIPO_LABELS[parseInt(tipo)]} por $${fmt(sVal)} pero el IMPGAN no lo refleja. Posible error de liquidación.`});
+   }
+  }
+ }
+
+ // Rule 9: Large IMPUESTO swing
+ const impDif=(anual.IMPUESTO||0)-(dic.IMPUESTO||0);
+ if(abs(impDif)>50000){
+  const factors=identifyTopFactors(dic,anual);
+  insights.push({type:impDif<0?'favorable':'unfavorable',
+   text:`Ajuste significativo en impuesto: $${fmt(impDif)}. Principales factores: ${factors.join(', ')}.`});
+ }
+
+ // Rule 10: Baja employee with adjustment
+ if(emp.nomina&&!emp.nomina.activo&&abs(impDif)>100){
+  insights.push({type:'warning',text:`Empleado dado de baja con ajuste de impuesto $${fmt(impDif)}. Verificar liquidación final.`});
+ }
+
+ return insights;
+}
+
+function identifyTopFactors(dic,anual){
+ const deltas=[];
+ for(const g of IMPGAN_GROUPS){
+  if(g.id==='impuesto')continue;
+  for(const col of g.keys){
+   const d=(anual[col.k]||0)-(dic[col.k]||0);
+   if(abs(d)>100)deltas.push({label:col.l,dif:d,abs:abs(d)});
+  }
+ }
+ deltas.sort((a,b)=>b.abs-a.abs);
+ return deltas.slice(0,3).map(d=>`${d.label} ${d.dif>0?'+':''}${fmt(d.dif)}`);
+}
+
+/* ═══════════════════════════════════════════
+   PROCESS FILES
+   ═══════════════════════════════════════════ */
+async function processFiles(){
+ const clientName=(document.getElementById('client-name').value.trim()||'Cliente').toUpperCase();
+ document.getElementById('import-screen').style.display='none';
+ const ps=document.getElementById('progress-screen');ps.style.display='flex';
+ const setP=(pct,st,ct='')=>{
+  document.querySelector('.prog-bar').style.width=pct+'%';
+  document.querySelector('.prog-status').textContent=st;
+  document.querySelector('.prog-count').textContent=ct;
+ };
+ try{
+  setP(10,'Leyendo IMPGAN Diciembre…');
+  await tick();
+  const dicResult=await parseIMPGAN(FILES.impgan_dic);
+  setP(25,`IMPGAN Diciembre: ${Object.keys(dicResult.employees).length} empleados`);
+  await tick();
+  const anualResult=await parseIMPGAN(FILES.impgan_anual);
+  setP(40,`IMPGAN Anual: ${Object.keys(anualResult.employees).length} empleados`);
+  await tick();
+
+  let siradigDic=null,siradigAnual=null;
+  if(FILES.siradig_dic){
+   setP(50,'Procesando SIRADIG Diciembre…');await tick();
+   siradigDic=await parseZip(FILES.siradig_dic);
+  }
+  if(FILES.siradig_anual){
+   setP(60,'Procesando SIRADIG Anual…');await tick();
+   siradigAnual=await parseZip(FILES.siradig_anual);
+  }
+
+  let nomina={byId:{},byCuil:{}};
+  if(FILES.nomina){
+   setP(70,'Leyendo nómina…');await tick();
+   nomina=await parseNomina(FILES.nomina);
+  }
+
+  setP(80,'Generando comparativa e insights…');await tick();
+  _APP=buildAppData(dicResult,anualResult,siradigDic,siradigAnual,nomina,clientName);
+
+  setP(100,'¡Listo!');await tick();
+  ps.style.display='none';
+  showGauge();
+ }catch(err){
+  alert('Error procesando archivos: '+err.message);
+  console.error(err);
+  location.reload();
+ }
+}
+
+function tick(){return new Promise(r=>setTimeout(r,30));}
+
+/* ═══════════════════════════════════════════
+   BUILD APP DATA
+   ═══════════════════════════════════════════ */
+function buildAppData(dicR,anualR,siradigDic,siradigAnual,nomina,clientName){
+ const allIds=new Set([...Object.keys(dicR.employees),...Object.keys(anualR.employees)]);
+ const employees=[];
+
+ for(const idStr of allIds){
+  const id=parseInt(idStr);
+  const dic=dicR.employees[id]||{};
+  const anual=anualR.employees[id]||{};
+  const nom=nomina.byId[id]||null;
+  const cuil=nom?.cuil||null;
+  const siradigD=cuil&&siradigDic?siradigDic.results[cuil]||null:null;
+  const siradigA=cuil&&siradigAnual?siradigAnual.results[cuil]||null:null;
+
+  const name=nom?nom.fullName:(anual.NOMBRE||dic.NOMBRE||'Empleado '+id);
+  const empresa=anual.N_EMPRESA||dic.N_EMPRESA||'';
+
+  // Calculate differences for all IMPGAN groups
+  const diffs={};
+  let hasChange=false;
+  for(const g of IMPGAN_GROUPS){
+   for(const col of g.keys){
+    const vd=dic[col.k]||0;
+    const va=anual[col.k]||0;
+    const d=va-vd;
+    diffs[col.k]={dic:vd,anual:va,dif:d};
+    if(abs(d)>0.01)hasChange=true;
+   }
+  }
+
+  // SIRADIG diffs
+  let siradigDiffs=null;
+  if(siradigD||siradigA){
+   siradigDiffs={};
+   const allTipos=new Set([...Object.keys(siradigD?.deducciones||{}),...Object.keys(siradigA?.deducciones||{})]);
+   for(const t of allTipos){
+    const tipo=parseInt(t);
+    const vd=(siradigD?.deducciones||{})[tipo]||0;
+    const va=(siradigA?.deducciones||{})[tipo]||0;
+    if(vd||va)siradigDiffs[tipo]={dic:vd,anual:va,dif:va-vd,label:TIPO_LABELS[tipo]||'Tipo '+tipo};
+   }
+   hasChange=hasChange||Object.values(siradigDiffs).some(d=>abs(d.dif)>0.01);
+  }
+
+  const impuestoDif=(anual.IMPUESTO||0)-(dic.IMPUESTO||0);
+
+  const emp={
+   id,name,empresa,cuil,
+   dic,anual,diffs,siradigDiffs,
+   siradig_dic:siradigD,siradig_anual:siradigA,
+   nomina:nom,
+   hasChange,
+   impuestoDif,
+   insights:[]
+  };
+  emp.insights=generateInsights(emp);
+
+  // Classify: ok / review / warn
+  const hasWarning=emp.insights.some(i=>i.type==='warning');
+  const hasAdjust=abs(impuestoDif)>100;
+  if(!hasChange&&!hasAdjust)emp.status='ok';
+  else if(hasWarning)emp.status='warn';
+  else emp.status='review';
+
+  employees.push(emp);
+ }
+
+ employees.sort((a,b)=>abs(b.impuestoDif)-abs(a.impuestoDif));
+
+ const okCount=employees.filter(e=>e.status==='ok').length;
+ const reviewCount=employees.filter(e=>e.status==='review').length;
+ const warnCount=employees.filter(e=>e.status==='warn').length;
+ const totalAjuste=employees.reduce((s,e)=>s+e.impuestoDif,0);
+ const maxRet=employees.reduce((m,e)=>e.impuestoDif>m.val?{val:e.impuestoDif,name:e.name}:m,{val:0,name:'-'});
+ const maxDev=employees.reduce((m,e)=>e.impuestoDif<m.val?{val:e.impuestoDif,name:e.name}:m,{val:0,name:'-'});
+
+ return {
+  employees,clientName,
+  stats:{total:employees.length,ok:okCount,review:reviewCount,warn:warnCount,totalAjuste,maxRet,maxDev},
+  unmappedDic:dicR.unmapped||[],unmappedAnual:anualR.unmapped||[],
+  hasSiradig:!!(siradigDic||siradigAnual),hasNomina:Object.keys(nomina.byId).length>0
+ };
+}
+
+/* ═══════════════════════════════════════════
+   GAUGE SCREEN
+   ═══════════════════════════════════════════ */
+function showGauge(){
+ const gs=document.getElementById('gauge-screen');gs.style.display='flex';
+ const s=_APP.stats;
+ const total=s.total||1;
+ const pOk=Math.round(s.ok/total*100);
+ const pRev=Math.round(s.review/total*100);
+ const pWarn=100-pOk-pRev;
+
+ document.getElementById('gauge-sub-text').textContent=
+  `${_APP.clientName} — ${s.total} empleados analizados`;
+
+ // Battery
+ const bat=document.getElementById('gauge-battery');
+ bat.innerHTML='';
+ if(pOk>0)bat.innerHTML+=`<div class="gauge-seg seg-ok" style="width:${pOk}%"><span class="g-pct">${pOk}%</span><span class="g-label">OK</span></div>`;
+ if(pRev>0)bat.innerHTML+=`<div class="gauge-seg seg-review" style="width:${pRev}%"><span class="g-pct">${pRev}%</span><span class="g-label">Revisar</span></div>`;
+ if(pWarn>0)bat.innerHTML+=`<div class="gauge-seg seg-warn" style="width:${pWarn}%"><span class="g-pct">${pWarn}%</span><span class="g-label">Alerta</span></div>`;
+
+ // Legend
+ document.getElementById('gauge-legend').innerHTML=`
+  <div class="gauge-legend-item ok"><div class="legend-dot"></div><span class="legend-n">${s.ok}</span> Sin cambios</div>
+  <div class="gauge-legend-item review"><div class="legend-dot"></div><span class="legend-n">${s.review}</span> Con ajuste</div>
+  <div class="gauge-legend-item warn"><div class="legend-dot"></div><span class="legend-n">${s.warn}</span> Inconsistencias</div>
+ `;
+
+ // Detail cards
+ document.getElementById('gauge-detail').innerHTML=`
+  <div class="gauge-detail-card ok"><div class="gd-icon">✅</div><div class="gd-val">${s.ok}</div><div class="gd-label">Liquidados OK</div></div>
+  <div class="gauge-detail-card review"><div class="gd-icon">🔍</div><div class="gd-val">${s.review}</div><div class="gd-label">A revisar</div></div>
+  <div class="gauge-detail-card warn"><div class="gd-icon">⚠️</div><div class="gd-val">${s.warn}</div><div class="gd-label">Con alertas</div></div>
+  <div class="gauge-detail-card" style="border-color:var(--cyan)"><div class="gd-icon">💲</div><div class="gd-val" style="color:${_APP.stats.totalAjuste>=0?'var(--red)':'var(--green)'};font-size:18px">$${fmt(_APP.stats.totalAjuste)}</div><div class="gd-label">Ajuste neto total</div></div>
+ `;
+}
+
+function showApp(){
+ document.getElementById('gauge-screen').style.display='none';
+ document.getElementById('app').style.display='';
+ renderApp();
+}
+
+/* ═══════════════════════════════════════════
+   RENDER APP
+   ═══════════════════════════════════════════ */
+function renderApp(){
+ const s=_APP.stats;
+ document.getElementById('hdr-client').textContent=_APP.clientName;
+
+ // Stats bar
+ document.getElementById('stats-bar').innerHTML=`
+  <div class="stat-item"><div class="s-label">Total empleados</div><div class="s-val">${s.total}</div></div>
+  <div class="stat-item"><div class="s-label">Con ajuste</div><div class="s-val warn">${s.review+s.warn}</div></div>
+  <div class="stat-item"><div class="s-label">Sin cambios</div><div class="s-val green">${s.ok}</div></div>
+  <div class="stat-item"><div class="s-label">Ajuste neto</div><div class="s-val ${s.totalAjuste>=0?'red':'green'}" style="font-size:18px">$${fmt(s.totalAjuste)}</div></div>
+  <div class="stat-item"><div class="s-label">Mayor retención</div><div class="s-val red" style="font-size:15px">$${fmt(s.maxRet.val)}</div><div class="s-name" style="font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.maxRet.name}</div></div>
+  <div class="stat-item"><div class="s-label">Mayor devolución</div><div class="s-val green" style="font-size:15px">$${fmt(s.maxDev.val)}</div><div class="s-name" style="font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.maxDev.name}</div></div>
+  <div class="stat-item"><div class="s-label">Alertas</div><div class="s-val ${s.warn>0?'red':'muted'}">${s.warn}</div></div>
+ `;
+
+ // Tabs
+ const tabs=[
+  {id:'emps',label:'Empleados'},
+  {id:'ranking',label:'Ranking ajustes'},
+  {id:'rubros',label:'Resumen rubros'},
+  {id:'audit',label:'Auditoría',badge:s.warn>0?s.warn:null}
+ ];
+ document.getElementById('tab-nav').innerHTML=tabs.map((t,i)=>
+  `<div class="tab${i===0?' active':''}" onclick="switchTab(${i})" data-tab="${i}">${t.label}${t.badge?'<span class="tab-badge">'+t.badge+'</span>':''}</div>`
+ ).join('');
+ document.getElementById('tab-content').innerHTML=tabs.map((t,i)=>
+  `<div class="tab-panel${i===0?' active':''}" id="panel-${t.id}"></div>`
+ ).join('');
+
+ renderEmps();
+ renderRanking();
+ renderRubros();
+ renderAudit();
+}
+
+function switchTab(idx){
+ document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+ document.querySelectorAll('.tab-panel').forEach((p,i)=>p.classList.toggle('active',i===idx));
+}
+
+/* ═══════════════════════════════════════════
+   TAB 0: EMPLOYEES
+   ═══════════════════════════════════════════ */
+function renderEmps(){
+ const panel=document.getElementById('panel-emps');
+ panel.innerHTML=`
+  <div class="filter-bar">
+   <input class="main-search" placeholder="Buscar por nombre, legajo o empresa…" oninput="filterEmps()">
+   <select onchange="filterEmps()">
+    <option value="">Todos</option>
+    <option value="ok">Sin cambios</option>
+    <option value="review">Con ajuste</option>
+    <option value="warn">Con alertas</option>
+   </select>
+   <span class="fc-count" id="emp-count"></span>
+  </div>
+  <div class="page-size-bar">Mostrar: ${[20,50,100].map(n=>`<button class="ps-btn${n===_PS?' active':''}" onclick="_PS=${n};_PAGE=0;renderEmpList()">${n}</button>`).join('')}</div>
+  <div class="emp-list" id="emp-list"></div>
+  <div class="pagination" id="emp-pagination"></div>
+ `;
+ renderEmpList();
+}
+
+function getFilteredEmps(){
+ const panel=document.getElementById('panel-emps');
+ const q=(panel.querySelector('.main-search')?.value||'').toLowerCase();
+ const status=panel.querySelector('select')?.value||'';
+ return _APP.employees.filter(e=>{
+  if(status&&e.status!==status)return false;
+  if(q){
+   const hay=`${e.name} ${e.id} ${e.empresa} ${e.cuil||''}`.toLowerCase();
+   if(!hay.includes(q))return false;
+  }
+  return true;
+ });
+}
+
+function renderEmpList(){
+ const filtered=getFilteredEmps();
+ document.getElementById('emp-count').textContent=`${filtered.length} empleados`;
+ const start=_PAGE*_PS;
+ const page=filtered.slice(start,start+_PS);
+ const list=document.getElementById('emp-list');
+ list.innerHTML=page.length?page.map(e=>buildCard(e)).join(''):'<div class="no-results">No se encontraron empleados</div>';
+
+ // Pagination
+ const totalPages=Math.ceil(filtered.length/_PS);
+ const pag=document.getElementById('emp-pagination');
+ if(totalPages<=1){pag.innerHTML='';return;}
+ let h='';
+ for(let i=0;i<totalPages;i++){
+  h+=`<button class="${i===_PAGE?'active':''}" onclick="_PAGE=${i};renderEmpList()">${i+1}</button>`;
+ }
+ pag.innerHTML=h;
+}
+
+function filterEmps(){_PAGE=0;renderEmpList();}
+
+function buildCard(emp){
+ const badgeCls=emp.status==='ok'?'badge-ok':emp.status==='warn'?'badge-warn':'badge-review';
+ const initials=emp.name.split(/[\s,]+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+ const isBaja=emp.nomina&&!emp.nomina.activo;
+ const impDif=emp.impuestoDif;
+ const difCls=abs(impDif)<0.01?'zero':impDif>0?'neg':'pos';
+ const statusPill=emp.status==='ok'?'<span class="status-pill status-sin">Sin cambios</span>'
+  :emp.status==='warn'?'<span class="status-pill" style="background:#ffebee;color:var(--red)">Con alertas</span>'
+  :'<span class="status-pill status-con">Con ajuste</span>';
+
+ let pills='';
+ if(isBaja)pills+='<span class="pill pill-baja">Baja</span>';
+ if(emp.siradig_dic||emp.siradig_anual)pills+='<span class="pill pill-info">SIRADIG</span>';
+ if(emp.insights.some(i=>i.type==='warning'))pills+='<span class="pill pill-warn">!</span>';
+
+ let meta='';
+ if(emp.empresa)meta+=`<span class="mpill">${emp.empresa}</span>`;
+ if(emp.nomina?.categoria)meta+=`<span class="mpill">${emp.nomina.categoria}</span>`;
+ if(emp.cuil)meta+=`<span class="mpill">CUIL ${emp.cuil}</span>`;
+ meta+=`<span class="mpill">Leg. ${emp.id}</span>`;
+
+ const cardId='card-'+emp.id;
+ let body='';
+
+ // IMPGAN comparison
+ for(const g of IMPGAN_GROUPS){
+  const rows=g.keys.filter(col=>{
+   const d=emp.diffs[col.k];
+   return d&&(abs(d.dic)>0.01||abs(d.anual)>0.01);
+  });
+  if(!rows.length)continue;
+  const gid=cardId+'-'+g.id;
+  body+=`<div class="group-header" onclick="toggleGroup('${gid}')">`+
+   `<span class="gh-icon">${g.icon}</span>${g.label}<span class="gh-chev">▼</span></div>`;
+  body+=`<div class="group-content" id="${gid}">`;
+  body+=`<table class="ded-table"><thead><tr><th>Concepto</th><th>Diciembre</th><th>Anual</th><th>Diferencia</th></tr></thead><tbody>`;
+  let tDic=0,tAnu=0,tDif=0;
+  for(const col of rows){
+   const d=emp.diffs[col.k];
+   const rc=rowClass(col.k,d.dif);
+   const dc=difClass(col.k,d.dif);
+   body+=`<tr class="${rc}"><td class="rubro-name">${col.l}</td><td class="num">${fmt(d.dic)}</td><td class="num">${fmt(d.anual)}</td><td class="${dc}">${d.dif>0?'+':''}${fmt(d.dif)}</td></tr>`;
+   tDic+=d.dic;tAnu+=d.anual;tDif+=d.dif;
+  }
+  body+=`</tbody><tfoot><tr><td style="font-weight:700">Total ${g.label}</td><td class="num" style="font-weight:700">${fmt(tDic)}</td><td class="num" style="font-weight:700">${fmt(tAnu)}</td><td class="num" style="font-weight:700">${tDif>0?'+':''}${fmt(tDif)}</td></tr></tfoot></table>`;
+  body+=`</div>`;
+ }
+
+ // SIRADIG comparison
+ if(emp.siradigDiffs&&Object.keys(emp.siradigDiffs).length){
+  body+=`<div class="section-title"><span class="st-icon">📁</span>SIRADIG — Deducciones declaradas</div>`;
+  body+=`<table class="ded-table"><thead><tr><th>Rubro</th><th>Diciembre</th><th>Anual</th><th>Diferencia</th></tr></thead><tbody>`;
+  let stDic=0,stAnu=0,stDif=0;
+  for(const [tipo,d] of Object.entries(emp.siradigDiffs)){
+   const dc=d.dif>0?'dif-pos':d.dif<0?'dif-neg':'dif-zero';
+   const rc=d.dif>0?'row-pos':d.dif<0?'row-neg':'';
+   body+=`<tr class="${rc}"><td class="rubro-name">${d.label}</td><td class="num">${fmt(d.dic)}</td><td class="num">${fmt(d.anual)}</td><td class="${dc}">${d.dif>0?'+':''}${fmt(d.dif)}</td></tr>`;
+   stDic+=d.dic;stAnu+=d.anual;stDif+=d.dif;
+  }
+  body+=`</tbody><tfoot><tr><td style="font-weight:700">Total SIRADIG</td><td class="num" style="font-weight:700">${fmt(stDic)}</td><td class="num" style="font-weight:700">${fmt(stAnu)}</td><td class="num" style="font-weight:700">${stDif>0?'+':''}${fmt(stDif)}</td></tr></tfoot></table>`;
+ }
+
+ // Insights
+ if(emp.insights.length){
+  body+=`<div class="section-title"><span class="st-icon">💡</span>Insights</div>`;
+  body+=`<div class="insight-list">`;
+  const icons={favorable:'✅',unfavorable:'❌',warning:'⚠️',info:'ℹ️'};
+  for(const ins of emp.insights){
+   body+=`<div class="insight-card ${ins.type}"><span class="ic-icon">${icons[ins.type]||'ℹ️'}</span>${ins.text}</div>`;
+  }
+  body+=`</div>`;
+ }
+
+ return `<div class="emp-card${isBaja?' baja':''}" id="${cardId}">
+  <div class="emp-header" onclick="toggleCard('${cardId}')">
+   <div class="emp-badge ${badgeCls}">${initials}</div>
+   <div class="emp-info">
+    <div class="emp-name-row"><span class="emp-fullname">${emp.name}</span>${pills}</div>
+    <div class="emp-sub">${emp.empresa}</div>
+    <div class="meta-pills">${meta}</div>
+   </div>
+   <div class="emp-right">
+    ${statusPill}
+    <span class="emp-dif ${difCls}">${abs(impDif)<0.01?'Sin dif.':'$'+(impDif>0?'+':'')+fmt(impDif)}</span>
+    <span class="chevron">▼</span>
+   </div>
+  </div>
+  <div class="emp-body">${body}</div>
+ </div>`;
+}
+
+function toggleCard(id){document.getElementById(id).classList.toggle('open');}
+function toggleGroup(id){
+ const el=document.getElementById(id);
+ el.classList.toggle('collapsed');
+ el.previousElementSibling.classList.toggle('collapsed');
+}
+
+/* ═══════════════════════════════════════════
+   TAB 1: RANKING
+   ═══════════════════════════════════════════ */
+function renderRanking(){
+ const panel=document.getElementById('panel-ranking');
+ const sorted=[..._APP.employees].filter(e=>abs(e.impuestoDif)>0.01).sort((a,b)=>abs(b.impuestoDif)-abs(a.impuestoDif));
+ const maxAbs=sorted.length?abs(sorted[0].impuestoDif):1;
+ let h=`<table class="ranking-table"><thead><tr><th>#</th><th>Legajo</th><th>Empleado</th><th>Empresa</th><th style="text-align:right">Dic</th><th style="text-align:right">Anual</th><th style="text-align:right">Diferencia</th><th>Barra</th></tr></thead><tbody>`;
+ sorted.forEach((e,i)=>{
+  const d=e.diffs.IMPUESTO||{dic:0,anual:0,dif:0};
+  const cls=e.impuestoDif>0?'neg':'pos';
+  const barCls=e.impuestoDif>0?'bar-neg':'bar-pos';
+  const pct=Math.round(abs(e.impuestoDif)/maxAbs*100);
+  h+=`<tr><td>${i+1}</td><td>${e.id}</td><td style="font-weight:600">${e.name}</td><td>${e.empresa}</td>
+   <td class="num">${fmt(d.dic)}</td><td class="num">${fmt(d.anual)}</td>
+   <td class="num" style="font-weight:700;color:var(--${cls==='pos'?'green':'red'})">${e.impuestoDif>0?'+':''}${fmt(e.impuestoDif)}</td>
+   <td class="bar-cell"><div class="bar-wrap"><div class="bar-inner ${barCls}" style="width:${pct}%"></div></div></td></tr>`;
+ });
+ h+=`</tbody></table>`;
+ if(!sorted.length)h='<div class="no-results">No hay empleados con ajuste de impuesto</div>';
+ panel.innerHTML=h;
+}
+
+/* ═══════════════════════════════════════════
+   TAB 2: SUMMARY BY RUBRO
+   ═══════════════════════════════════════════ */
+function renderRubros(){
+ const panel=document.getElementById('panel-rubros');
+ let h='<div class="summary-grid">';
+ for(const g of IMPGAN_GROUPS){
+  h+=`<div class="summary-group-card"><div class="sgc-header"><span class="sgc-icon">${g.icon}</span><span class="sgc-title">${g.label}</span></div><div class="sgc-body">`;
+  for(const col of g.keys){
+   let tDic=0,tAnu=0;
+   for(const e of _APP.employees){tDic+=(e.dic[col.k]||0);tAnu+=(e.anual[col.k]||0);}
+   const dif=tAnu-tDic;
+   if(abs(tDic)<0.01&&abs(tAnu)<0.01)continue;
+   const cls=abs(dif)<0.01?'color:var(--gray)':difClass(col.k,dif)==='dif-pos'?'color:var(--green)':'color:var(--red)';
+   h+=`<div class="sgc-row"><span class="sgc-label">${col.l}</span><span class="sgc-val" style="${cls}">${dif>0?'+':''}${fmt(dif)}</span></div>`;
+  }
+  h+=`</div></div>`;
+ }
+ h+=`</div>`;
+ panel.innerHTML=h;
+}
+
+/* ═══════════════════════════════════════════
+   TAB 3: AUDIT
+   ═══════════════════════════════════════════ */
+function renderAudit(){
+ const panel=document.getElementById('panel-audit');
+ let h='';
+
+ // Inconsistencies
+ const inconsistent=_APP.employees.filter(e=>e.insights.some(i=>i.type==='warning'));
+ h+=`<div class="audit-section"><h3>⚠️ Inconsistencias (${inconsistent.length})</h3>`;
+ if(inconsistent.length){
+  h+=`<table class="audit-table"><thead><tr><th>Legajo</th><th>Empleado</th><th>Detalle</th></tr></thead><tbody>`;
+  for(const e of inconsistent){
+   const warns=e.insights.filter(i=>i.type==='warning').map(i=>i.text).join('<br>');
+   h+=`<tr><td>${e.id}</td><td style="font-weight:600">${e.name}</td><td>${warns}</td></tr>`;
+  }
+  h+=`</tbody></table>`;
+ } else h+='<div class="no-results">No se encontraron inconsistencias</div>';
+ h+=`</div>`;
+
+ // Unmapped columns
+ const unmapped=[..._APP.unmappedDic,..._APP.unmappedAnual].filter((v,i,a)=>a.indexOf(v)===i);
+ if(unmapped.length){
+  h+=`<div class="audit-section"><h3>📋 Columnas no mapeadas (${unmapped.length})</h3>`;
+  h+=`<div style="padding:12px;background:white;border:1.5px solid var(--border);border-radius:10px;font-size:12px;color:var(--gray);line-height:1.8">`;
+  h+=unmapped.map(c=>`<span class="mpill">${c}</span>`).join(' ');
+  h+=`</div></div>`;
+ }
+
+ panel.innerHTML=h;
+}
+
+/* ═══════════════════════════════════════════
+   EXCEL EXPORT
+   ═══════════════════════════════════════════ */
+function downloadExcel(){
+ const wb=XLSX.utils.book_new();
+
+ // Sheet 1: Resumen
+ const resumen=[
+  ['Análisis Reliquidación Anual — '+_APP.clientName],
+  ['Fecha de análisis',new Date().toLocaleDateString('es-AR')],
+  [''],
+  ['Total empleados',_APP.stats.total],
+  ['Sin cambios',_APP.stats.ok],
+  ['Con ajuste',_APP.stats.review],
+  ['Con alertas',_APP.stats.warn],
+  ['Ajuste neto total',_APP.stats.totalAjuste],
+  ['Mayor retención',_APP.stats.maxRet.name,_APP.stats.maxRet.val],
+  ['Mayor devolución',_APP.stats.maxDev.name,_APP.stats.maxDev.val],
+ ];
+ const ws1=XLSX.utils.aoa_to_sheet(resumen);
+ XLSX.utils.book_append_sheet(wb,ws1,'Resumen');
+
+ // Sheet 2: Comparativa completa
+ const headers=['Legajo','Nombre','Empresa','CUIL','Estado','Status'];
+ for(const g of IMPGAN_GROUPS)for(const c of g.keys)headers.push(c.l+' DIC',c.l+' ANUAL',c.l+' DIF');
+ const rows2=[headers];
+ for(const e of _APP.employees){
+  const row=[e.id,e.name,e.empresa,e.cuil||'',e.nomina?.activo===false?'Baja':'Activo',e.status];
+  for(const g of IMPGAN_GROUPS)for(const c of g.keys){
+   const d=e.diffs[c.k]||{dic:0,anual:0,dif:0};
+   row.push(d.dic,d.anual,d.dif);
+  }
+  rows2.push(row);
+ }
+ const ws2=XLSX.utils.aoa_to_sheet(rows2);
+ XLSX.utils.book_append_sheet(wb,ws2,'Comparativa');
+
+ // Sheet 3: Insights
+ const rows3=[['Legajo','Nombre','Tipo','Insight']];
+ for(const e of _APP.employees){
+  for(const ins of e.insights){
+   rows3.push([e.id,e.name,ins.type,ins.text]);
+  }
+ }
+ const ws3=XLSX.utils.aoa_to_sheet(rows3);
+ XLSX.utils.book_append_sheet(wb,ws3,'Insights');
+
+ // Sheet 4: Solo con ajuste
+ const adjusted=_APP.employees.filter(e=>abs(e.impuestoDif)>0.01);
+ const rows4=[['Legajo','Nombre','Empresa','Impuesto DIC','Impuesto ANUAL','Diferencia','Insights']];
+ for(const e of adjusted){
+  const d=e.diffs.IMPUESTO||{dic:0,anual:0,dif:0};
+  rows4.push([e.id,e.name,e.empresa,d.dic,d.anual,d.dif,e.insights.map(i=>i.text).join(' | ')]);
+ }
+ const ws4=XLSX.utils.aoa_to_sheet(rows4);
+ XLSX.utils.book_append_sheet(wb,ws4,'Con ajuste');
+
+ XLSX.writeFile(wb,`Analisis_IG_Anual_${_APP.clientName.replace(/\s+/g,'_')}.xlsx`);
+}
+
+/* ═══════════════════════════════════════════
+   GATE
+   ═══════════════════════════════════════════ */
+const _GATE_H='7c5c8b5f54ff3d894cb16009cdc728851a99db5804d2f094af55f4822a5ae891';
+let _gA=0,_gL=false,_gLT=null;
+async function checkGate(){
+ if(_gL)return;
+ const btn=document.querySelector('#gate-screen button[onclick]');
+ const inp=document.getElementById('gate-pwd');
+ const err=document.getElementById('gate-err');
+ const pwd=inp.value;
+ if(!pwd){err.textContent='Ingresá la contraseña.';return;}
+ btn.disabled=true;btn.textContent='Verificando…';err.textContent='';
+ await new Promise(r=>setTimeout(r,50));
+ const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pwd));
+ const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+ if(hex===_GATE_H){
+  document.getElementById('gate-screen').style.display='none';
+  document.getElementById('import-screen').style.display='';
+  _gA=0;
+ } else {
+  _gA++;inp.value='';
+  if(_gA>=3){
+   _gL=true;let s=30;
+   err.textContent='Demasiados intentos fallidos. Esperá '+s+'s.';btn.textContent='Bloqueado';
+   _gLT=setInterval(()=>{s--;err.textContent='Demasiados intentos fallidos. Esperá '+s+'s.';if(s<=0){clearInterval(_gLT);_gL=false;_gA=0;btn.disabled=false;btn.textContent='Ingresar';err.textContent='';inp.focus();}},1000);
+  } else {
+   err.textContent='Contraseña incorrecta. Intentos restantes: '+(3-_gA)+'.';
+   btn.disabled=false;btn.textContent='Ingresar';inp.focus();
+  }
+ }
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════ */
+setupDrop('zone-impgan-dic','impgan_dic',['.xlsx','.xls']);
+setupDrop('zone-impgan-anual','impgan_anual',['.xlsx','.xls']);
+setupDrop('zone-siradig-dic','siradig_dic',['.zip']);
+setupDrop('zone-siradig-anual','siradig_anual',['.zip']);
+setupDrop('zone-nomina','nomina',['.xlsx','.xls']);
+</script>
+</body>
+</html>
