@@ -28,12 +28,12 @@
     },
     {
       "id": 3,
-      "nombre": "monday.com",
-      "descripcion": "Seguimiento de tickets de soporte con proveedores y clientes.",
-      "url": "https://bhidalgo.monday.com/",
-      "icono": "🎫",
+      "nombre": "Analisis IG Anual",
+      "descripcion": "Revisión de IMPGAN y SIRADIG",
+      "url": "https://willyesposito.github.io/herramientas-ha/analisis_ig_anual_hya.html",
+      "icono": "🚀",
       "version": "1.0",
-      "categoria": "Gestión",
+      "categoria": "Nómina",
       "estado": "activo"
     },
     {
