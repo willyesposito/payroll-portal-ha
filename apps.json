@@ -35,36 +35,6 @@
       "version": "1.0",
       "categoria": "Nómina",
       "estado": "activo"
-    },
-    {
-      "id": 4,
-      "nombre": "Calendario de Vencimientos",
-      "descripcion": "Fechas clave de presentaciones fiscales y obligaciones laborales.",
-      "url": "./apps/calendario/index.html",
-      "icono": "📅",
-      "version": "1.2",
-      "categoria": "Gestión",
-      "estado": "Inactivo"
-    },
-    {
-      "id": 5,
-      "nombre": "Validador de CUIL/CUIT",
-      "descripcion": "Verificación rápida de CUIL/CUIT con dígito verificador.",
-      "url": "./apps/validador-cuil/index.html",
-      "icono": "🔍",
-      "version": "1.0",
-      "categoria": "Utilidades",
-      "estado": "Inactivo"
-    },
-    {
-      "id": 6,
-      "nombre": "Tablero de Implementaciones",
-      "descripcion": "Estado y avance de proyectos de implementación por cliente.",
-      "url": "./apps/tablero-impl/index.html",
-      "icono": "🚀",
-      "version": "0.9",
-      "categoria": "Gestión",
-      "estado": "Inactivo"
     }
   ]
 }
