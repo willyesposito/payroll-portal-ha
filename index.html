@@ -346,6 +346,7 @@
 
     .app-tile .t-icon { font-size:2rem; line-height:1; filter:saturate(0.9); }
     .app-tile .t-name { font-size:0.74rem; font-weight:700; color:var(--text-1); line-height:1.3; }
+    .app-tile .t-desc { font-size:0.68rem; color:var(--text-2); line-height:1.45; margin-top:2px; }
     .app-tile .t-ver  { font-size:0.6rem; color:var(--text-3); font-weight:500; }
     .app-tile .t-cat  {
       font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;
@@ -783,7 +784,8 @@
       <div class="hero-badges" id="heroBadges">
         <span class="hbadge hbadge-urgent">⚠️ F931 SUSS – vence 10 abr</span>
         <span class="hbadge hbadge-info">📅 Cierre nómina – 25 abr</span>
-        <span class="hbadge hbadge-ok">✅ 6 clientes activos</span>
+        <span class="hbadge hbadge-ok">🟦 Meta 4: 20 clientes</span>
+        <span class="hbadge hbadge-ok">🟧 Axton: 10 clientes</span>
       </div>
     </div>
     <div class="hero-right">
@@ -799,7 +801,7 @@
         </div>
         <div class="kpi-chip urgent">
           <div class="n" id="daysToVcto">—</div>
-          <div class="l">días vcto</div>
+          <div class="l" id="daysToVctoLabel">días pago emp.</div>
         </div>
       </div>
     </div>
@@ -1052,61 +1054,6 @@ const CONFIG = {
   /* ── FAQ — cambia poco, queda inline ────────────────────── */
   faqs: [
     {
-      icono:'📅',
-      pregunta:'¿Cuándo cierran las nóminas mensuales?',
-      respuesta:'El cierre de nómina se realiza el día 25 de cada mes. Los legajos con novedades deben estar ingresados en Axton antes del día 22. En meses con feriados se notifica con anticipación por el canal de Teams del equipo.',
-    },
-    {
-      icono:'💼',
-      pregunta:'¿Cómo se carga una novedad en Axton?',
-      respuesta:'Acceder a Axton → Módulo Novedades → seleccionar empresa → ingresar CUIL del empleado y tipo de novedad. Adjuntar comprobante escaneado si el tipo de novedad lo requiere. Guardar y confirmar.',
-    },
-    {
-      icono:'🏛️',
-      pregunta:'¿Qué presentaciones se hacen ante ARCA cada mes?',
-      respuesta:'F931 (SUSS – aportes y contribuciones), F1357 (Ganancias 4° categoría), SIPA (aportes autónomos si aplica) y retenciones de 3° categoría según cada cliente. El calendario exacto está en el Calendario de Vencimientos.',
-    },
-    {
-      icono:'🔍',
-      pregunta:'¿Cómo valido un CUIL/CUIT con dígito verificador?',
-      respuesta:'Usá la app "Validador CUIL/CUIT" del portal (acceso directo en la grilla de apps). También podés consultar directamente en ARCA (ex-AFIP) con el número de documento del empleado.',
-    },
-    {
-      icono:'🟠',
-      pregunta:'¿Dónde cargo las tareas de implementación nuevas?',
-      respuesta:'En monday.com, dentro del board "Implementaciones Clientes". Cada cliente tiene su grupo de tareas. Asignale el responsable, la fecha de entrega y el estado. Ante dudas, consultá el Tablero de Implementaciones del portal.',
-    },
-    {
-      icono:'🧮',
-      pregunta:'¿Para qué sirve SIRADIG Engine?',
-      respuesta:'Compara el formulario SIRADIG de un empleado entre dos períodos distintos. Útil para detectar cambios en deducciones, cargas de familia o datos del empleado antes del cierre de Ganancias. Se alimenta con los archivos exportados desde Axton.',
-    },
-    {
-      icono:'📊',
-      pregunta:'¿Para qué sirve el Validador F. 1359?',
-      respuesta:'Cruza los archivos TXT de la presentación F.1359 contra el IMPGAN y las reglas vigentes de ARCA. Detecta inconsistencias de importes, CUIL o conceptos antes de la presentación formal. Evita rechazos y diferencias con el fisco.',
-    },
-    {
-      icono:'🚀',
-      pregunta:'¿Para qué sirve Análisis IG Anual?',
-      respuesta:'Permite revisar en detalle el IMPGAN y el SIRADIG de un empleado en el cierre anual. Muestra la liquidación proyectada vs. lo declarado, facilitando la detección de errores antes de la presentación definitiva del F.1357.',
-    },
-    {
-      icono:'📥',
-      pregunta:'¿Para qué sirve el Visor F. 1359 / Visor SIRADIG?',
-      respuesta:'Descarga y presenta en formato Excel la información contenida en los archivos TXT de la F.1359 y del SIRADIG. Facilita la revisión masiva de datos sin necesidad de abrir cada archivo de texto manualmente.',
-    },
-    {
-      icono:'✅',
-      pregunta:'¿Para qué sirve el Gestor de Novedades?',
-      respuesta:'Valida las novedades cargadas por el cliente en el portal antes de importarlas a Axton. Detecta errores de formato, CUIL inválidos o conceptos fuera de rango, y genera el archivo importador listo para procesar.',
-    },
-    {
-      icono:'🤖',
-      pregunta:'¿Cuándo usar cada modelo de IA? (Claude, ChatGPT, etc.)',
-      respuesta:'Consultá la guía "Casos de uso · Comparativa de modelos" en la grilla de apps. Resume qué tipo de tarea conviene hacer con cada herramienta: redacción, análisis de datos, código, consultas legales, etc. Recordá nunca ingresar datos personales de clientes o empleados en ninguna IA.',
-    },
-    {
       icono:'🔒',
       pregunta:'¿Qué información NO puedo cargar en una IA (ChatGPT, Claude, Gemini, etc.)?',
       respuesta:'Nunca ingresés en herramientas de IA datos personales de empleados ni de clientes: CUIL, DNI, nombre y apellido, remuneraciones, domicilio, datos de salud, legajos ni cualquier información que permita identificar a una persona. La Ley 25.326 de Protección de Datos Personales (Argentina) clasifica estos datos como sensibles y su tratamiento sin consentimiento explícito es una infracción grave que puede generar sanciones para el estudio. Lo mismo aplica bajo el RGPD europeo si trabajás con clientes con filiales en la Unión Europea. Las IAs públicas pueden almacenar y usar los datos ingresados para mejorar sus modelos: una vez enviada, la información sale del control del estudio.',
@@ -1227,20 +1174,35 @@ function initDate() {
   const daysClose = Math.ceil((cierre - todayMidnight) / 86400000);
   document.getElementById('daysToClose').textContent = daysClose > 0 ? daysClose : '0';
 
-  // Días al próximo vencimiento urgente (cualquiera, no solo los marcados)
-  // Primero buscamos urgentes, si no hay mostramos el próximo evento
-  const eventsFuture = CONFIG.eventos
-    .map(e => ({ ...e, d: new Date(e.fecha.split('-')[0], e.fecha.split('-')[1]-1, e.fecha.split('-')[2]) }))
-    .filter(e => e.d >= todayMidnight)
-    .sort((a,b) => a.d - b.d);
-
-  const urgente = eventsFuture.find(e => e.urgente) || eventsFuture[0];
-  if (urgente) {
-    const diff = Math.ceil((urgente.d - todayMidnight) / 86400000);
-    document.getElementById('daysToVcto').textContent = diff > 0 ? diff : '¡Hoy!';
-  } else {
-    document.getElementById('daysToVcto').textContent = '—';
+  // Countdown a fecha de pago de empleados de clientes:
+  // - Hasta el 30/04/2026 inclusive: fecha fija (vencimiento F.1359)
+  // - Desde mayo en adelante: 4° día hábil del mes corriente;
+  //   si ya pasó, muestra el del mes siguiente.
+  function getFourthBizDay(year, month) {
+    let count = 0, day = 1;
+    while (true) {
+      const d = new Date(year, month, day);
+      const dow = d.getDay();
+      if (dow !== 0 && dow !== 6) { count++; if (count === 4) return d; }
+      day++;
+    }
   }
+  function getTargetPagoDate(today) {
+    const april30 = new Date(2026, 3, 30);
+    if (today <= april30) return april30;
+    const y = today.getFullYear(), m = today.getMonth();
+    const fourth = getFourthBizDay(y, m);
+    if (today <= fourth) return fourth;
+    const nm = m === 11 ? 0 : m + 1, ny = m === 11 ? y + 1 : y;
+    return getFourthBizDay(ny, nm);
+  }
+  const targetPago = getTargetPagoDate(todayMidnight);
+  const diffPago   = Math.ceil((targetPago - todayMidnight) / 86400000);
+  document.getElementById('daysToVcto').textContent = diffPago > 0 ? diffPago : '¡Hoy!';
+  // Actualizar label con la fecha destino
+  const labelMeses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  document.getElementById('daysToVctoLabel').textContent =
+    `pago emp. · ${targetPago.getDate()} ${labelMeses[targetPago.getMonth()]}`;
 
   // Avatar
   document.getElementById('userAvatar').textContent = CONFIG.user.initials;
@@ -1259,6 +1221,7 @@ function renderApps() {
          style="animation-delay:${i * 0.07}s" title="Abrir ${a.nombre}">
         <span class="t-icon">${a.icono}</span>
         <span class="t-name">${a.nombre}</span>
+        ${a.descripcion ? `<span class="t-desc">${a.descripcion}</span>` : ''}
         <span class="t-cat">${catLabel}</span>
         <span class="t-ver">v${a.version}</span>
       </a>`;
