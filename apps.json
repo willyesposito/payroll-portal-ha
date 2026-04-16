@@ -3,7 +3,7 @@
     "titulo": "Portal Hidalgo & Asociados",
     "subtitulo": "Herramientas internas del equipo",
     "version": "1.0",
-    "ultimaActualizacion": "2026-04-09"
+    "ultimaActualizacion": "2026-04-16"
   },
   "apps": [
     {
@@ -22,19 +22,19 @@
       "descripcion": "Cruza txt de 1359 contra Impgan y reglas de ARCA",
       "url": "https://willyesposito.github.io/payroll-portal-ha/validador-f1359.html",
       "icono": "📊",
-      "version": "2.5",
+      "version": "1.5",
       "categoria": "Reportes",
-      "estado": "activo"
+      "estado": "beta"
     },
     {
       "id": 3,
-      "nombre": "Analisis IG Anual",
+      "nombre": "Análisis IG Anual",
       "descripcion": "Revisión de IMPGAN y SIRADIG",
       "url": "https://willyesposito.github.io/payroll-portal-ha/analisis_ig_anual_hya.html",
       "icono": "🚀",
       "version": "1.0",
       "categoria": "Nómina",
-      "estado": "activo"
+      "estado": "beta"
     },
     {
       "id": 4,
@@ -42,7 +42,7 @@
       "descripcion": "Descarga la información de los TXT en Excel",
       "url": "https://willyesposito.github.io/payroll-portal-ha/visor_siradig.html",
       "icono": "📥",
-      "version": "1.0",
+      "version": "2.0",
       "categoria": "Reportes",
       "estado": "activo"
     },
@@ -54,7 +54,7 @@
       "icono": "✅",
       "version": "1.0",
       "categoria": "Nómina",
-      "estado": "activo"
+      "estado": "beta"
     },
     {
       "id": 6,
