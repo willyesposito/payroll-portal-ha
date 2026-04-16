@@ -10,7 +10,7 @@
       "id": 1,
       "nombre": "SIRADIG Engine",
       "descripcion": "Comparador de SIRADIG entre períodos",
-      "url": "https://willyesposito.github.io/herramientas-ha/siradig_engine_hya.html",
+      "url": "https://willyesposito.github.io/payroll-portal-ha/siradig_engine_hya.html",
       "icono": "🧮",
       "version": "1.0",
       "categoria": "Nómina",
@@ -20,7 +20,7 @@
       "id": 2,
       "nombre": "Validador F. 1359",
       "descripcion": "Cruza txt de 1359 contra Impgan y reglas de ARCA",
-      "url": "https://willyesposito.github.io/herramientas-ha/validador-f1359.html",
+      "url": "https://willyesposito.github.io/payroll-portal-ha/validador-f1359.html",
       "icono": "📊",
       "version": "2.5",
       "categoria": "Reportes",
@@ -30,10 +30,40 @@
       "id": 3,
       "nombre": "Analisis IG Anual",
       "descripcion": "Revisión de IMPGAN y SIRADIG",
-      "url": "https://willyesposito.github.io/herramientas-ha/analisis_ig_anual_hya.html",
+      "url": "https://willyesposito.github.io/payroll-portal-ha/analisis_ig_anual_hya.html",
       "icono": "🚀",
       "version": "1.0",
       "categoria": "Nómina",
+      "estado": "activo"
+    },
+    {
+      "id": 4,
+      "nombre": "Visor F. 1359",
+      "descripcion": "Descarga la información de los TXT en Excel",
+      "url": "https://willyesposito.github.io/payroll-portal-ha/visor_siradig.html",
+      "icono": "📥",
+      "version": "1.0",
+      "categoria": "Reportes",
+      "estado": "activo"
+    },
+    {
+      "id": 5,
+      "nombre": "Validador Novedades",
+      "descripcion": "Valida las novedades subidas por el cliente y baja el importador",
+      "url": "https://willyesposito.github.io/payroll-portal-ha/GestorNovedades_HyA.html",
+      "icono": "✅",
+      "version": "1.0",
+      "categoria": "Nómina",
+      "estado": "activo"
+    },
+    {
+      "id": 6,
+      "nombre": "Cómo usar Claude",
+      "descripcion": "Guía para entender qué modelo de IA usar según la tarea",
+      "url": "https://willyesposito.github.io/payroll-portal-ha/casos_uso_modelos_comparativa.html",
+      "icono": "🤖",
+      "version": "1.0",
+      "categoria": "Herramientas",
       "estado": "activo"
     }
   ]
