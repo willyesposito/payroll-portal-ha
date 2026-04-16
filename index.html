@@ -395,7 +395,7 @@
       transition: max-height 0.3s var(--ease), padding 0.3s var(--ease);
       padding:0 20px 0 48px;
     }
-    .faq-item.open .faq-a { max-height:200px; padding:0 20px 14px 48px; }
+    .faq-item.open .faq-a { max-height:400px; padding:0 20px 14px 48px; }
     .faq-a p { font-size:0.78rem; color:var(--text-2); line-height:1.65; }
 
     /* ═══════════════════════════════════════
@@ -1075,6 +1075,51 @@ const CONFIG = {
       icono:'🟠',
       pregunta:'¿Dónde cargo las tareas de implementación nuevas?',
       respuesta:'En monday.com, dentro del board "Implementaciones Clientes". Cada cliente tiene su grupo de tareas. Asignale el responsable, la fecha de entrega y el estado. Ante dudas, consultá el Tablero de Implementaciones del portal.',
+    },
+    {
+      icono:'🧮',
+      pregunta:'¿Para qué sirve SIRADIG Engine?',
+      respuesta:'Compara el formulario SIRADIG de un empleado entre dos períodos distintos. Útil para detectar cambios en deducciones, cargas de familia o datos del empleado antes del cierre de Ganancias. Se alimenta con los archivos exportados desde Axton.',
+    },
+    {
+      icono:'📊',
+      pregunta:'¿Para qué sirve el Validador F. 1359?',
+      respuesta:'Cruza los archivos TXT de la presentación F.1359 contra el IMPGAN y las reglas vigentes de ARCA. Detecta inconsistencias de importes, CUIL o conceptos antes de la presentación formal. Evita rechazos y diferencias con el fisco.',
+    },
+    {
+      icono:'🚀',
+      pregunta:'¿Para qué sirve Análisis IG Anual?',
+      respuesta:'Permite revisar en detalle el IMPGAN y el SIRADIG de un empleado en el cierre anual. Muestra la liquidación proyectada vs. lo declarado, facilitando la detección de errores antes de la presentación definitiva del F.1357.',
+    },
+    {
+      icono:'📥',
+      pregunta:'¿Para qué sirve el Visor F. 1359 / Visor SIRADIG?',
+      respuesta:'Descarga y presenta en formato Excel la información contenida en los archivos TXT de la F.1359 y del SIRADIG. Facilita la revisión masiva de datos sin necesidad de abrir cada archivo de texto manualmente.',
+    },
+    {
+      icono:'✅',
+      pregunta:'¿Para qué sirve el Gestor de Novedades?',
+      respuesta:'Valida las novedades cargadas por el cliente en el portal antes de importarlas a Axton. Detecta errores de formato, CUIL inválidos o conceptos fuera de rango, y genera el archivo importador listo para procesar.',
+    },
+    {
+      icono:'🤖',
+      pregunta:'¿Cuándo usar cada modelo de IA? (Claude, ChatGPT, etc.)',
+      respuesta:'Consultá la guía "Casos de uso · Comparativa de modelos" en la grilla de apps. Resume qué tipo de tarea conviene hacer con cada herramienta: redacción, análisis de datos, código, consultas legales, etc. Recordá nunca ingresar datos personales de clientes o empleados en ninguna IA.',
+    },
+    {
+      icono:'🔒',
+      pregunta:'¿Qué información NO puedo cargar en una IA (ChatGPT, Claude, Gemini, etc.)?',
+      respuesta:'Nunca ingresés en herramientas de IA datos personales de empleados ni de clientes: CUIL, DNI, nombre y apellido, remuneraciones, domicilio, datos de salud, legajos ni cualquier información que permita identificar a una persona. La Ley 25.326 de Protección de Datos Personales (Argentina) clasifica estos datos como sensibles y su tratamiento sin consentimiento explícito es una infracción grave que puede generar sanciones para el estudio. Lo mismo aplica bajo el RGPD europeo si trabajás con clientes con filiales en la Unión Europea. Las IAs públicas pueden almacenar y usar los datos ingresados para mejorar sus modelos: una vez enviada, la información sale del control del estudio.',
+    },
+    {
+      icono:'⚠️',
+      pregunta:'¿Qué pasa si subo datos de un empleado a una IA por error?',
+      respuesta:'Informalo de inmediato a tu responsable o al área de IT. Según la Ley 25.326 y la Disposición AAIP 4/2019, el estudio tiene obligación de notificar incidentes de seguridad que afecten datos personales. No intentes "corregirlo solo": la notificación temprana reduce el riesgo legal. Si la plataforma lo permite, eliminá el historial de la conversación de inmediato.',
+    },
+    {
+      icono:'🛡️',
+      pregunta:'¿Qué sí puedo hacer con las IAs del trabajo?',
+      respuesta:'Podés usar las IAs para: redactar textos genéricos, resumir normativa, generar plantillas, buscar errores en código propio, consultas conceptuales sobre liquidación o ARCA, y tareas que no involucren datos identificatorios de personas reales. La guía "Cómo usar Claude" del portal detalla los casos de uso aprobados por el estudio.',
     },
   ],
 
