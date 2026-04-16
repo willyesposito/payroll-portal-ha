@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>H&A · Gestor de Novedades</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.2/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"/>
+<style>
+  body{margin:0;background:#0f172a;font-family:'Segoe UI','IBM Plex Sans',system-ui,sans-serif}
+  ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#1e293b}::-webkit-scrollbar-thumb{background:#475569;border-radius:3px}
+  .erp-badge-axton{background:#1e3a5f;color:#60a5fa;border:1px solid #2563eb}
+  .erp-badge-meta4{background:#4c1d95;color:#c4b5fd;border:1px solid #7c3aed}
+  select option{background:#1e293b}
+  .fade-in{animation:fadeIn .3s ease}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .preview-table{font-size:11px;border-collapse:collapse;width:100%}
+  .preview-table th{background:#334155;color:#94a3b8;padding:4px 8px;text-align:left;font-weight:600;position:sticky;top:0}
+  .preview-table td{padding:3px 8px;color:#cbd5e1;border-bottom:1px solid #1e293b}
+  .preview-table tr:nth-child(even) td{background:rgba(30,41,59,.5)}
+  .preview-table tr:hover td{background:rgba(56,189,248,.08)}
+  .detected-tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:4px;background:#065f46;color:#6ee7b7;margin-left:6px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+/* ═══════════════════════════════════════════
+   SECCIÓN: CONSTANTS
+   Variables globales, sistemas, clientes default
+   ═══════════════════════════════════════════ */
+const {useState,useEffect,useRef} = React;
+
+/* ─── Constants ─── */
+const MONTHS_ES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const YEARS=[2024,2025,2026,2027,2028];
+
+/* Sistema del cliente — 2 opciones únicamente */
+const SYSTEMS={
+  axton:{label:"Axton IT",   badge:"AX",  bg:"#1e3a5f",text:"#60a5fa",border:"#2563eb"},
+  meta4:{label:"Meta 4",     badge:"M4",  bg:"#4c1d95",text:"#c4b5fd",border:"#7c3aed"},
+};
+
+/* Formato de salida Meta 4 — se elige al procesar */
+const META4_FORMATS={
+  incidencias:{label:"Incidencias",   badge:"M4I",  bg:"#4c1d95",text:"#c4b5fd",border:"#7c3aed"},
+  fase_alta:  {label:"Fase de Alta",  badge:"M4FA", bg:"#5b21b6",text:"#ddd6fe",border:"#8b5cf6"},
+};
+
+/* Clientes pre-cargados */
+const DEFAULT_CLIENTS=[
+  "Allegro","Bonafide","Campari","Carrier","COELSA","Copetro","Coty","Credencial",
+  "DLA","Epiroc","Finadiet","Geopagos","GSMA","Lowsedo","Marval","Merz",
+  "PGI","Piano","Plasticomnium Florida","Plasticomnium Pilar","Poincenot",
+  "Red Bull","SIASA","Sportline","TIM","Toyota","TPA"
+].map((name,i)=>({
+  id:"default_"+i, name,
+  shortName:name.replace(/\s+/g,"").slice(0,8).toUpperCase(),
+  system:"meta4", orgId:"", convenio:"", concepts:[], isDefault:true,
+}));
+
+/* ERP de origen */
+const SOURCE_ERPS={
+  axton:{label:"Axton IT",icon:"🔷",desc:"Archivo exportado desde Axton IT"},
+  meta4:{label:"Meta 4",  icon:"🟣",desc:"Archivo exportado desde Meta 4"},
+  otro: {label:"Otro / Desconocido",icon:"📄",desc:"Excel genérico, detección automática"},
+};
+
+const ls=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
+const lss=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+
+/* ─── Inferencia tipo_valor por nombre de concepto (Axton) ─── */
+/* ═══════════════════════════════════════════
+   SECCIÓN: HELPERS & PARSERS
+   parseExcel, findHRow, ERP patterns, detectColumns,
+   analyzeStructure, inferTipoValor, parseAxtonConceptFile,
+   parseMeta4ConceptFile
+   ═══════════════════════════════════════════ */
+function inferTipoValor(nombre,manual){
+  if(manual!==undefined)return manual;
+  const n=(nombre||"").toLowerCase();
+  if(/\b(hs\.?|horas?|d[ií]as?|jornada|ausencia|licencia|vacacion|inasist|unidad|cantidad|n[uú]mero|nro\.?\s*hora|seman)\b/i.test(n))
+    return"cantidad";
+  return"monto";
+}
+
+/* ─── Inferencia tipo_valor por unidad (Meta4) ─── */
+function inferTipoValorMeta4(unidadNombre){
+  const n=(unidadNombre||"").toLowerCase();
+  if(/hora|d[ií]a|jornada|unidad|cantidad|n[uú]mero|nro\.|cuota/i.test(n))return"cantidad";
+  return"monto";
+}
+
+/* ─── Parse conceptos Axton (ReporteConceptos.xlsx) ─── */
+/* Header en fila 3 (idx 2): Numero, Concepto, Reducido, Tipo, Grupo, ... */
+function parseAxtonConceptFile(data){
+  // Buscar fila de header buscando "Numero" o "Concepto"
+  let hr=2;
+  for(let i=0;i<Math.min(6,data.length);i++){
+    if(String(data[i]?.[0]||"").trim()==="Numero"){hr=i;break;}
+  }
+  const rows=data.slice(hr+1).filter(r=>r[0]&&!isNaN(String(r[0]).trim())&&String(r[0]).trim());
+  return rows.map(r=>{
+    const id=String(r[0]||"").trim();
+    const nombre=String(r[1]||"").trim();
+    const tipoAxton=String(r[3]||"").trim();  // De Carga, Liquidacion, etc.
+    const grupo=String(r[4]||"").trim();       // Remunerativos, Patronales
+    return{id,nombre,tipoAxton,grupo,tipoValor:inferTipoValor(nombre),tipoManual:false};
+  }).filter(r=>r.id&&r.nombre);
+}
+
+/* ─── Parse conceptos Meta4 con mapeo flexible de columnas ─── */
+function parseMeta4ConceptFile(data,colMap){
+  const hr=findHRow(data);
+  return data.slice(hr+1)
+    .filter(r=>r[colMap.id]&&!isNaN(String(r[colMap.id]).trim())&&String(r[colMap.id]).trim())
+    .map(r=>{
+      const id=String(r[colMap.id]||"").trim();
+      const nombre=String(r[colMap.nombre]||"").trim();
+      const unidadNombre=colMap.unidad>=0?String(r[colMap.unidad]||"").trim():"";
+      const tipoPreli=colMap.tipo>=0?String(r[colMap.tipo]||"").trim():"";
+      return{id,nombre,nombreCorto:nombre,unidadId:"",unidadNombre,tipoPreli,
+        tipoValor:unidadNombre?inferTipoValorMeta4(unidadNombre):inferTipoValor(nombre),
+        tipoManual:false};
+    })
+    .filter(r=>r.id&&r.nombre);
+}
+
+function guessConceptCol(hdrLabels,hints){
+  return hdrLabels.findIndex(h=>hints.some(k=>h.includes(k)));
+}
+
+/* ─── Helpers ─── */
+function parseExcel(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
+        const sheets={};
+        wb.SheetNames.forEach(name=>{
+          sheets[name]=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:false,defval:""});
+        });
+        res({sheets,sheetNames:wb.SheetNames,firstSheet:sheets[wb.SheetNames[0]]});
+      }catch(err){rej(err)}
+    };
+    r.readAsArrayBuffer(file);
+  });
+}
+
+/* Smart header row detection */
+function findHRow(data,maxScan=6){
+  let best=0,bestScore=0;
+  for(let i=0;i<Math.min(maxScan,data.length);i++){
+    const row=data[i]||[];
+    const filled=row.filter(c=>c&&String(c).trim()).length;
+    const hasText=row.filter(c=>c&&isNaN(c)&&String(c).trim().length>1).length;
+    const score=filled*2+hasText*3;
+    if(score>bestScore){bestScore=score;best=i}
+  }
+  return best;
+}
+
+/* ERP-specific column detection patterns */
+const ERP_PATTERNS={
+  axton:{
+    legajo:[/^legajo$/i,/^leg\.?$/i,/^nro\.?\s*leg/i,/^numero\s*legajo/i],
+    nombre:[/apellido.*nombre/i,/nombre.*apellido/i,/^nombre$/i,/^apellido$/i,/^empleado$/i],
+    cuil:[/^cuil$/i,/^cuit$/i],
+    concepto_code:[/^\d{3,5}$/],
+    fecha_ingreso:[/fecha.*ingreso/i,/ingreso/i,/alta/i],
+    sueldo:[/sueldo/i,/basico/i,/básico/i,/remunerac/i],
+    uo:[/u\.?o\.?\s/i,/unidad\s*org/i,/convenio/i,/categ/i],
+  },
+  meta4:{
+    legajo:[/^legajo$/i,/^leg\.?$/i,/^nro\.?\s*leg/i,/^codigo\s*empl/i,/^empleado$/i],
+    nombre:[/apellido.*nombre/i,/nombre.*apellido/i,/^nombre$/i,/^apellido$/i],
+    concepto:[/concepto/i,/^codigo$/i,/^cod\.?\s*concepto/i],
+    valor:[/valor/i,/monto/i,/importe/i,/cantidad/i],
+    fecha:[/fecha/i,/periodo/i,/imputac/i],
+  },
+  otro:{
+    legajo:[/legajo/i,/leg\.?\b/i,/employee.*id/i,/nro/i,/numero/i],
+    nombre:[/nombre/i,/apellido/i,/employee/i,/trabajador/i],
+  }
+};
+
+function detectColumns(headers,erpType){
+  const patterns=ERP_PATTERNS[erpType]||ERP_PATTERNS.otro;
+  const detected={};
+  Object.entries(patterns).forEach(([field,regexes])=>{
+    for(let i=0;i<headers.length;i++){
+      const label=headers[i].label;
+      if(regexes.some(rx=>rx.test(label))){
+        if(!detected[field])detected[field]={idx:i,label};
+      }
+    }
+  });
+  return detected;
+}
+
+/* Analyze file structure for ERP hints */
+function analyzeStructure(data,erpHint){
+  const info={detectedErp:erpHint,confidence:"high",notes:[],headerRow:0,dataStartRow:1,columnCount:0,rowCount:0};
+  if(!data||!data.length)return info;
+
+  info.headerRow=findHRow(data);
+  info.dataStartRow=info.headerRow+1;
+  const hdrs=(data[info.headerRow]||[]).map((c,i)=>({label:String(c||`Col ${i+1}`).trim(),idx:i}));
+  info.columnCount=hdrs.length;
+  const dataRows=data.slice(info.dataStartRow).filter(r=>r.some(c=>c&&String(c).trim()));
+  info.rowCount=dataRows.length;
+
+  /* If "otro", try to guess ERP from content clues */
+  if(erpHint==="otro"){
+    const allText=data.slice(0,5).flat().join(" ").toLowerCase();
+    if(/axton|u\.?o\.?\s*cliente|lnodnro/i.test(allText)){
+      info.detectedErp="axton";info.confidence="medium";info.notes.push("Detectado como posible Axton por contenido");
+    }else if(/meta\s*4|concepto.*valor|imputaci/i.test(allText)){
+      info.detectedErp="meta4";info.confidence="medium";info.notes.push("Detectado como posible Meta 4 por contenido");
+    }else{
+      info.confidence="low";info.notes.push("No se detectó ERP específico, usando detección genérica");
+    }
+  }
+
+  /* Check for Axton F2 specific structure */
+  if(erpHint==="axton"||info.detectedErp==="axton"){
+    const row0=data[0]||[];
+    const row1=data[1]||[];
+    if(String(row0[0]||"").toLowerCase().includes("unidad organizativa")){
+      info.notes.push("Formato Axton F2 detectado (Unidad Organizativa en fila 1)");
+      info.headerRow=1;info.dataStartRow=2;
+    }
+    if(String(row1[0]||"").trim()==="Legajo"){
+      info.notes.push("Header Axton estándar en fila 2");
+      info.headerRow=1;info.dataStartRow=2;
+    }
+  }
+
+  /* Check for Meta4 specific structure */
+  if(erpHint==="meta4"||info.detectedErp==="meta4"){
+    const row0text=(data[0]||[]).join(" ").toLowerCase();
+    if(row0text.includes("formato 2")){
+      info.notes.push("Formato Meta 4 F2 detectado");
+      info.headerRow=1;info.dataStartRow=2;
+    }
+  }
+
+  return info;
+}
+
+/* ─── Components ─── */
+/* ═══════════════════════════════════════════
+   SECCIÓN: COMPONENTS
+   Badge, DropZone, Field, StatPill, ErpSelector,
+   DataPreview, AnalysisPanel
+   ═══════════════════════════════════════════ */
+function Badge({system}){
+  const s=SYSTEMS[system]||SYSTEMS.axton;
+  return <span style={{background:s.bg,color:s.text,border:`1px solid ${s.border}`,fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:4}}>{s.badge}</span>;
+}
+
+function DropZone({onFile,label,accept=".xlsx,.xls,.csv"}){
+  const ref=useRef();
+  const [drag,setDrag]=useState(false);
+  return(
+    <div onClick={()=>ref.current?.click()}
+      onDragOver={e=>{e.preventDefault();setDrag(true)}}
+      onDragLeave={()=>setDrag(false)}
+      onDrop={e=>{e.preventDefault();setDrag(false);const f=e.dataTransfer.files[0];if(f)onFile(f)}}
+      style={{border:`2px dashed ${drag?"#22d3ee":"#475569"}`,borderRadius:12,padding:"2rem",textAlign:"center",cursor:"pointer",transition:"all .2s",background:drag?"rgba(34,211,238,.06)":"transparent"}}>
+      <input ref={ref} type="file" accept={accept} style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f)onFile(f);e.target.value=""}}/>
+      <div style={{fontSize:36,marginBottom:8}}>📂</div>
+      <p style={{color:"#cbd5e1",fontWeight:500,fontSize:14}}>{label}</p>
+      <p style={{color:"#64748b",fontSize:12,marginTop:4}}>Arrastrá o hacé click — .xlsx / .xls / .csv</p>
+    </div>
+  );
+}
+
+function Field({label,value,onChange,placeholder="",style={}}){
+  return(
+    <div style={style}>
+      <label style={{display:"block",fontSize:11,color:"#94a3b8",marginBottom:4,textTransform:"uppercase",letterSpacing:1,fontWeight:500}}>{label}</label>
+      <input value={value} placeholder={placeholder} onChange={e=>onChange(e.target.value)}
+        style={{width:"100%",background:"#334155",border:"1px solid #475569",color:"#fff",borderRadius:8,padding:"8px 12px",fontSize:13,outline:"none",boxSizing:"border-box"}}/>
+    </div>
+  );
+}
+
+function StatPill({label,value,color="#fff"}){
+  return(
+    <div style={{background:"#1e293b",borderRadius:12,border:"1px solid #334155",padding:"12px 16px"}}>
+      <p style={{fontSize:11,color:"#64748b",textTransform:"uppercase",letterSpacing:1}}>{label}</p>
+      <p style={{fontSize:24,fontWeight:700,color,marginTop:2}}>{value}</p>
+    </div>
+  );
+}
+
+function ErpSelector({value,onChange}){
+  return(
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+      {Object.entries(SOURCE_ERPS).map(([k,erp])=>(
+        <button key={k} onClick={()=>onChange(k)}
+          style={{padding:"12px",borderRadius:8,border:`2px solid ${value===k?"#22d3ee":"#475569"}`,
+            background:value===k?"rgba(34,211,238,.1)":"#1e293b",cursor:"pointer",textAlign:"center",transition:"all .2s"}}>
+          <div style={{fontSize:24}}>{erp.icon}</div>
+          <div style={{color:value===k?"#22d3ee":"#e2e8f0",fontWeight:600,fontSize:13,marginTop:4}}>{erp.label}</div>
+          <div style={{color:"#64748b",fontSize:11,marginTop:2}}>{erp.desc}</div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* File preview with detected columns highlighted */
+function DataPreview({data,headerRow,maxRows=8,detected={}}){
+  if(!data||!data.length)return null;
+  const headers=data[headerRow]||[];
+  const rows=data.slice(headerRow+1,headerRow+1+maxRows);
+  const detectedIdxs=new Set(Object.values(detected).map(d=>d.idx));
+  return(
+    <div style={{maxHeight:280,overflow:"auto",borderRadius:8,border:"1px solid #334155"}}>
+      <table className="preview-table">
+        <thead>
+          <tr>{headers.map((h,i)=>(
+            <th key={i} style={detectedIdxs.has(i)?{background:"#065f46",color:"#6ee7b7"}:{}}>
+              {String(h||`Col ${i+1}`).trim()}
+              {detectedIdxs.has(i)&&<span className="detected-tag">✓</span>}
+            </th>
+          ))}</tr>
+        </thead>
+        <tbody>{rows.map((row,ri)=>(
+          <tr key={ri}>{headers.map((_,ci)=>(
+            <td key={ci} style={detectedIdxs.has(ci)?{color:"#6ee7b7"}:{}}>{String(row[ci]||"").trim()||"—"}</td>
+          ))}</tr>
+        ))}</tbody>
+      </table>
+    </div>
+  );
+}
+
+/* Analysis panel showing what was detected */
+function AnalysisPanel({analysis,detected}){
+  if(!analysis)return null;
+  const confColor={high:"#22c55e",medium:"#eab308",low:"#ef4444"};
+  const confLabel={high:"Alta",medium:"Media",low:"Baja"};
+  return(
+    <div className="fade-in" style={{background:"#1e293b",borderRadius:12,border:"1px solid #334155",padding:16,marginTop:12}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12,flexWrap:"wrap"}}>
+        <span style={{fontSize:11,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,fontWeight:600}}>Análisis del archivo</span>
+        <span style={{fontSize:11,padding:"2px 8px",borderRadius:4,background:confColor[analysis.confidence]+"22",color:confColor[analysis.confidence],fontWeight:600}}>
+          Confianza: {confLabel[analysis.confidence]}
+        </span>
+        <span style={{fontSize:12,color:"#94a3b8"}}>{analysis.rowCount} filas · {analysis.columnCount} columnas</span>
+      </div>
+      {analysis.notes.length>0&&(
+        <div style={{marginBottom:12}}>
+          {analysis.notes.map((n,i)=>(
+            <div key={i} style={{fontSize:12,color:"#94a3b8",padding:"2px 0"}}>💡 {n}</div>
+          ))}
+        </div>
+      )}
+      {Object.keys(detected).length>0&&(
+        <div>
+          <div style={{fontSize:11,color:"#64748b",textTransform:"uppercase",letterSpacing:1,fontWeight:600,marginBottom:8}}>Columnas detectadas</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {Object.entries(detected).map(([field,d])=>(
+              <span key={field} style={{fontSize:11,padding:"4px 10px",borderRadius:6,background:"#065f46",color:"#6ee7b7",fontWeight:500}}>
+                {field}: "{d.label}"
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Main App ─── */
+/* ═══════════════════════════════════════════
+   SECCIÓN: APP STATE
+   useState, useEffect, estado de procesamiento
+   ═══════════════════════════════════════════ */
+function App(){
+  /* ── Persistent state ── */
+  const [tab,setTab]=useState("procesar");
+  const [clients,setClients]=useState(()=>{
+    const saved=ls("hya_clients")||[];
+    const savedIds=new Set(saved.map(c=>c.id));
+    const merged=[...saved,...DEFAULT_CLIENTS.filter(d=>!savedIds.has(d.id))];
+    return merged.sort((a,b)=>a.name.localeCompare(b.name,"es"));
+  });
+  const [nominaMapModal, setNominaMapModal] = useState(null);
+  const [conceptMapModal, setConceptMapModal] = useState(null);
+  const [nomina,setNomina]=useState(()=>ls("hya_nomina")?.data||[]);
+  const [nomUpdated,setNomUpdated]=useState(()=>ls("hya_nomina")?.updated||null);
+  const [history,setHistory]=useState(()=>ls("hya_history")||[]);
+  /* Axton concept map — global, persisted */
+  const [axtonMap,setAxtonMap]=useState(()=>ls("hya_axton_map")||null);
+  /* ── Processing state ── */
+  const [selId,setSelId]=useState("");
+  const [meta4Format,setMeta4Format]=useState("incidencias");
+  const [sourceErp,setSourceErp]=useState("otro");
+  const [period,setPeriod]=useState({month:new Date().getMonth()+1,year:new Date().getFullYear()});
+  const [fileName,setFileName]=useState(null);
+  const [rawData,setRawData]=useState(null);
+  const [hRow,setHRow]=useState(0);
+  const [headers,setHeaders]=useState([]);
+  const [colLeg,setColLeg]=useState("");
+  const [colNom,setColNom]=useState("");
+  const [colConcepto,setColConcepto]=useState("");
+  const [colValor,setColValor]=useState("");
+  const [colFecha,setColFecha]=useState("");
+  const [isRowFormat,setIsRowFormat]=useState(false);
+  const [cMaps,setCMaps]=useState([]);
+  const [conceptsOpen,setConceptsOpen]=useState(true);
+  /* Meta4 concept map — per-session */
+  const [clientMap,setClientMap]=useState(null);
+  const [valid,setValid]=useState(null);
+  const [step,setStep]=useState(1);
+  const [analysis,setAnalysis]=useState(null);
+  const [detected,setDetected]=useState({});
+  const [modal,setModal]=useState(false);
+  const [editCli,setEditCli]=useState(null);
+  const [mapTab,setMapTab]=useState("tabla"); // for concept map view: tabla|subir
+
+  /* ── Effects ── */
+  useEffect(()=>{lss("hya_clients",clients.filter(c=>c._modified||!c.isDefault))},[clients]);
+  useEffect(()=>{lss("hya_nomina",{data:nomina,updated:nomUpdated})},[nomina,nomUpdated]);
+  useEffect(()=>{lss("hya_history",history)},[history]);
+  useEffect(()=>{lss("hya_axton_map",axtonMap)},[axtonMap]);
+
+  /* ═══════════════════════════════════════════
+     SECCIÓN: CONCEPT MAP HANDLERS
+     resetProcessing, handleAxtonMapFile,
+     handleMeta4MapFile, toggleTipoManual
+     ═══════════════════════════════════════════ */
+  /* ── Reset helpers ── */
+  function resetProcessing(){
+    setRawData(null);setFileName(null);setValid(null);setAnalysis(null);setDetected({});
+    setIsRowFormat(false);setColConcepto("");setColValor("");setColFecha("");
+    setColLeg("");setColNom("");setCMaps([]);setClientMap(null);
+  }
+
+  /* ── Parse uploaded concept files ── */
+  async function handleAxtonMapFile(file){
+    try{
+      const {firstSheet:data}=await parseExcel(file);
+      const concepts=parseAxtonConceptFile(data);
+      if(!concepts.length){alert("No se encontraron conceptos. Verificá el formato del archivo.");return;}
+      setAxtonMap({name:file.name,concepts,updated:new Date().toLocaleString("es-AR")});
+    }catch(err){alert("Error leyendo archivo Axton: "+err.message);}
+  }
+
+  async function handleMeta4MapFile(file){
+    try{
+      const {sheets,sheetNames}=await parseExcel(file);
+      const preferidas=["CONCEPTO_UNIDAD","conceptos","conceptos meta4","sheet1","hoja1"];
+      const sheetName=preferidas.find(n=>sheetNames.map(s=>s.toLowerCase()).includes(n.toLowerCase()))||sheetNames[0];
+      const data=sheets[sheetName];
+      if(!data||data.length<2){alert("No se encontraron datos en el archivo.");return;}
+      const hr=findHRow(data);
+      const hdrs=(data[hr]||[]).map((c,i)=>({label:String(c||`Col ${i+1}`).trim(),idx:i}));
+      const hl=hdrs.map(h=>h.label.toLowerCase());
+      setConceptMapModal({
+        data,hdrs,hr,sheetName,
+        id:     guessConceptCol(hl,["id_concepto","id concepto","id","codigo","nro","número"]),
+        nombre: guessConceptCol(hl,["nombre_largo","nombre de concepto","nombre largo","nombre","descripcion","concepto"]),
+        unidad: guessConceptCol(hl,["nombre_largo_u","unidad","tipo de unidad","unidad (si","monto (si"]),
+        tipo:   guessConceptCol(hl,["tipo_concepto","tipo de concepto","tipo concepto","tipo","grupo","remuner"]),
+      });
+    }catch(err){alert("Error leyendo archivo Meta4: "+err.message);}
+  }
+
+  function confirmConceptMap({data,hr,id,nombre,unidad,tipo,sheetName}){
+    if(id<0||nombre<0){alert("Tenés que mapear al menos ID y Nombre de concepto.");return;}
+    const concepts=parseMeta4ConceptFile(data,{id,nombre,unidad,tipo});
+    if(!concepts.length){alert("No se encontraron conceptos válidos con ese mapeo.");return;}
+    setClientMap({name:sheetName,concepts,updated:new Date().toLocaleString("es-AR")});
+    setConceptMapModal(null);
+  }
+
+  function toggleTipoManual(map,setMap,idx){
+    setMap(m=>({...m,concepts:m.concepts.map((c,i)=>{
+      if(i!==idx)return c;
+      const newTipo=c.tipoValor==="monto"?"cantidad":"monto";
+      return{...c,tipoValor:newTipo,tipoManual:true};
+    })}));
+  }
+
+  /* ═══════════════════════════════════════════
+     SECCIÓN: NOVEDADES HANDLER
+     handleNovFile — carga, análisis, detección
+     de formato, auto-mapeo de columnas
+     ═══════════════════════════════════════════ */
+  /* ── Handle novedades file ── */
+  async function handleNovFile(file){
+    setFileName(file.name);
+    try{
+      const {firstSheet:data}=await parseExcel(file);
+      setRawData(data);
+      const info=analyzeStructure(data,sourceErp);
+      setAnalysis(info);
+      const hr=info.headerRow;
+      const hdrs=(data[hr]||[]).map((c,i)=>({label:String(c||`Col ${i+1}`).trim(),idx:i}));
+      setHRow(hr);setHeaders(hdrs);
+      const det=detectColumns(hdrs,info.detectedErp);
+      setDetected(det);
+      /* Auto-map legajo/nombre */
+      const liIdx=det.legajo?.idx??hdrs.findIndex(h=>/legajo|leg\b/i.test(h.label));
+      const niIdx=det.nombre?.idx??hdrs.findIndex(h=>/nombre|apellido/i.test(h.label));
+      setColLeg(liIdx>=0?String(liIdx):"");
+      setColNom(niIdx>=0?String(niIdx):"");
+      /* Detect row format */
+      const coIdx=hdrs.findIndex(h=>/c[oó]d(igo)?\s*(de\s*)?concepto/i.test(h.label)||(/^concepto$/i.test(h.label)&&hdrs.some(x=>/^valor$/i.test(x.label))));
+      const vaIdx=hdrs.findIndex(h=>/^valor$/i.test(h.label)||/^monto$/i.test(h.label)||/^importe$/i.test(h.label));
+      const feIdx=hdrs.findIndex(h=>/fecha\s*(de\s*)?imputaci[oó]n/i.test(h.label)||/^fecha$/i.test(h.label));
+      const rowFmt=coIdx>=0&&vaIdx>=0;
+      setIsRowFormat(rowFmt);
+      setColConcepto(coIdx>=0?String(coIdx):"");
+      setColValor(vaIdx>=0?String(vaIdx):"");
+      setColFecha(feIdx>=0?String(feIdx):"");
+      if(!rowFmt){
+        /* Column format: auto-map from concept map or client config */
+        const cli=clients.find(c=>c.id===selId);
+        const effectiveSystem=cli?.system;
+        const mapSource=effectiveSystem==="axton"?axtonMap:clientMap;
+        const sourceConcepts=mapSource?.concepts||cli?.concepts||[];
+        if(sourceConcepts.length){
+          setCMaps(sourceConcepts.map(c=>{
+            const hint=(c.clientHint||c.nombre||c.name||"").toLowerCase();
+            const ci=hdrs.findIndex(h=>hint&&h.label.toLowerCase().includes(hint));
+            return{code:c.id||c.code,name:c.nombre||c.name,col:ci>=0?String(ci):"",tipoValor:c.tipoValor||"monto"};
+          }));
+        }else setCMaps([]);
+      }else{
+        setCMaps([]);
+        info.notes.push("Modo pass-through: archivo ya en formato fila (Legajo·Concepto·Valor)");
+      }
+      setValid(null);setStep(3);
+    }catch(err){alert("Error leyendo archivo: "+err.message);}
+  }
+
+  /* ═══════════════════════════════════════════
+     SECCIÓN: VALIDATION & EXPORT
+     runValidation, downloadValidationXls, doExport
+     ═══════════════════════════════════════════ */
+  /* ── Validation ── */
+  function runValidation(){
+    if(!rawData||colLeg==="")return;
+    const li=parseInt(colLeg);
+    const rows=rawData.slice(hRow+1).filter(r=>r.some(c=>c&&String(c).trim()));
+    const nMap=new Map(nomina.map(e=>[String(e.legajo).trim(),e]));
+    const cli=clients.find(c=>c.id===selId);
+    const effectiveSystem=cli?.system;
+    const mapSource=effectiveSystem==="axton"?axtonMap:clientMap;
+    const conceptLookup=new Map((mapSource?.concepts||[]).map(c=>[String(c.id),c]));
+    const issues={noEnNomina:[],duplicados:[],conceptoNoEnMapa:[],tipoValorInvalido:[],valoresAltos:[],fechasFuera:[],vacios:[],valorNoNumerico:[],legajoDadoDeBaja:[]};
+    const seenLegCon=new Map();
+    const coIdx=colConcepto!==""?parseInt(colConcepto):-1;
+    const vaIdx=colValor!==""?parseInt(colValor):-1;
+    const feIdx=colFecha!==""?parseInt(colFecha):-1;
+    const conceptStatsMap=new Map();
+    const legajosUnicos=new Set();
+
+    function parseFecha(s){
+      const parts=s.split(/[\/\-\.]/);
+      let m=-1,y=-1;
+      if(parts.length>=3){
+        if(parts[0].length===4){m=parseInt(parts[1]);y=parseInt(parts[0]);}
+        else if(parts[2].length===4){m=parseInt(parts[0])<=12?parseInt(parts[0]):parseInt(parts[1]);y=parseInt(parts[2]);}
+        else if(parts[2].length===2){m=parseInt(parts[0])<=12?parseInt(parts[0]):parseInt(parts[1]);y=2000+parseInt(parts[2]);}
+      }
+      return{m,y};
+    }
+
+    rows.forEach((row,i)=>{
+      const leg=String(row[li]||"").trim();
+      const rn=hRow+2+i;
+      if(!leg){issues.vacios.push({row:rn,leg:"—",nombre:"—",msg:"Legajo vacío"});return;}
+      legajosUnicos.add(leg);
+      const emp=nMap.get(leg);
+      const nombre=emp?.nombre||"";
+      /* Legajo en nómina → ERROR */
+      if(nomina.length>0&&!emp)
+        issues.noEnNomina.push({row:rn,leg,nombre:"No encontrado",msg:`Legajo ${leg} no figura en nómina activa`});
+      /* R3: Legajo dado de baja */
+      if(nomina.length>0&&emp&&emp.fechaEgreso&&emp.fechaEgreso.trim()){
+        const{m:em,y:ey}=parseFecha(emp.fechaEgreso.trim());
+        if(ey>0&&(ey<period.year||(ey===period.year&&em>0&&em<period.month)))
+          issues.legajoDadoDeBaja.push({row:rn,leg,nombre,msg:`Fecha de egreso ${emp.fechaEgreso.trim()} es anterior al período ${MONTHS_ES[period.month-1]} ${period.year}`});
+      }
+
+      if(isRowFormat){
+        const codeCon=coIdx>=0?String(row[coIdx]||"").trim():"";
+        const key=`${leg}|${codeCon}`;
+        /* Duplicado legajo+concepto */
+        if(codeCon){
+          if(seenLegCon.has(key))
+            issues.duplicados.push({row:rn,leg,nombre,msg:`Legajo ${leg} + Concepto ${codeCon} duplicado (1ª vez fila ${seenLegCon.get(key)})`});
+          else seenLegCon.set(key,rn);
+        }
+        /* Concepto no en mapa */
+        if(codeCon&&conceptLookup.size>0&&!conceptLookup.has(codeCon))
+          issues.conceptoNoEnMapa.push({row:rn,leg,nombre,msg:`Concepto ${codeCon} no está en el mapa de conceptos del cliente`});
+        /* Valor */
+        if(vaIdx>=0){
+          const valStr=String(row[vaIdx]||"").trim();
+          if(valStr){
+            const num=parseFloat(valStr.replace(/\./g,"").replace(",","."));
+            if(isNaN(num)){
+              issues.valorNoNumerico.push({row:rn,leg,nombre,msg:`Valor "${valStr}" no es numérico (Concepto: ${codeCon||"—"})`});
+            }else{
+              /* Tipo valor */
+              const con=conceptLookup.get(codeCon);
+              if(con&&con.tipoValor==="cantidad"&&num>999)
+                issues.tipoValorInvalido.push({row:rn,leg,nombre,msg:`Concepto ${codeCon} (${con.nombre}) es de cantidad pero el valor ${valStr} parece un importe`});
+              if(num>1000000)
+                issues.valoresAltos.push({row:rn,leg,nombre,msg:`Valor ${num.toLocaleString("es-AR")} excede $1.000.000 (Concepto: ${codeCon})`});
+              /* R6: estadísticas por concepto */
+              if(codeCon){
+                const cnombre=(conceptLookup.get(codeCon)?.nombre)||codeCon;
+                if(!conceptStatsMap.has(codeCon))conceptStatsMap.set(codeCon,{nombre:cnombre,count:0,sum:0,min:Infinity,max:-Infinity,legajos:new Set()});
+                const s=conceptStatsMap.get(codeCon);
+                s.count++;s.sum+=num;s.min=Math.min(s.min,num);s.max=Math.max(s.max,num);s.legajos.add(leg);
+              }
+            }
+          }
+        }
+        /* Fecha */
+        if(feIdx>=0){
+          const fechaStr=String(row[feIdx]||"").trim();
+          if(fechaStr){
+            const{m,y}=parseFecha(fechaStr);
+            if(m>0&&!(m===period.month&&y===period.year))
+              issues.fechasFuera.push({row:rn,leg,nombre,msg:`Fecha "${fechaStr}" no corresponde a ${MONTHS_ES[period.month-1]} ${period.year}`});
+          }
+        }
+      }else{
+        cMaps.forEach(m=>{
+          if(m.col==="")return;
+          const valStr=String(row[parseInt(m.col)]||"").trim();
+          if(!valStr||valStr==="0")return;
+          const key=`${leg}|${m.code}`;
+          if(seenLegCon.has(key))
+            issues.duplicados.push({row:rn,leg,nombre,msg:`Legajo ${leg} + Concepto ${m.name} (${m.code}) duplicado`});
+          else seenLegCon.set(key,rn);
+          /* Concepto en mapa */
+          if(conceptLookup.size>0&&!conceptLookup.has(String(m.code)))
+            issues.conceptoNoEnMapa.push({row:rn,leg,nombre,msg:`Concepto ${m.code} no está en el mapa`});
+          const num=parseFloat(valStr.replace(/\./g,"").replace(",","."));
+          if(isNaN(num)){
+            issues.valorNoNumerico.push({row:rn,leg,nombre,msg:`Valor "${valStr}" no es numérico (Concepto: ${m.name||m.code})`});
+          }else{
+            if(m.tipoValor==="cantidad"&&num>999)
+              issues.tipoValorInvalido.push({row:rn,leg,nombre,msg:`Concepto "${m.name}" es de cantidad pero valor ${valStr} parece importe`});
+            if(num>1000000)
+              issues.valoresAltos.push({row:rn,leg,nombre,msg:`Concepto "${m.name}" = ${valStr} excede $1.000.000`});
+            /* R6 */
+            const code=String(m.code);
+            if(!conceptStatsMap.has(code))conceptStatsMap.set(code,{nombre:m.name||code,count:0,sum:0,min:Infinity,max:-Infinity,legajos:new Set()});
+            const s=conceptStatsMap.get(code);
+            s.count++;s.sum+=num;s.min=Math.min(s.min,num);s.max=Math.max(s.max,num);s.legajos.add(leg);
+          }
+        });
+      }
+    });
+    const conceptStats=[...conceptStatsMap.entries()].map(([code,s])=>({
+      code,nombre:s.nombre,count:s.count,sum:s.sum,avg:s.count>0?s.sum/s.count:0,
+      min:s.min===Infinity?0:s.min,max:s.max===-Infinity?0:s.max,legajosCount:s.legajos.size
+    })).sort((a,b)=>b.sum-a.sum);
+    const allErrors=[...issues.vacios,...issues.noEnNomina,...issues.duplicados,...issues.valorNoNumerico,...issues.legajoDadoDeBaja];
+    setValid({issues,errors:allErrors,warnings:[...issues.conceptoNoEnMapa,...issues.tipoValorInvalido,...issues.valoresAltos,...issues.fechasFuera],total:rows.length,ok:allErrors.length===0,legajosUnicos:legajosUnicos.size,conceptStats,importeTotal:conceptStats.reduce((a,b)=>a+b.sum,0)});
+    setStep(4);
+  }
+
+  /* ── Download validation report ── */
+  function downloadValidationXls(){
+    if(!valid)return;
+    const wb=XLSX.utils.book_new();
+    const addSheet=(name,rows,cols)=>{
+      if(!rows.length)return;
+      const ws=XLSX.utils.aoa_to_sheet([cols,...rows.map(r=>cols.map(c=>({fila:"row",legajo:"leg",nombre:"nombre",detalle:"msg"}[c]?r[({fila:"row",legajo:"leg",nombre:"nombre",detalle:"msg"}[c])]:"")))]);
+      XLSX.utils.book_append_sheet(wb,ws,name.slice(0,31));
+    };
+    const cols=["Fila","Legajo","Nombre","Detalle"];
+    const toArr=arr=>arr.map(r=>[r.row,r.leg,r.nombre||"",r.msg]);
+    if(valid.issues.noEnNomina.length)    {const ws=XLSX.utils.aoa_to_sheet([cols,...toArr(valid.issues.noEnNomina)]);    XLSX.utils.book_append_sheet(wb,ws,"No en Nómina");}
+    if(valid.issues.duplicados.length)    {const ws=XLSX.utils.aoa_to_sheet([cols,...toArr(valid.issues.duplicados)]);     XLSX.utils.book_append_sheet(wb,ws,"Duplicados");}
+    if(valid.issues.conceptoNoEnMapa.length){const ws=XLSX.utils.aoa_to_sheet([cols,...toArr(valid.issues.conceptoNoEnMapa)]);XLSX.utils.book_append_sheet(wb,ws,"Conceptos no en Mapa");}
+    if(valid.issues.tipoValorInvalido.length){const ws=XLSX.utils.aoa_to_sheet([cols,...toArr(valid.issues.tipoValorInvalido)]);XLSX.utils.book_append_sheet(wb,ws,"Tipo Valor Inválido");}
+    if(valid.issues.valoresAltos.length)  {const ws=XLSX.utils.aoa_to_sheet([cols,...toArr(valid.issues.valoresAltos)]);  XLSX.utils.book_append_sheet(wb,ws,"Valores Altos");}
+    if(valid.issues.fechasFuera.length)   {const ws=XLSX.utils.aoa_to_sheet([cols,...toArr(valid.issues.fechasFuera)]);   XLSX.utils.book_append_sheet(wb,ws,"Fechas Fuera Período");}
+    if(valid.issues.vacios.length)        {const ws=XLSX.utils.aoa_to_sheet([cols,...toArr(valid.issues.vacios)]);        XLSX.utils.book_append_sheet(wb,ws,"Legajos Vacíos");}
+    const resumen=[["Tipo","Cantidad","Tipo de issue"],
+      ["Legajos no en nómina",valid.issues.noEnNomina.length,"Error"],
+      ["Duplicados legajo+concepto",valid.issues.duplicados.length,"Error"],
+      ["Legajos vacíos",valid.issues.vacios.length,"Error"],
+      ["Concepto no en mapa",valid.issues.conceptoNoEnMapa.length,"Advertencia"],
+      ["Tipo de valor inválido",valid.issues.tipoValorInvalido.length,"Advertencia"],
+      ["Valores > $1.000.000",valid.issues.valoresAltos.length,"Advertencia"],
+      ["Fechas fuera del período",valid.issues.fechasFuera.length,"Advertencia"],
+      ["","",""],
+      ["Total filas procesadas",valid.total,""],
+      ["Estado",valid.ok?"Sin errores críticos":"HAY ERRORES CRÍTICOS",""],
+    ];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(resumen),"Resumen");
+    const cli=clients.find(c=>c.id===selId);
+    XLSX.writeFile(wb,`Validacion_${(cli?.shortName||cli?.name||"").replace(/\s/g,"")}_${period.year}${String(period.month).padStart(2,"0")}.xlsx`);
+  }
+
+  /* ── Export ── */
+  function doExport(){
+    if(!rawData||colLeg==="")return;
+    const cli=clients.find(c=>c.id===selId);if(!cli)return;
+    const li=parseInt(colLeg);
+    const rows=rawData.slice(hRow+1).filter(r=>r.some(c=>c&&String(c).trim()));
+    const dateStr=`${period.year}-${String(period.month).padStart(2,"0")}-25`;
+    const monthStr=`${MONTHS_ES[period.month-1]} ${period.year}`;
+    const nMap=new Map(nomina.map(e=>[String(e.legajo).trim(),e]));
+    const effectiveSystem=cli.system==="axton"?"axton":meta4Format;
+    let out=[];
+
+    if(effectiveSystem==="axton"){
+      const concepts=cMaps.length?cMaps:(axtonMap?.concepts||[]);
+      const r0=["Unidad Organizativa",cli.orgId||"",`${cli.name}${cli.convenio?"_"+cli.convenio:""}`,
+        "Fecha","","","","",""];
+      concepts.forEach(c=>r0.push(c.nombre||c.name||""));
+      const r1=["Legajo","LNodNro","Apellido y Nombres","Cliente","U.O. Cliente","Sueldo",
+        "Fecha Ingreso","Fecha Egreso","Fecha Ultimo Pago"];
+      concepts.forEach(c=>r1.push(c.id||c.code||""));
+      out=[r0,r1];
+      rows.forEach(row=>{
+        const leg=String(row[li]||"").trim();
+        const emp=nMap.get(leg)||{};
+        const niIdx=colNom!==""?parseInt(colNom):-1;
+        const nombre=niIdx>=0?String(row[niIdx]||""):(emp.nombre||"");
+        const dr=[leg,emp.lnodNro||"",nombre,cli.name,emp.uo||cli.convenio||"",
+          emp.sueldo||"",emp.fechaIngreso||"",emp.fechaEgreso||"",""];
+        concepts.forEach(c=>{
+          const m=cMaps.find(x=>(x.code||x.id)===c.id||(x.code||x.id)===c.code);
+          dr.push(m&&m.col!==""?String(row[parseInt(m.col)]||""):"");
+        });
+        out.push(dr);
+      });
+    }else{
+      const isIncidencias=effectiveSystem==="incidencias";
+      if(!isIncidencias)out.push(["FORMATO 2","","","","","","","","",""]);
+      out.push(isIncidencias
+        ?["Legajo","*","*","*","*","Código de Concepto","*","*","Valor","Nombre de Concepto","Fecha de Imputación"]
+        :["Legajo","*","*","*","*","*","Valor","Código de\nconcepto","Nombre de concepto","Fecha de imputación"]);
+      if(isRowFormat){
+        const coIdx2=colConcepto!==""?parseInt(colConcepto):-1;
+        const vaIdx2=colValor!==""?parseInt(colValor):-1;
+        const feIdx2=colFecha!==""?parseInt(colFecha):-1;
+        const noConIdx=headers.findIndex(h=>/nombre\s*(de\s*)?concepto/i.test(h.label));
+        rows.forEach(row=>{
+          const leg=String(row[li]||"").trim();
+          const emp=nMap.get(leg)||{};
+          const cod=coIdx2>=0?String(row[coIdx2]||"").trim():"";
+          const val=vaIdx2>=0?String(row[vaIdx2]||"").trim():"";
+          const fecha=feIdx2>=0?String(row[feIdx2]||"").trim():dateStr;
+          const nomCon=noConIdx>=0?String(row[noConIdx]||"").trim():"";
+          if(leg&&val&&val!=="0")
+            out.push(isIncidencias
+              ?[leg,emp.lnodNro||"","","","",cod,"","",val,nomCon,fecha]
+              :[leg,emp.lnodNro||"","","","","",val,cod,nomCon,fecha]);
+        });
+      }else{
+        rows.forEach(row=>{
+          const leg=String(row[li]||"").trim();
+          const emp=nMap.get(leg)||{};
+          cMaps.forEach(m=>{
+            if(m.col==="")return;
+            const val=String(row[parseInt(m.col)]||"").trim();
+            if(val&&val!=="0")
+              out.push(isIncidencias
+                ?[leg,emp.lnodNro||"","","","",m.code,"","",val,m.name,dateStr]
+                :[leg,emp.lnodNro||"","","","","",val,m.code,m.name,dateStr]);
+          });
+        });
+      }
+    }
+    const ws2=XLSX.utils.aoa_to_sheet(out);
+    const wb2=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb2,ws2,"Novedades");
+    const fname=`${(cli.shortName||cli.name).replace(/\s/g,"").slice(0,8)}_${effectiveSystem.toUpperCase()}_${period.year}${String(period.month).padStart(2,"0")}.xlsx`;
+    XLSX.writeFile(wb2,fname);
+    setHistory(h=>[{id:Date.now(),client:cli.name,system:effectiveSystem,period:monthStr,
+      rows:rows.length,file:fname,date:new Date().toLocaleString("es-AR"),
+      sourceErp,errors:valid?.errors?.length||0,warnings:valid?.warnings?.length||0},...h].slice(0,100));
+    setStep(5);
+  }
+
+  /* ═══════════════════════════════════════════
+     SECCIÓN: NÓMINA & CLIENTS
+     handleNominaFile, saveClient
+     ═══════════════════════════════════════════ */
+async function handleNominaFile(file){
+  try{
+    const {firstSheet:data}=await parseExcel(file);
+    let emp=[];
+    if(String(data[1]?.[0]||"").trim()==="Legajo"){
+      emp=data.slice(2).filter(r=>r[0]&&String(r[0]).trim()).map(r=>({
+        legajo:String(r[0]||"").trim(),lnodNro:String(r[1]||"").trim(),
+        nombre:String(r[2]||"").trim(),uo:String(r[4]||"").trim(),sueldo:String(r[5]||"").trim(),
+        fechaIngreso:String(r[6]||"").trim(),fechaEgreso:String(r[7]||"").trim(),
+      }));
+      setNomina(emp);setNomUpdated(new Date().toLocaleString("es-AR"));
+    } else {
+      const hr=findHRow(data);
+      const hdrs=(data[hr]||[]).map((c,i)=>({label:String(c||`Col ${i+1}`).trim(),idx:i}));
+      const guess=(hints)=>hdrs.findIndex(h=>hints.some(k=>h.label.toLowerCase().includes(k)));
+      setNominaMapModal({
+        data, hdrs, hr,
+        legajo: guess(["legajo","id_empleado","nro_emp","nro emp","numero empleado","emp_id"]),
+        nombre: guess(["apellido","nombre"]),
+        uo:     guess(["u.o","unidad org","convenio","categ","centro_costo","sindicato","puesto","sector","area","departamento"]),
+        fechaIngreso: guess(["fecha alta","fec_alta","fecha ingreso","fec_ingreso","fec_antiguedad","ingreso","alta"]),
+      });
+    }
+  }catch(err){alert("Error leyendo nómina: "+err.message);}
+}
+function confirmNominaMap({data,hr,legajo,nombre,uo,fechaIngreso}){
+  if(legajo<0){alert("Tenés que mapear al menos el campo Legajo.");return;}
+  const emp=data.slice(hr+1).filter(r=>r[legajo]&&String(r[legajo]).trim()).map(r=>({
+    legajo:       String(r[legajo]||"").trim(),
+    nombre:       nombre>=0?String(r[nombre]||"").trim():"",
+    uo:           uo>=0?String(r[uo]||"").trim():"",
+    fechaIngreso: fechaIngreso>=0?String(r[fechaIngreso]||"").trim():"",
+  }));
+  setNomina(emp);
+  setNomUpdated(new Date().toLocaleString("es-AR"));
+  setNominaMapModal(null);
+}
+  function saveClient(c){
+    const updated={...c,_modified:true};
+    if(c.id&&clients.find(x=>x.id===c.id))
+      setClients(p=>p.map(x=>x.id===c.id?updated:x).sort((a,b)=>a.name.localeCompare(b.name,"es")));
+    else
+      setClients(p=>[...p,{...updated,id:Date.now().toString()}].sort((a,b)=>a.name.localeCompare(b.name,"es")));
+    setModal(false);setEditCli(null);
+  }
+
+  /* ═══════════════════════════════════════════
+     SECCIÓN: RENDER
+     Estilos (S), return() completo con todo el JSX:
+     UI PROCESAR / UI CLIENTES / UI NÓMINA /
+     UI HISTORIAL / MODAL CLIENTE
+     ═══════════════════════════════════════════ */
+  const selCli=clients.find(c=>c.id===selId);
+  const dataRows=rawData?rawData.slice(hRow+1).filter(r=>r.some(c=>c&&String(c).trim())):[];
+  const activeMap=selCli?.system==="axton"?axtonMap:clientMap;
+
+  /* ─── Styles ─── */
+  const S={
+    card:{background:"#1e293b",borderRadius:12,border:"1px solid #334155",padding:20},
+    h2:{fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:2,marginBottom:16},
+    select:{width:"100%",background:"#334155",border:"1px solid #475569",color:"#fff",borderRadius:8,padding:"8px 12px",fontSize:13,outline:"none"},
+    btn:{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:600,fontSize:13,transition:"all .2s"},
+    btnPrimary:{background:"#0e7490",color:"#fff"},
+    btnSuccess:{background:"#15803d",color:"#fff"},
+    btnSecondary:{background:"#334155",color:"#e2e8f0"},
+    tabActive:{padding:"12px 20px",fontSize:13,fontWeight:500,color:"#67e8f9",background:"none",border:"none",borderBottom:"2px solid #22d3ee",cursor:"pointer"},
+    tabInactive:{padding:"12px 20px",fontSize:13,fontWeight:500,color:"#94a3b8",background:"none",border:"none",borderBottom:"2px solid transparent",cursor:"pointer"},
+    pill:(color,bg,border)=>({display:"inline-flex",alignItems:"center",gap:4,fontSize:11,padding:"2px 8px",borderRadius:4,background:bg,color,border:`1px solid ${border}`,fontWeight:600}),
+  };
+
+  return(
+    <div style={{minHeight:"100vh",color:"#e2e8f0"}}>
+
+      {/* Header */}
+      <div style={{background:"#1e293b",borderBottom:"1px solid #334155",padding:"12px 24px",display:"flex",alignItems:"center",gap:16,position:"sticky",top:0,zIndex:10}}>
+        <div style={{width:40,height:40,borderRadius:"50%",background:"#18B7E8",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <span style={{color:"#fff",fontWeight:900,fontSize:13}}>H&A</span>
+        </div>
+        <div>
+          <h1 style={{fontWeight:700,fontSize:18,color:"#fff",margin:0,lineHeight:1.2}}>Gestor de Novedades</h1>
+          <p style={{fontSize:12,color:"#94a3b8",margin:0}}>Hidalgo & Asociados · Payroll Processing</p>
+        </div>
+        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:10}}>
+          <div style={{fontSize:12,padding:"6px 12px",borderRadius:8,border:`1px solid ${nomina.length>0?"#166534":"#92400e"}`,
+            background:nomina.length>0?"rgba(22,101,52,.2)":"rgba(146,64,14,.2)",color:nomina.length>0?"#4ade80":"#fbbf24"}}>
+            {nomina.length>0?`✓ Nómina: ${nomina.length} emp.`:"⚠ Sin nómina activa"}
+          </div>
+          <div style={{fontSize:12,padding:"6px 12px",borderRadius:8,border:`1px solid ${axtonMap?"#1d4ed8":"#334155"}`,
+            background:axtonMap?"rgba(29,78,216,.15)":"transparent",color:axtonMap?"#60a5fa":"#475569"}}>
+            {axtonMap?`AX: ${axtonMap.concepts.length} conceptos`:"AX: sin mapa"}
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Bar */}
+      <div style={{display:"flex",background:"#1e293b",borderBottom:"1px solid #334155",paddingLeft:24}}>
+        {[["procesar","📋 Procesar"],["clientes","🏢 Clientes"],["nomina","👥 Nómina"],["historial","📜 Historial"]].map(([id,label])=>(
+          <button key={id} onClick={()=>setTab(id)} style={tab===id?S.tabActive:S.tabInactive}>{label}</button>
+        ))}
+      </div>
+
+      <div style={{padding:24}}>
+
+        {/* ═══ PROCESAR ═══ */}
+        {tab==="procesar"&&(
+          <div style={{maxWidth:920,margin:"0 auto"}}>
+
+            {/* Step indicators */}
+            <div style={{display:"flex",alignItems:"center",gap:6,fontSize:11,color:"#64748b",marginBottom:16,flexWrap:"wrap"}}>
+              {["Cliente·Período","ERP origen","Archivo","Mapeo","Validar","Exportar"].map((s,i)=>(
+                <span key={i} style={{display:"flex",alignItems:"center",gap:4}}>
+                  <span style={{width:20,height:20,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",
+                    fontWeight:700,fontSize:10,flexShrink:0,
+                    background:step>i+1?"#15803d":step===i+1?"#0e7490":"#334155",
+                    color:step>i+1?"#bbf7d0":step===i+1?"#cffafe":"#64748b"}}>
+                    {step>i+1?"✓":i+1}
+                  </span>
+                  <span style={{color:step===i+1?"#67e8f9":step>i+1?"#4ade80":""}}>{s}</span>
+                  {i<5&&<span style={{color:"#334155"}}>›</span>}
+                </span>
+              ))}
+            </div>
+
+            {/* Step 1: Client + Period */}
+            <div style={{...S.card,marginBottom:12}}>
+              <h2 style={S.h2}>① Cliente · Sistema · Período a procesar</h2>
+              <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"flex-end"}}>
+                <div style={{flex:1,minWidth:180}}>
+                  <label style={{display:"block",fontSize:11,color:"#94a3b8",marginBottom:4}}>Cliente *</label>
+                  <select value={selId} onChange={e=>{setSelId(e.target.value);setStep(2);resetProcessing();}}
+                    style={S.select}>
+                    <option value="">— Seleccioná un cliente —</option>
+                    {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                {selCli&&(
+                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 14px",borderRadius:8,
+                    border:`1px solid ${SYSTEMS[selCli.system]?.border}`,background:SYSTEMS[selCli.system]?.bg}}>
+                    <span style={{fontSize:11,fontWeight:700,color:SYSTEMS[selCli.system]?.text}}>{SYSTEMS[selCli.system]?.badge}</span>
+                    <span style={{fontSize:12,fontWeight:500,color:SYSTEMS[selCli.system]?.text}}>{SYSTEMS[selCli.system]?.label}</span>
+                  </div>
+                )}
+                <div style={{display:"flex",alignItems:"center",gap:8,background:"#334155",padding:"8px 12px",borderRadius:8,border:"1px solid #475569"}}>
+                  <span style={{fontSize:11,color:"#94a3b8",fontWeight:600,textTransform:"uppercase",letterSpacing:1}}>Período:</span>
+                  <select value={period.month} onChange={e=>setPeriod(p=>({...p,month:parseInt(e.target.value)}))}
+                    style={{background:"transparent",color:"#fff",fontSize:13,border:"none",outline:"none",cursor:"pointer"}}>
+                    {MONTHS_ES.map((m,i)=><option key={i} value={i+1}>{m}</option>)}
+                  </select>
+                  <select value={period.year} onChange={e=>setPeriod(p=>({...p,year:parseInt(e.target.value)}))}
+                    style={{background:"transparent",color:"#fff",fontSize:13,border:"none",outline:"none",cursor:"pointer"}}>
+                    {YEARS.map(y=><option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+              </div>
+              {/* Meta4 format selector */}
+              {selCli?.system==="meta4"&&(
+                <div style={{marginTop:14,paddingTop:14,borderTop:"1px solid #334155"}}>
+                  <label style={{display:"block",fontSize:11,color:"#94a3b8",marginBottom:8,textTransform:"uppercase",letterSpacing:1,fontWeight:600}}>Formato de salida Meta 4</label>
+                  <div style={{display:"flex",gap:8}}>
+                    {Object.entries(META4_FORMATS).map(([k,f])=>(
+                      <button key={k} onClick={()=>setMeta4Format(k)}
+                        style={{padding:"8px 20px",borderRadius:8,border:`2px solid ${meta4Format===k?f.border:"#475569"}`,
+                          background:meta4Format===k?f.bg:"#334155",cursor:"pointer",transition:"all .2s",
+                          color:meta4Format===k?f.text:"#94a3b8",fontWeight:600,fontSize:12}}>
+                        {f.badge} — {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Step 2: ERP source */}
+            {selId&&(
+              <div style={{...S.card,marginBottom:12}} className="fade-in">
+                <h2 style={S.h2}>② ERP de origen del archivo</h2>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                  {Object.entries(SOURCE_ERPS).map(([k,erp])=>(
+                    <button key={k} onClick={()=>{setSourceErp(k);if(step<3)setStep(2);}}
+                      style={{padding:"10px",borderRadius:8,border:`2px solid ${sourceErp===k?"#22d3ee":"#475569"}`,
+                        background:sourceErp===k?"rgba(34,211,238,.1)":"#1e293b",cursor:"pointer",textAlign:"center",transition:"all .2s"}}>
+                      <div style={{fontSize:22}}>{erp.icon}</div>
+                      <div style={{color:sourceErp===k?"#22d3ee":"#e2e8f0",fontWeight:600,fontSize:12,marginTop:4}}>{erp.label}</div>
+                      <div style={{color:"#64748b",fontSize:11,marginTop:2}}>{erp.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 2b: Concept map + upload */}
+            {selId&&(
+              <div style={{...S.card,marginBottom:12}}>
+                <h2 style={S.h2}>③ Mapa de conceptos del cliente</h2>
+                {selCli?.system==="axton"?(
+                  axtonMap?(
+                    <div style={{display:"flex",alignItems:"center",gap:12,background:"rgba(22,101,52,.12)",border:"1px solid #166534",borderRadius:8,padding:"10px 14px"}}>
+                      <span style={{fontSize:18}}>✅</span>
+                      <div style={{flex:1}}>
+                        <p style={{margin:0,fontSize:12,color:"#4ade80",fontWeight:500}}>{axtonMap.name}</p>
+                        <p style={{margin:0,fontSize:11,color:"#94a3b8"}}>{axtonMap.concepts.length} conceptos cargados globalmente</p>
+                      </div>
+                      <button onClick={()=>setTab("nomina")} style={{fontSize:11,color:"#60a5fa",background:"none",border:"1px solid #2563eb",borderRadius:6,padding:"4px 10px",cursor:"pointer"}}>Ver / cambiar →</button>
+                    </div>
+                  ):(
+                    <div style={{background:"rgba(146,64,14,.12)",border:"1px solid #92400e",borderRadius:8,padding:"10px 14px",fontSize:12,color:"#fbbf24"}}>
+                      ⚠ No hay mapa Axton cargado. Subilo en la pestaña <strong>Nómina</strong> → Conceptos Axton.
+                    </div>
+                  )
+                ):(
+                  clientMap?(
+                    <div style={{display:"flex",alignItems:"center",gap:12,background:"rgba(22,101,52,.12)",border:"1px solid #166534",borderRadius:8,padding:"10px 14px"}}>
+                      <span style={{fontSize:18}}>✅</span>
+                      <div style={{flex:1}}>
+                        <p style={{margin:0,fontSize:12,color:"#4ade80",fontWeight:500}}>{clientMap.name}</p>
+                        <p style={{margin:0,fontSize:11,color:"#94a3b8"}}>{clientMap.concepts.length} conceptos</p>
+                      </div>
+                      <button onClick={()=>setClientMap(null)} style={{color:"#64748b",background:"none",border:"none",cursor:"pointer",fontSize:12}}>✕</button>
+                    </div>
+                  ):(
+                    <label style={{display:"flex",alignItems:"center",gap:10,border:"1px dashed #7c3aed",borderRadius:8,padding:"12px 14px",cursor:"pointer",background:"rgba(124,58,237,.05)"}}>
+                      <input type="file" accept=".xlsx,.xls,.csv" style={{display:"none"}}
+                        onChange={e=>{const f=e.target.files?.[0];if(f)handleMeta4MapFile(f);e.target.value="";}}/>
+                      <span style={{fontSize:24}}>📁</span>
+                      <div>
+                        <p style={{margin:0,fontSize:12,color:"#c4b5fd",fontWeight:500}}>Subir mapa de conceptos Meta 4</p>
+                        <p style={{margin:0,fontSize:11,color:"#64748b"}}>Excel con hoja CONCEPTO_UNIDAD — auto-parseo + inferencia de tipo</p>
+                      </div>
+                    </label>
+                  )
+                )}
+                {/* Concept map preview with tipo toggle */}
+                {activeMap&&activeMap.concepts.length>0&&(
+                  <div style={{marginTop:12}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                      <span style={{fontSize:11,color:"#64748b",textTransform:"uppercase",letterSpacing:1}}>Vista previa ({Math.min(8,activeMap.concepts.length)} de {activeMap.concepts.length})</span>
+                    </div>
+                    <div style={{maxHeight:200,overflow:"auto",borderRadius:8,border:"1px solid #334155"}}>
+                      <table className="preview-table">
+                        <thead><tr><th>ID</th><th>Nombre</th><th>{selCli?.system==="axton"?"Grupo":"Unidad"}</th><th>Tipo valor</th></tr></thead>
+                        <tbody>{activeMap.concepts.slice(0,50).map((c,i)=>(
+                          <tr key={i}>
+                            <td style={{fontFamily:"monospace",color:"#22d3ee"}}>{c.id}</td>
+                            <td>{c.nombre}</td>
+                            <td style={{color:"#94a3b8",fontSize:10}}>{c.grupo||c.unidadNombre||""}</td>
+                            <td>
+                              <button onClick={()=>toggleTipoManual(activeMap,selCli?.system==="axton"?setAxtonMap:setClientMap,i)}
+                                style={{fontSize:10,padding:"2px 8px",borderRadius:4,cursor:"pointer",border:"none",fontWeight:600,
+                                  background:c.tipoValor==="cantidad"?"rgba(34,211,238,.15)":"rgba(167,139,250,.15)",
+                                  color:c.tipoValor==="cantidad"?"#22d3ee":"#c4b5fd"}}>
+                                {c.tipoValor==="cantidad"?"# Cantidad":"$ Monto"}{c.tipoManual?"*":""}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                      {activeMap.concepts.length>50&&<p style={{fontSize:11,color:"#64748b",textAlign:"center",padding:6}}>... y {activeMap.concepts.length-50} más</p>}
+                    </div>
+                    <p style={{fontSize:10,color:"#475569",marginTop:4}}>* = modificado manualmente · Click en el tipo para cambiarlo</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 3: Upload novedades */}
+            {selId&&(
+              <div style={{...S.card,marginBottom:12}}>
+                <h2 style={S.h2}>④ Archivo de novedades del cliente</h2>
+                {fileName?(
+                  <div>
+                    <div style={{display:"flex",alignItems:"center",gap:12,background:"rgba(51,65,85,.6)",borderRadius:8,padding:"10px 14px",border:"1px solid #475569"}}>
+                      <span style={{fontSize:22}}>📄</span>
+                      <div>
+                        <p style={{color:"#fff",fontWeight:500,fontSize:13,margin:0}}>{fileName}</p>
+                        <p style={{color:"#94a3b8",fontSize:11,margin:0}}>
+                          {dataRows.length} filas · {headers.length} cols · ERP: {SOURCE_ERPS[sourceErp]?.label}
+                          {isRowFormat&&<span style={{marginLeft:8,color:"#22d3ee"}}>🔁 Formato fila</span>}
+                        </p>
+                      </div>
+                      <button onClick={()=>{setFileName(null);setRawData(null);setValid(null);setStep(2);setAnalysis(null);setDetected({});setIsRowFormat(false);setColConcepto("");setColValor("");setColFecha("");}}
+                        style={{marginLeft:"auto",color:"#64748b",cursor:"pointer",background:"none",border:"none",fontSize:14,padding:4}}>✕</button>
+                    </div>
+                    <AnalysisPanel analysis={analysis} detected={detected}/>
+                    {rawData&&<div style={{marginTop:10}}><DataPreview data={rawData} headerRow={hRow} detected={detected}/></div>}
+                  </div>
+                ):(
+                  <DropZone label={`Subí el archivo de novedades de ${selCli?.name||"cliente"}`} onFile={handleNovFile}/>
+                )}
+              </div>
+            )}
+
+            {/* Step 4: Column mapping */}
+            {rawData&&step>=3&&(
+              <div style={{...S.card,marginBottom:12}} className="fade-in">
+                <h2 style={S.h2}>⑤ Mapeo de columnas</h2>
+                {isRowFormat?(
+                  <div>
+                    <div style={{display:"inline-flex",alignItems:"center",gap:6,background:"rgba(34,211,238,.08)",border:"1px solid #0e7490",borderRadius:6,padding:"5px 12px",marginBottom:12,fontSize:12,color:"#22d3ee"}}>
+                      🔁 Pass-through — confirmá las columnas clave
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                      {[["Legajo *",colLeg,setColLeg],["Nombre",colNom,setColNom],
+                        ["Código Concepto",colConcepto,setColConcepto],["Valor",colValor,setColValor],
+                        ["Fecha Imputación",colFecha,setColFecha]
+                      ].map(([lbl,val,setter],i)=>(
+                        <div key={i}>
+                          <label style={{display:"block",fontSize:11,color:"#94a3b8",marginBottom:4,textTransform:"uppercase",letterSpacing:1}}>{lbl}</label>
+                          <select value={val} onChange={e=>setter(e.target.value)} style={S.select}>
+                            <option value="">— no mapeada —</option>
+                            {headers.map((h,k)=><option key={k} value={String(h.idx)}>{h.label}</option>)}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ):(
+                  <div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+                      <div>
+                        <label style={{display:"block",fontSize:11,color:"#94a3b8",marginBottom:4,textTransform:"uppercase",letterSpacing:1}}>Columna LEGAJO *</label>
+                        <select value={colLeg} onChange={e=>setColLeg(e.target.value)} style={S.select}>
+                          <option value="">— no mapeada —</option>
+                          {headers.map((h,i)=><option key={i} value={String(h.idx)}>{h.label}{detected.legajo?.idx===h.idx?" ✓":""}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{display:"block",fontSize:11,color:"#94a3b8",marginBottom:4,textTransform:"uppercase",letterSpacing:1}}>Columna NOMBRE</label>
+                        <select value={colNom} onChange={e=>setColNom(e.target.value)} style={S.select}>
+                          <option value="">— no mapeada —</option>
+                          {headers.map((h,i)=><option key={i} value={String(h.idx)}>{h.label}{detected.nombre?.idx===h.idx?" ✓":""}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{borderTop:"1px solid #334155",paddingTop:14}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:conceptsOpen?10:0}}>
+                        <button onClick={()=>setConceptsOpen(o=>!o)}
+                          style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:0}}>
+                          <span style={{fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:2}}>
+                            {conceptsOpen?"▾":"▸"} Conceptos a exportar
+                          </span>
+                          <span style={{fontSize:10,color:"#475569"}}>({cMaps.length})</span>
+                        </button>
+                        {conceptsOpen&&(
+                          <button onClick={()=>setCMaps(m=>[...m,{code:"",name:"",col:"",tipoValor:"monto"}])}
+                            style={{fontSize:12,color:"#22d3ee",background:"none",border:"none",cursor:"pointer"}}>+ Agregar</button>
+                        )}
+                      </div>
+                      {conceptsOpen&&(
+                        <div>
+                          {cMaps.map((m,i)=>(
+                            <div key={i} style={{display:"flex",gap:6,alignItems:"center",marginBottom:6}}>
+                              <input placeholder="Código" value={m.code} onChange={e=>setCMaps(p=>p.map((x,j)=>j===i?{...x,code:e.target.value}:x))}
+                                style={{width:70,background:"#334155",border:"1px solid #475569",color:"#fff",borderRadius:6,padding:"5px 8px",fontSize:12,outline:"none"}}/>
+                              <input placeholder="Nombre" value={m.name} onChange={e=>setCMaps(p=>p.map((x,j)=>j===i?{...x,name:e.target.value}:x))}
+                                style={{flex:1,background:"#334155",border:"1px solid #475569",color:"#fff",borderRadius:6,padding:"5px 8px",fontSize:12,outline:"none"}}/>
+                              <select value={m.col} onChange={e=>setCMaps(p=>p.map((x,j)=>j===i?{...x,col:e.target.value}:x))}
+                                style={{width:160,background:"#334155",border:"1px solid #475569",color:"#fff",borderRadius:6,padding:"5px 8px",fontSize:12,outline:"none"}}>
+                                <option value="">— sin mapear —</option>
+                                {headers.map((h,k)=><option key={k} value={String(h.idx)}>{h.label}</option>)}
+                              </select>
+                              <button onClick={()=>setCMaps(p=>p.map((x,j)=>j===i?{...x,tipoValor:x.tipoValor==="monto"?"cantidad":"monto"}:x))}
+                                style={{fontSize:10,padding:"4px 8px",borderRadius:4,cursor:"pointer",border:"none",fontWeight:600,flexShrink:0,
+                                  background:m.tipoValor==="cantidad"?"rgba(34,211,238,.15)":"rgba(167,139,250,.15)",
+                                  color:m.tipoValor==="cantidad"?"#22d3ee":"#c4b5fd"}}>
+                                {m.tipoValor==="cantidad"?"#":"$"}
+                              </button>
+                              <button onClick={()=>setCMaps(p=>p.filter((_,j)=>j!==i))}
+                                style={{color:"#64748b",cursor:"pointer",background:"none",border:"none",fontSize:12}}>✕</button>
+                            </div>
+                          ))}
+                          {!cMaps.length&&<p style={{color:"#475569",fontSize:12,fontStyle:"italic"}}>Sin conceptos. Se agregarán del mapa si hay uno cargado.</p>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <button onClick={runValidation} disabled={colLeg===""}
+                  style={{...S.btn,...S.btnPrimary,width:"100%",marginTop:16,opacity:colLeg===""?.4:1,cursor:colLeg===""?"not-allowed":"pointer"}}>
+                  Validar datos →
+                </button>
+              </div>
+            )}
+
+           {/* Step 5: Validation results */}
+{valid&&step>=4&&(
+  <div style={{...S.card,marginBottom:12}} className="fade-in">
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+      <h2 style={{...S.h2,margin:0}}>⑥ Resultados de validación</h2>
+      <button onClick={downloadValidationXls}
+        style={{...S.btn,background:"#1e3a5f",color:"#60a5fa",border:"1px solid #2563eb",padding:"6px 14px",fontSize:12}}>
+        📥 Descargar reporte .xlsx
+      </button>
+    </div>
+    <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}}>
+      <StatPill label="Total filas" value={valid.total}/>
+      <StatPill label="Errores" value={valid.errors.length} color={valid.errors.length>0?"#f87171":"#4ade80"}/>
+      <StatPill label="Advertencias" value={valid.warnings.length} color={valid.warnings.length>0?"#fbbf24":"#4ade80"}/>
+      <div style={{display:"flex",alignItems:"center",gap:8,padding:"0 14px",borderRadius:12,
+        background:valid.ok?"rgba(22,101,52,.25)":"rgba(127,29,29,.25)",
+        color:valid.ok?"#4ade80":"#f87171",border:`1px solid ${valid.ok?"#166534":"#991b1b"}`}}>
+        <span>{valid.ok?"✓":"✕"}</span>
+        <span style={{fontSize:12,fontWeight:600}}>{valid.ok?"Listo para exportar":"Errores críticos"}</span>
+      </div>
+    </div>
+
+    {/* ── Secciones de issues ── */}
+    {(()=>{
+      const IssueBlock=({label,color,bg,isErr,children,count})=>{
+        const [open,setOpen]=React.useState(true);
+        if(!count)return null;
+        return(
+          <div style={{marginBottom:10}}>
+            <button onClick={()=>setOpen(o=>!o)}
+              style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:0,marginBottom:open?6:0,width:"100%",textAlign:"left"}}>
+              <span style={{fontSize:10,color,minWidth:10}}>{open?"▾":"▸"}</span>
+              <span style={{fontSize:11,color,fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>
+                {isErr?"⛔":"⚠"} {label}
+              </span>
+              <span style={{fontSize:11,color:"#64748b",marginLeft:4}}>({count})</span>
+            </button>
+            {open&&<div>{children}</div>}
+          </div>
+        );
+      };
+
+      /* Render genérico — lista plana */
+      const FlatList=({items,bg,isErr})=>(
+        <div style={{maxHeight:110,overflowY:"auto"}}>
+          {items.map((e,i)=>(
+            <div key={i} style={{fontSize:12,background:bg,borderRadius:4,padding:"4px 10px",marginBottom:2,display:"flex",gap:10,color:isErr?"#fca5a5":"#fde68a"}}>
+              <span style={{color:"#64748b",minWidth:44,flexShrink:0}}>Fila {e.row}</span>
+              <span style={{color:"#94a3b8",minWidth:55,fontFamily:"monospace",flexShrink:0}}>{e.leg}</span>
+              {e.nombre&&<span style={{color:"#cbd5e1",minWidth:110,flexShrink:0}}>{e.nombre}</span>}
+              <span style={{flex:1}}>{e.msg}</span>
+            </div>
+          ))}
+        </div>
+      );
+
+      /* Render agrupado con sub-colapsables */
+      const GroupedList=({groups,bg,isErr,groupLabel})=>{
+        const [openGroups,setOpenGroups]=React.useState({});
+        const toggle=k=>setOpenGroups(o=>({...o,[k]:!o[k]}));
+        return(
+          <div>
+            {groups.map(([key,items])=>(
+              <div key={key} style={{marginBottom:4}}>
+                <button onClick={()=>toggle(key)}
+                  style={{display:"flex",alignItems:"center",gap:6,width:"100%",background:bg,border:"none",borderRadius:4,
+                    padding:"5px 10px",cursor:"pointer",textAlign:"left"}}>
+                  <span style={{fontSize:10,color:"#94a3b8",minWidth:10}}>{openGroups[key]?"▾":"▸"}</span>
+                  <span style={{fontSize:12,fontFamily:"monospace",color:isErr?"#fca5a5":"#fde68a",fontWeight:600}}>{groupLabel} {key}</span>
+                  <span style={{fontSize:11,color:"#64748b",marginLeft:"auto"}}>{items.length} {items.length===1?"fila":"filas"}</span>
+                </button>
+                {openGroups[key]&&(
+                  <div style={{paddingLeft:12,marginTop:2}}>
+                    {items.map((e,i)=>(
+                      <div key={i} style={{fontSize:11,background:"rgba(0,0,0,.15)",borderRadius:3,padding:"3px 8px",marginBottom:2,
+                        display:"flex",gap:8,color:isErr?"#fca5a5":"#fde68a"}}>
+                        <span style={{color:"#64748b",minWidth:44,flexShrink:0}}>Fila {e.row}</span>
+                        <span style={{color:"#94a3b8",minWidth:55,fontFamily:"monospace",flexShrink:0}}>{e.leg}</span>
+                        {e.nombre&&<span style={{color:"#cbd5e1",flexShrink:0}}>{e.nombre}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      };
+
+      const issues=valid.issues;
+      const errBg="rgba(127,29,29,.12)";
+      const warnBg="rgba(146,64,14,.12)";
+
+      /* ── Agrupamiento: conceptoNoEnMapa por código ── */
+      const conMapaGroups=(()=>{
+        const m=new Map();
+        (issues.conceptoNoEnMapa||[]).forEach(e=>{
+          const match=e.msg.match(/Concepto\s+(\S+)/);
+          const key=match?match[1]:"?";
+          if(!m.has(key))m.set(key,[]);
+          m.get(key).push(e);
+        });
+        return [...m.entries()];
+      })();
+
+      /* ── Agrupamiento: fechasFuera por fecha ── */
+      const fechasGroups=(()=>{
+        const m=new Map();
+        (issues.fechasFuera||[]).forEach(e=>{
+          const match=e.msg.match(/"([^"]+)"/);
+          const key=match?match[1]:"?";
+          if(!m.has(key))m.set(key,[]);
+          m.get(key).push(e);
+        });
+        return [...m.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+      })();
+
+      /* ── Agrupamiento: duplicados por código de concepto ── */
+      const duplicadosGroups=(()=>{
+        const m=new Map();
+        (issues.duplicados||[]).forEach(e=>{
+          // Extraer código entre "Concepto " y " " o ")"
+          const match=e.msg.match(/Concepto\s+(\S+)/);
+          const key=match?match[1]:"?";
+          if(!m.has(key))m.set(key,[]);
+          m.get(key).push(e);
+        });
+        return [...m.entries()];
+      })();
+
+      return(
+        <>
+          <IssueBlock label="Legajo no figura en nómina" color="#f87171" bg={errBg} isErr={true} count={(issues.noEnNomina||[]).length}>
+            <FlatList items={issues.noEnNomina||[]} bg={errBg} isErr={true}/>
+          </IssueBlock>
+
+          <IssueBlock label="Legajo + Concepto duplicado" color="#f87171" bg={errBg} isErr={true} count={(issues.duplicados||[]).length}>
+            <GroupedList groups={duplicadosGroups} bg={errBg} isErr={true} groupLabel="Concepto"/>
+          </IssueBlock>
+
+          <IssueBlock label="Legajos vacíos" color="#f87171" bg={errBg} isErr={true} count={(issues.vacios||[]).length}>
+            <FlatList items={issues.vacios||[]} bg={errBg} isErr={true}/>
+          </IssueBlock>
+
+          <IssueBlock label="Concepto no está en el mapa del cliente" color="#fbbf24" bg={warnBg} isErr={false} count={(issues.conceptoNoEnMapa||[]).length}>
+            <GroupedList groups={conMapaGroups} bg={warnBg} isErr={false} groupLabel="Concepto"/>
+          </IssueBlock>
+
+          <IssueBlock label="Tipo de valor inconsistente (cantidad/monto)" color="#fbbf24" bg={warnBg} isErr={false} count={(issues.tipoValorInvalido||[]).length}>
+            <FlatList items={issues.tipoValorInvalido||[]} bg={warnBg} isErr={false}/>
+          </IssueBlock>
+
+          <IssueBlock label="Valores > $1.000.000" color="#fbbf24" bg={warnBg} isErr={false} count={(issues.valoresAltos||[]).length}>
+            <FlatList items={issues.valoresAltos||[]} bg={warnBg} isErr={false}/>
+          </IssueBlock>
+
+          <IssueBlock label={`Fechas fuera de ${MONTHS_ES[period.month-1]} ${period.year}`} color="#fbbf24" bg={warnBg} isErr={false} count={(issues.fechasFuera||[]).length}>
+            <GroupedList groups={fechasGroups} bg={warnBg} isErr={false} groupLabel="Fecha"/>
+          </IssueBlock>
+        </>
+      );
+    })()}
+
+    <button onClick={doExport} disabled={!valid.ok}
+      style={{...S.btn,...S.btnSuccess,width:"100%",marginTop:8,opacity:valid.ok?1:.4,cursor:valid.ok?"pointer":"not-allowed",fontSize:14}}>
+      📥 Generar archivo — {selCli?.system==="axton"?"Axton IT":META4_FORMATS[meta4Format]?.label}
+    </button>
+  </div>
+)}
+
+            {/* Done */}
+            {step===5&&(
+              <div className="fade-in" style={{background:"rgba(22,101,52,.18)",border:"1px solid #166534",borderRadius:12,padding:24,textAlign:"center"}}>
+                <div style={{fontSize:44,marginBottom:10}}>🎉</div>
+                <p style={{color:"#4ade80",fontWeight:700,fontSize:18}}>¡Archivo generado!</p>
+                <p style={{color:"#94a3b8",fontSize:13,marginTop:4}}>La descarga debería iniciarse automáticamente.</p>
+                <button onClick={()=>{setStep(1);setSelId("");resetProcessing();setSourceErp("otro");}}
+                  style={{...S.btn,...S.btnSecondary,marginTop:14}}>Procesar otro cliente →</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ CLIENTES ═══ */}
+        {tab==="clientes"&&(
+          <div style={{maxWidth:1100,margin:"0 auto"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <h2 style={{fontSize:20,fontWeight:700,color:"#fff",margin:0}}>Clientes <span style={{fontSize:13,fontWeight:400,color:"#64748b"}}>({clients.length})</span></h2>
+              <div style={{display:"flex",gap:10}}>
+                <label style={{cursor:"pointer",fontSize:12,color:"#22d3ee",display:"flex",alignItems:"center",gap:4,padding:"7px 12px",background:"#1e293b",border:"1px solid #334155",borderRadius:8}}>
+                  📥 Importar JSON
+                  <input type="file" accept=".json" style={{display:"none"}} onChange={e=>{
+                    const f=e.target.files?.[0];if(!f)return;
+                    const r=new FileReader();
+                    r.onload=ev=>{try{const c=JSON.parse(ev.target.result);saveClient({...c,id:null});}catch{alert("JSON inválido");}};
+                    r.readAsText(f);e.target.value="";
+                  }}/>
+                </label>
+                <button onClick={()=>{setEditCli({name:"",shortName:"",system:"meta4",orgId:"",convenio:"",concepts:[]});setModal(true);}}
+                  style={{...S.btn,...S.btnPrimary}}>+ Nuevo cliente</button>
+              </div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
+              {clients.map(c=>(
+                <div key={c.id} style={S.card}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                    <div>
+                      <h3 style={{fontWeight:700,color:"#fff",margin:0,fontSize:14}}>{c.name}</h3>
+                      {c.shortName&&<p style={{fontSize:11,color:"#64748b",margin:0}}>{c.shortName}</p>}
+                    </div>
+                    <span style={{...S.pill(SYSTEMS[c.system]?.text,SYSTEMS[c.system]?.bg,SYSTEMS[c.system]?.border)}}>{SYSTEMS[c.system]?.badge}</span>
+                  </div>
+                  <div style={{fontSize:11,color:"#64748b",marginBottom:12,lineHeight:1.7}}>
+                    <span>{SYSTEMS[c.system]?.label}</span>
+                    {c.orgId&&<span> · Org {c.orgId}</span>}
+                    {c.convenio&&<span> · {c.convenio}</span>}
+                  </div>
+                  <div style={{display:"flex",gap:6}}>
+                    <button onClick={()=>{setEditCli({...c,concepts:[...(c.concepts||[])]});setModal(true);}}
+                      style={{...S.btn,...S.btnSecondary,flex:1,fontSize:11,padding:"5px 0"}}>✏️ Editar</button>
+                    <button onClick={()=>{const b=new Blob([JSON.stringify(c,null,2)],{type:"application/json"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=`${c.shortName||c.name}.json`;a.click();URL.revokeObjectURL(u);}}
+                      style={{...S.btn,...S.btnSecondary,flex:1,fontSize:11,padding:"5px 0"}}>📤 Exportar</button>
+                    <button onClick={()=>{if(confirm(`¿Eliminar ${c.name}?`))setClients(p=>p.filter(x=>x.id!==c.id));}}
+                      style={{...S.btn,background:"#334155",color:"#64748b",fontSize:11,padding:"5px 10px"}}>🗑</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ NÓMINA ═══ */}
+        {tab==="nomina"&&(
+          <div style={{maxWidth:760,margin:"0 auto"}}>
+            <h2 style={{fontSize:20,fontWeight:700,color:"#fff",margin:"0 0 4px"}}>Nómina Activa</h2>
+            <p style={{color:"#94a3b8",fontSize:13,marginBottom:20}}>F2 Axton o cualquier Excel con Legajo + Nombre.</p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:14,marginBottom:20}}>
+              <StatPill label="Empleados" value={nomina.length} color="#22d3ee"/>
+              <div style={{background:"#1e293b",borderRadius:12,border:"1px solid #334155",padding:"12px 14px"}}>
+                <p style={{fontSize:11,color:"#64748b",margin:0}}>Última actualización</p>
+                <p style={{fontSize:12,color:"#cbd5e1",marginTop:2}}>{nomUpdated||"—"}</p>
+              </div>
+            </div>
+            <DropZone label="Subí la nómina activa" onFile={handleNominaFile}/>
+            {nomina.length>0&&(
+              <div style={{marginTop:20}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                  <h3 style={{fontSize:12,fontWeight:700,color:"#94a3b8",margin:0}}>Vista previa (primeros 20)</h3>
+                  <button onClick={()=>{if(confirm("¿Limpiar nómina?"))setNomina([]);}} style={{fontSize:11,color:"#f87171",background:"none",border:"none",cursor:"pointer"}}>🗑 Limpiar</button>
+                </div>
+                <div style={{borderRadius:10,border:"1px solid #334155",overflow:"hidden"}}>
+                  <table className="preview-table">
+                    <thead><tr>{["Legajo","Nombre","U.O.","Sueldo"].map(h=><th key={h}>{h}</th>)}</tr></thead>
+                    <tbody>{nomina.slice(0,20).map((e,i)=>(
+                      <tr key={i}>
+                        <td style={{color:"#22d3ee",fontFamily:"monospace"}}>{e.legajo}</td>
+                        <td>{e.nombre}</td><td style={{color:"#94a3b8"}}>{e.uo}</td><td style={{color:"#94a3b8"}}>{e.sueldo}</td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                  {nomina.length>20&&<p style={{fontSize:11,color:"#64748b",textAlign:"center",padding:6}}>... y {nomina.length-20} más</p>}
+                </div>
+              </div>
+            )}
+
+            {/* Axton concept map — global */}
+            <div style={{marginTop:32,paddingTop:24,borderTop:"1px solid #334155"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                <h3 style={{fontSize:14,fontWeight:700,color:"#60a5fa",margin:0}}>📋 Mapa de Conceptos — Axton IT</h3>
+                <span style={{fontSize:11,color:"#64748b"}}>Global · persiste entre sesiones</span>
+              </div>
+              <p style={{color:"#64748b",fontSize:12,marginBottom:14}}>Subí el ReporteConceptos.xlsx de Axton. Se usa para todos los clientes Axton y se guarda permanentemente.</p>
+              {axtonMap?(
+                <div style={{background:"#1e293b",borderRadius:10,border:"1px solid #166534",padding:14}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                    <span style={{fontSize:18}}>✅</span>
+                    <div style={{flex:1}}>
+                      <p style={{margin:0,color:"#4ade80",fontWeight:600,fontSize:12}}>{axtonMap.name}</p>
+                      <p style={{margin:0,color:"#94a3b8",fontSize:11}}>{axtonMap.concepts.length} conceptos · Actualizado: {axtonMap.updated}</p>
+                    </div>
+                    <button onClick={()=>{if(confirm("¿Limpiar mapa Axton?"))setAxtonMap(null);}} style={{fontSize:11,color:"#f87171",background:"none",border:"none",cursor:"pointer"}}>🗑 Limpiar</button>
+                  </div>
+                  <div style={{maxHeight:200,overflow:"auto",borderRadius:6,border:"1px solid #334155"}}>
+                    <table className="preview-table">
+                      <thead><tr><th>ID</th><th>Nombre</th><th>Grupo</th><th>Tipo Axton</th><th>Tipo Valor</th></tr></thead>
+                      <tbody>{axtonMap.concepts.slice(0,100).map((c,i)=>(
+                        <tr key={i}>
+                          <td style={{fontFamily:"monospace",color:"#60a5fa"}}>{c.id}</td>
+                          <td>{c.nombre}</td>
+                          <td style={{fontSize:10,color:"#94a3b8"}}>{c.grupo}</td>
+                          <td style={{fontSize:10,color:"#64748b"}}>{c.tipoAxton}</td>
+                          <td>
+                            <button onClick={()=>toggleTipoManual(axtonMap,setAxtonMap,i)}
+                              style={{fontSize:10,padding:"1px 6px",borderRadius:4,cursor:"pointer",border:"none",fontWeight:600,
+                                background:c.tipoValor==="cantidad"?"rgba(34,211,238,.15)":"rgba(167,139,250,.15)",
+                                color:c.tipoValor==="cantidad"?"#22d3ee":"#c4b5fd"}}>
+                              {c.tipoValor==="cantidad"?"# Cantidad":"$ Monto"}{c.tipoManual?"*":""}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                    {axtonMap.concepts.length>100&&<p style={{fontSize:11,color:"#64748b",textAlign:"center",padding:6}}>... y {axtonMap.concepts.length-100} más</p>}
+                  </div>
+                  <p style={{fontSize:10,color:"#475569",marginTop:6}}>* = modificado manualmente · Click en el tipo para cambiarlo</p>
+                </div>
+              ):(
+                <label style={{display:"flex",alignItems:"center",gap:12,border:"1px dashed #2563eb",borderRadius:10,padding:14,cursor:"pointer",background:"rgba(37,99,235,.05)"}}>
+                  <input type="file" accept=".xlsx,.xls,.csv" style={{display:"none"}}
+                    onChange={e=>{const f=e.target.files?.[0];if(f)handleAxtonMapFile(f);e.target.value="";}}/>
+                  <span style={{fontSize:26}}>📁</span>
+                  <div>
+                    <p style={{margin:0,fontSize:12,color:"#93c5fd",fontWeight:500}}>Subir ReporteConceptos.xlsx (Axton)</p>
+                    <p style={{margin:0,fontSize:11,color:"#64748b"}}>Auto-detecta columnas Numero/Concepto/Tipo/Grupo · Infiere tipo de valor por nombre</p>
+                  </div>
+                </label>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ HISTORIAL ═══ */}
+        {tab==="historial"&&(
+          <div style={{maxWidth:1100,margin:"0 auto"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <h2 style={{fontSize:20,fontWeight:700,color:"#fff",margin:0}}>Historial</h2>
+              {history.length>0&&<button onClick={()=>{if(confirm("¿Borrar todo?"))setHistory([]);}} style={{fontSize:12,color:"#f87171",background:"none",border:"none",cursor:"pointer"}}>🗑 Borrar todo</button>}
+            </div>
+            {!history.length?(
+              <div style={{textAlign:"center",padding:"80px 0",color:"#64748b"}}>
+                <div style={{fontSize:48,marginBottom:14}}>📜</div>
+                <p>Los archivos generados aparecerán acá</p>
+              </div>
+            ):(
+              <div style={{borderRadius:12,border:"1px solid #334155",overflow:"hidden"}}>
+                <table className="preview-table" style={{fontSize:13}}>
+                  <thead><tr>{["Fecha","Cliente","Sistema","ERP Origen","Período","Filas","Err.","Adv.","Archivo"].map(h=><th key={h}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {history.map(h=>(
+                      <tr key={h.id}>
+                        <td style={{fontSize:11,color:"#94a3b8"}}>{h.date}</td>
+                        <td style={{color:"#fff",fontWeight:500}}>{h.client}</td>
+                        <td><span style={{fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:4,background:"#334155",color:"#94a3b8"}}>{h.system?.toUpperCase()}</span></td>
+                        <td style={{fontSize:11,color:"#94a3b8"}}>{SOURCE_ERPS[h.sourceErp]?.label||"—"}</td>
+                        <td>{h.period}</td><td>{h.rows}</td>
+                        <td style={{color:h.errors>0?"#f87171":"#4ade80"}}>{h.errors}</td>
+                        <td style={{color:h.warnings>0?"#fbbf24":"#94a3b8"}}>{h.warnings}</td>
+                        <td style={{fontSize:11,color:"#22d3ee",fontFamily:"monospace"}}>{h.file}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ═══ CLIENT MODAL ═══ */}
+      {modal&&editCli&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,padding:16}}
+          onClick={e=>{if(e.target===e.currentTarget){setModal(false);setEditCli(null);}}}>
+          <div style={{background:"#1e293b",borderRadius:16,border:"1px solid #475569",width:"100%",maxWidth:560,maxHeight:"90vh",overflow:"auto"}}>
+            <div style={{padding:20,borderBottom:"1px solid #334155",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,background:"#1e293b",zIndex:10}}>
+              <h3 style={{fontSize:17,fontWeight:700,color:"#fff",margin:0}}>{editCli.id&&clients.find(x=>x.id===editCli.id)?"Editar cliente":"Nuevo cliente"}</h3>
+              <button onClick={()=>{setModal(false);setEditCli(null);}} style={{color:"#94a3b8",background:"none",border:"none",fontSize:20,cursor:"pointer",lineHeight:1}}>✕</button>
+            </div>
+            <div style={{padding:20}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+                <Field label="Nombre completo *" value={editCli.name} onChange={v=>setEditCli(p=>({...p,name:v}))}/>
+                <Field label="Nombre corto (archivos)" value={editCli.shortName} onChange={v=>setEditCli(p=>({...p,shortName:v}))} placeholder="ej: COELSA"/>
+              </div>
+              <div style={{marginBottom:14}}>
+                <label style={{display:"block",fontSize:11,color:"#94a3b8",marginBottom:8,textTransform:"uppercase",letterSpacing:1,fontWeight:700}}>Sistema de liquidación *</label>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  {Object.entries(SYSTEMS).map(([k,s])=>(
+                    <button key={k} onClick={()=>setEditCli(p=>({...p,system:k}))}
+                      style={{padding:"12px",borderRadius:8,border:`2px solid ${editCli.system===k?s.border:"#475569"}`,
+                        background:editCli.system===k?s.bg:"#334155",cursor:"pointer",textAlign:"center",transition:"all .2s"}}>
+                      <span style={{display:"block",fontSize:13,fontWeight:700,color:editCli.system===k?s.text:"#94a3b8"}}>{s.badge}</span>
+                      <span style={{fontSize:12,color:editCli.system===k?s.text:"#94a3b8"}}>{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {editCli.system==="axton"&&(
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+                  <Field label="Org ID" value={editCli.orgId||""} onChange={v=>setEditCli(p=>({...p,orgId:v}))} placeholder="ej: 3599"/>
+                  <Field label="Convenio / U.O." value={editCli.convenio||""} onChange={v=>setEditCli(p=>({...p,convenio:v}))} placeholder="ej: FUERA DE CONVENIO"/>
+                </div>
+              )}
+              <p style={{fontSize:11,color:"#475569",fontStyle:"italic",marginTop:8}}>Los conceptos se cargan desde el mapa de conceptos al procesar.</p>
+            </div>
+            <div style={{padding:20,borderTop:"1px solid #334155",display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button onClick={()=>{setModal(false);setEditCli(null);}} style={{...S.btn,...S.btnSecondary}}>Cancelar</button>
+              <button onClick={()=>saveClient(editCli)} disabled={!editCli.name.trim()}
+                style={{...S.btn,...S.btnPrimary,opacity:editCli.name.trim()?1:.4,fontWeight:700}}>Guardar cliente</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ NÓMINA MAP MODAL ═══ */}
+      {nominaMapModal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,padding:16}}>
+          <div style={{background:"#1e293b",borderRadius:16,border:"1px solid #475569",width:"100%",maxWidth:520,overflow:"hidden"}}>
+            <div style={{padding:"18px 20px",borderBottom:"1px solid #334155",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <h3 style={{margin:0,fontSize:15,fontWeight:700,color:"#fff"}}>Confirmar mapeo de columnas</h3>
+                <p style={{margin:"3px 0 0",fontSize:12,color:"#64748b"}}>Verificá que cada campo apunte a la columna correcta</p>
+              </div>
+              <button onClick={()=>setNominaMapModal(null)} style={{background:"none",border:"none",color:"#64748b",fontSize:20,cursor:"pointer",lineHeight:1}}>✕</button>
+            </div>
+            <div style={{padding:20,display:"flex",flexDirection:"column",gap:14}}>
+              {[
+                {key:"legajo",      label:"Legajo *",            required:true},
+                {key:"nombre",      label:"Nombre / Apellido"},
+                {key:"uo",          label:"U.O. / Convenio / Sector"},
+                {key:"fechaIngreso",label:"Fecha de ingreso"},
+              ].map(({key,label,required})=>(
+                <div key={key}>
+                  <label style={{display:"block",fontSize:11,color:"#94a3b8",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.06em",fontWeight:600}}>{label}</label>
+                  <select
+                    value={nominaMapModal[key]}
+                    onChange={e=>setNominaMapModal(p=>({...p,[key]:parseInt(e.target.value)}))}
+                    style={{width:"100%",background:"#0f172a",border:`1px solid ${required&&nominaMapModal[key]<0?"#ef4444":"#334155"}`,color:"#fff",borderRadius:8,padding:"8px 10px",fontSize:13,outline:"none"}}>
+                    <option value={-1}>— sin mapear —</option>
+                    {nominaMapModal.hdrs.map((h,i)=>(
+                      <option key={i} value={h.idx}>{h.label}</option>
+                    ))}
+                  </select>
+                  {required&&nominaMapModal[key]<0&&(
+                    <p style={{fontSize:11,color:"#ef4444",margin:"3px 0 0"}}>Campo requerido</p>
+                  )}
+                </div>
+              ))}
+              <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",marginTop:4}}>
+                <p style={{fontSize:11,color:"#64748b",margin:"0 0 6px",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em"}}>Vista previa (3 filas)</p>
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",fontSize:11,borderCollapse:"collapse"}}>
+                    <thead>
+                      <tr style={{borderBottom:"1px solid #1e293b"}}>
+                        {["Legajo","Nombre","U.O.","Fecha Ingreso"].map(h=>(
+                          <th key={h} style={{padding:"3px 8px",textAlign:"left",color:"#475569",fontWeight:600}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {nominaMapModal.data.slice(nominaMapModal.hr+1).filter(r=>r.some(c=>c&&String(c).trim())).slice(0,3).map((row,i)=>(
+                        <tr key={i}>
+                          <td style={{padding:"3px 8px",color:"#22d3ee",fontFamily:"monospace"}}>{nominaMapModal.legajo>=0?String(row[nominaMapModal.legajo]||""):"—"}</td>
+                          <td style={{padding:"3px 8px",color:"#e2e8f0"}}>{nominaMapModal.nombre>=0?String(row[nominaMapModal.nombre]||""):"—"}</td>
+                          <td style={{padding:"3px 8px",color:"#94a3b8"}}>{nominaMapModal.uo>=0?String(row[nominaMapModal.uo]||""):"—"}</td>
+                          <td style={{padding:"3px 8px",color:"#94a3b8"}}>{nominaMapModal.fechaIngreso>=0?String(row[nominaMapModal.fechaIngreso]||""):"—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div style={{padding:"14px 20px",borderTop:"1px solid #334155",display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button onClick={()=>setNominaMapModal(null)} style={{padding:"8px 18px",background:"#334155",border:"none",color:"#cbd5e1",borderRadius:8,fontSize:13,cursor:"pointer"}}>Cancelar</button>
+              <button
+                onClick={()=>confirmNominaMap(nominaMapModal)}
+                disabled={nominaMapModal.legajo<0}
+                style={{padding:"8px 18px",background:nominaMapModal.legajo>=0?"#0e7490":"#334155",border:"none",color:nominaMapModal.legajo>=0?"#fff":"#64748b",borderRadius:8,fontSize:13,fontWeight:700,cursor:nominaMapModal.legajo>=0?"pointer":"not-allowed"}}>
+                Importar nómina →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ CONCEPT MAP MODAL ═══ */}
+      {conceptMapModal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,padding:16}}>
+          <div style={{background:"#1e293b",borderRadius:16,border:"1px solid #475569",width:"100%",maxWidth:520,overflow:"hidden"}}>
+            <div style={{padding:"18px 20px",borderBottom:"1px solid #334155",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <h3 style={{margin:0,fontSize:15,fontWeight:700,color:"#fff"}}>Mapeo de columnas — Conceptos</h3>
+                <p style={{margin:"3px 0 0",fontSize:12,color:"#64748b"}}>Hoja: <span style={{color:"#c4b5fd"}}>{conceptMapModal.sheetName}</span></p>
+              </div>
+              <button onClick={()=>setConceptMapModal(null)} style={{background:"none",border:"none",color:"#64748b",fontSize:20,cursor:"pointer",lineHeight:1}}>✕</button>
+            </div>
+            <div style={{padding:20,display:"flex",flexDirection:"column",gap:14}}>
+              {[
+                {key:"id",     label:"ID / Código de concepto *", required:true},
+                {key:"nombre", label:"Nombre del concepto *",     required:true},
+                {key:"unidad", label:"Unidad / Tipo de valor (cantidad vs monto)"},
+                {key:"tipo",   label:"Tipo / Grupo (Remunerativo, etc.)"},
+              ].map(({key,label,required})=>(
+                <div key={key}>
+                  <label style={{display:"block",fontSize:11,color:"#94a3b8",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.06em",fontWeight:600}}>{label}</label>
+                  <select
+                    value={conceptMapModal[key]}
+                    onChange={e=>setConceptMapModal(p=>({...p,[key]:parseInt(e.target.value)}))}
+                    style={{width:"100%",background:"#0f172a",border:`1px solid ${required&&conceptMapModal[key]<0?"#ef4444":"#334155"}`,color:"#fff",borderRadius:8,padding:"8px 10px",fontSize:13,outline:"none"}}>
+                    <option value={-1}>— sin mapear —</option>
+                    {conceptMapModal.hdrs.map((h,i)=>(
+                      <option key={i} value={h.idx}>{h.label}</option>
+                    ))}
+                  </select>
+                  {required&&conceptMapModal[key]<0&&(
+                    <p style={{fontSize:11,color:"#ef4444",margin:"3px 0 0"}}>Campo requerido</p>
+                  )}
+                </div>
+              ))}
+              <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",marginTop:4}}>
+                <p style={{fontSize:11,color:"#64748b",margin:"0 0 6px",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em"}}>Vista previa (3 filas)</p>
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",fontSize:11,borderCollapse:"collapse"}}>
+                    <thead>
+                      <tr style={{borderBottom:"1px solid #1e293b"}}>
+                        {["ID","Nombre","Unidad","Tipo"].map(h=>(
+                          <th key={h} style={{padding:"3px 8px",textAlign:"left",color:"#475569",fontWeight:600}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {conceptMapModal.data.slice(conceptMapModal.hr+1).filter(r=>r.some(c=>c&&String(c).trim())).slice(0,3).map((row,i)=>(
+                        <tr key={i}>
+                          <td style={{padding:"3px 8px",color:"#c4b5fd",fontFamily:"monospace"}}>{conceptMapModal.id>=0?String(row[conceptMapModal.id]||""):"—"}</td>
+                          <td style={{padding:"3px 8px",color:"#e2e8f0"}}>{conceptMapModal.nombre>=0?String(row[conceptMapModal.nombre]||""):"—"}</td>
+                          <td style={{padding:"3px 8px",color:"#94a3b8"}}>{conceptMapModal.unidad>=0?String(row[conceptMapModal.unidad]||""):"—"}</td>
+                          <td style={{padding:"3px 8px",color:"#94a3b8"}}>{conceptMapModal.tipo>=0?String(row[conceptMapModal.tipo]||""):"—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div style={{padding:"14px 20px",borderTop:"1px solid #334155",display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button onClick={()=>setConceptMapModal(null)} style={{padding:"8px 18px",background:"#334155",border:"none",color:"#cbd5e1",borderRadius:8,fontSize:13,cursor:"pointer"}}>Cancelar</button>
+              <button
+                onClick={()=>confirmConceptMap(conceptMapModal)}
+                disabled={conceptMapModal.id<0||conceptMapModal.nombre<0}
+                style={{padding:"8px 18px",background:conceptMapModal.id>=0&&conceptMapModal.nombre>=0?"#5b21b6":"#334155",border:"none",
+                  color:conceptMapModal.id>=0&&conceptMapModal.nombre>=0?"#fff":"#64748b",borderRadius:8,fontSize:13,fontWeight:700,
+                  cursor:conceptMapModal.id>=0&&conceptMapModal.nombre>=0?"pointer":"not-allowed"}}>
+                Importar conceptos →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>,document.getElementById("root"));
+
+</script>
+</body>
+</html>

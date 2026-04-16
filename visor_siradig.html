@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visor SIRADIG — F1359</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #273549;
+  --border: #334155;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent: #3b82f6;
+  --accent2: #0ea5e9;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --header-h: 60px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+/* ── Header ── */
+.app-header { height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; position: sticky; top: 0; z-index: 100; }
+.app-header h1 { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -.3px; }
+.app-header .badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+.app-header .spacer { flex: 1; }
+.stats-bar { display: flex; gap: 16px; font-size: 12px; color: var(--text-muted); }
+.stats-bar span strong { color: var(--text); }
+
+/* ── Import Panel ── */
+.import-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 20px; }
+.drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 28px 20px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; position: relative; }
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: rgba(59,130,246,.07); }
+.drop-zone.loaded { border-color: var(--success); border-style: solid; }
+.drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.drop-zone .icon { font-size: 36px; margin-bottom: 8px; }
+.drop-zone h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.drop-zone p { font-size: 12px; color: var(--text-muted); }
+.drop-zone .file-list { margin-top: 10px; font-size: 11px; color: var(--success); text-align: left; max-height: 60px; overflow-y: auto; }
+
+/* ── Controls ── */
+.controls { display: flex; gap: 10px; padding: 0 20px 12px; align-items: center; flex-wrap: wrap; }
+.search-box { position: relative; flex: 1; min-width: 200px; max-width: 340px; }
+.search-box input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px 8px 36px; color: var(--text); font-size: 13px; outline: none; }
+.search-box input:focus { border-color: var(--accent); }
+.search-box .ico { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 15px; pointer-events: none; }
+select { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; outline: none; cursor: pointer; }
+select:focus { border-color: var(--accent); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: background .15s; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #2563eb; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { background: #059669; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-outline:hover { background: var(--surface2); }
+.controls .spacer { flex: 1; }
+
+/* ── Tabs ── */
+.tabs { display: flex; gap: 2px; padding: 0 20px 0; overflow-x: auto; border-bottom: 1px solid var(--border); }
+.tab { padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; white-space: nowrap; transition: color .15s, border-color .15s; user-select: none; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Table ── */
+.table-wrap { overflow: auto; padding: 0 20px 20px; max-height: calc(100vh - 280px); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead tr { background: var(--surface); position: sticky; top: 0; z-index: 10; }
+thead th { padding: 10px 12px; text-align: left; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
+thead th:hover { color: var(--text); }
+thead th .sort-icon { margin-left: 4px; opacity: .5; }
+thead th.sorted { color: var(--accent2); }
+thead th.sorted .sort-icon { opacity: 1; }
+tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
+tbody tr:hover { background: var(--surface2); }
+tbody tr.selected { background: rgba(59,130,246,.12); }
+tbody td { padding: 8px 12px; white-space: nowrap; color: var(--text); }
+tbody td.muted { color: var(--text-muted); }
+tbody td.amount { text-align: right; font-variant-numeric: tabular-nums; }
+tbody td.negative { color: var(--danger); }
+tbody td.zero { color: var(--text-muted); }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-state .ico { font-size: 48px; margin-bottom: 12px; }
+
+/* ── Detail Modal ── */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 900px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+.modal-header { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.modal-header h2 { font-size: 16px; font-weight: 700; flex: 1; }
+.modal-header .cuil { font-size: 12px; color: var(--text-muted); }
+.modal-close { background: transparent; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer; padding: 2px 6px; border-radius: 6px; }
+.modal-close:hover { background: var(--surface2); color: var(--text); }
+.modal-body { overflow-y: auto; padding: 16px 20px; }
+.reg-block { margin-bottom: 20px; }
+.reg-block h3 { font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+.reg-block h3 .reg-badge { background: var(--surface2); color: var(--text-muted); font-size: 11px; padding: 1px 8px; border-radius: 4px; }
+.field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.field-item { background: var(--surface2); border-radius: 8px; padding: 8px 12px; }
+.field-item .label { font-size: 10px; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; letter-spacing: .3px; }
+.field-item .value { font-size: 13px; color: var(--text); font-weight: 500; }
+.field-item .value.amount { font-variant-numeric: tabular-nums; }
+.field-item .value.zero { color: var(--text-muted); }
+.field-item .value.mark-yes { color: var(--success); }
+.field-item .value.mark-no { color: var(--text-muted); }
+
+/* ── Nómina mapping ── */
+.map-modal { max-width: 500px; }
+.map-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: center; margin-bottom: 10px; font-size: 13px; }
+.map-label { color: var(--text-muted); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+.no-data { display: none; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>Visor SIRADIG</h1>
+  </div>
+  <span class="badge">F1359 v2.0</span>
+  <div class="spacer"></div>
+  <div class="stats-bar" id="statsBar" style="display:none">
+    <span>Empleados: <strong id="statEmp">0</strong></span>
+    <span>Archivos TXT: <strong id="statFiles">0</strong></span>
+    <span>Período: <strong id="statPeriod">—</strong></span>
+    <span>CUIT Agente: <strong id="statCuit">—</strong></span>
+  </div>
+</header>
+
+<!-- Import Panel -->
+<div class="import-panel" id="importPanel">
+  <div class="drop-zone" id="dropTxt" ondragover="ev.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDropTxt(event)">
+    <input type="file" accept=".txt" multiple onchange="handleFilesTxt(this.files)">
+    <div class="icon">📄</div>
+    <h3>Archivos F1359 (.txt)</h3>
+    <p>Arrastrá uno o más archivos TXT del F1359<br>o hacé click para seleccionar</p>
+    <div class="file-list" id="txtFileList"></div>
+  </div>
+  <div class="drop-zone" id="dropXls" ondragover="ev.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDropXls(event)">
+    <input type="file" accept=".xls,.xlsx,.csv" onchange="handleFileNomina(this.files[0])">
+    <div class="icon">📊</div>
+    <h3>Nómina de Empleados (.xls / .xlsx)</h3>
+    <p>Debe contener columnas: CUIL, Legajo, Nombre<br>(con o sin guiones en el CUIL)</p>
+    <div class="file-list" id="xlsFileList"></div>
+  </div>
+</div>
+
+<!-- Nómina Column Mapping Modal -->
+<div class="modal-backdrop" id="mapModal" style="display:none">
+  <div class="modal map-modal">
+    <div class="modal-header">
+      <h2>Configurar columnas de la nómina</h2>
+      <button class="modal-close" onclick="document.getElementById('mapModal').style.display='none'">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-muted);margin-bottom:16px;font-size:13px">Seleccioná qué columna de tu archivo corresponde a cada campo:</p>
+      <div class="map-row"><span class="map-label">CUIL del empleado</span><select id="mapCuil"></select></div>
+      <div class="map-row"><span class="map-label">Legajo / ID Empleado</span><select id="mapLegajo"><option value="">— No disponible —</option></select></div>
+      <div class="map-row"><span class="map-label">Nombre (o Nombre+Apellido juntos)</span><select id="mapNombre"><option value="">— No disponible —</option></select></div>
+      <div class="map-row"><span class="map-label">Apellido (columna separada, opcional)</span><select id="mapApellido"><option value="">— No disponible —</option></select></div>
+      <div style="color:var(--text-muted);font-size:11px;margin-bottom:4px">Si Nombre y Apellido vienen en columnas separadas, se combinarán como "APELLIDO, Nombre".</div>
+      <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="document.getElementById('mapModal').style.display='none'">Cancelar</button>
+        <button class="btn btn-primary" onclick="applyNominaMapping()">Aplicar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main view (hidden until data loaded) -->
+<div id="mainView" style="display:none">
+  <div class="controls">
+    <div class="search-box">
+      <span class="ico">🔍</span>
+      <input type="text" id="searchInput" placeholder="Buscar por Legajo, CUIL o Nombre…" oninput="applyFilters()">
+    </div>
+    <div class="spacer"></div>
+    <button class="btn btn-success" onclick="exportExcel()">⬇ Exportar Excel</button>
+  </div>
+
+  <div class="tabs" id="tabsBar"></div>
+
+  <div class="table-wrap">
+    <table id="dataTable">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="ico">🔎</div>
+      <p>Sin resultados para la búsqueda actual</p>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-backdrop" id="detailModal" style="display:none" onclick="if(event.target===this)closeDetail()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px" id="detailLegajo"></div>
+        <h2 id="detailNombre"></h2>
+      </div>
+      <span class="cuil" id="detailCuil"></span>
+      <button class="modal-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  CONSTANTS & DEFINITIONS
+// ═══════════════════════════════════════════════════════════════════
+
+const TABLA1 = { '1':'ANUAL', '2':'FINAL', '3':'INFORMATIVA', '4':'ANUAL - DISTRACTO ENE-MAR' };
+const TABLA2 = { '1':'Sin beneficio', '2':'J/P/R - Ded. Específica (Art.125 Ley 24.241)' };
+const TABLA3 = { '00':'0%','01':'5%','02':'9%','03':'12%','04':'15%','05':'19%','06':'23%','07':'27%','08':'31%','09':'35%' };
+
+const REG_DEFS = {
+  '01': {
+    name: 'Cabecera',
+    len: 38,
+    fields: [
+      { key:'tipo_registro',    label:'Tipo Registro',          pos:[1,2],   type:'str' },
+      { key:'cuit_agente',      label:'CUIT Agente Retención',  pos:[3,13],  type:'cuit' },
+      { key:'periodo',          label:'Período',                pos:[14,19], type:'str' },
+      { key:'secuencia',        label:'Secuencia',              pos:[20,21], type:'num' },
+      { key:'cod_impuesto',     label:'Cód. Impuesto',          pos:[22,25], type:'str' },
+      { key:'cod_concepto',     label:'Cód. Concepto',          pos:[26,28], type:'str' },
+      { key:'nro_formulario',   label:'N° Formulario',          pos:[29,32], type:'str' },
+      { key:'tipo_presentacion',label:'Tipo Presentación',      pos:[33,33], type:'cod', table:'TABLA1' },
+      { key:'version',          label:'Versión Sistema',        pos:[34,38], type:'str' },
+    ]
+  },
+  '02': {
+    name: 'Datos del Trabajador',
+    len: 36,
+    fields: [
+      { key:'tipo_registro',    label:'Tipo Registro',           pos:[1,2],   type:'str' },
+      { key:'cuil',             label:'CUIL',                    pos:[3,13],  type:'cuil' },
+      { key:'periodo_desde',    label:'Período Trabajado Desde', pos:[14,21], type:'date' },
+      { key:'periodo_hasta',    label:'Período Trabajado Hasta', pos:[22,29], type:'date' },
+      { key:'meses',            label:'Meses',                   pos:[30,31], type:'num' },
+      { key:'beneficio',        label:'Beneficio',               pos:[32,32], type:'cod', table:'TABLA2' },
+      { key:'personal_pozo',    label:'Personal Pozo CCT 396',   pos:[33,33], type:'mark' },
+      { key:'actor_actores',    label:'Actor Asoc. Actores',     pos:[34,34], type:'mark' },
+      { key:'medida_cautelar',  label:'Medida Cautelar',         pos:[35,35], type:'mark' },
+      { key:'poder_judicial',   label:'Poder Judicial (Art.82)', pos:[36,36], type:'mark' },
+    ]
+  },
+  '03': {
+    name: 'Remuneraciones Gravadas',
+    len: 178,
+    fields: [
+      { key:'tipo_registro',        label:'Tipo Registro',                        pos:[1,2],     type:'str' },
+      { key:'cuil',                 label:'CUIL',                                 pos:[3,13],    type:'cuil' },
+      { key:'rem_bruta',            label:'Remuneración Bruta',                   pos:[14,28],   type:'amount' },
+      { key:'retrib_no_hab',        label:'Retrib. No Habituales',                pos:[29,43],   type:'amount' },
+      { key:'sac_primera',          label:'SAC Primera Cuota',                    pos:[44,58],   type:'amount' },
+      { key:'sac_segunda',          label:'SAC Segunda Cuota',                    pos:[59,73],   type:'amount' },
+      { key:'otros_rem_bruta',      label:'Otros Empl. - Rem. Bruta',             pos:[74,88],   type:'amount' },
+      { key:'otros_retrib_no_hab',  label:'Otros Empl. - Retrib. No Hab.',        pos:[89,103],  type:'amount' },
+      { key:'otros_sac_primera',    label:'Otros Empl. - SAC Primera',            pos:[104,118], type:'amount' },
+      { key:'otros_sac_segunda',    label:'Otros Empl. - SAC Segunda',            pos:[119,133], type:'amount' },
+      { key:'ajustes_ant_grav',     label:'Ajustes Per. Ant. Gravadas',           pos:[134,148], type:'amount' },
+      { key:'otros_ajustes_grav',   label:'Otros Empl. - Ajustes Ant. Grav.',     pos:[149,163], type:'amount' },
+      { key:'total_rem_gravada',    label:'TOTAL REMUNERACIÓN GRAVADA',           pos:[164,178], type:'amount', total:true },
+    ]
+  },
+  '04': {
+    name: 'Remuneraciones Exentas / No Alcanzadas',
+    len: 313,
+    fields: [
+      { key:'tipo_registro',          label:'Tipo Registro',                             pos:[1,2],     type:'str' },
+      { key:'cuil',                   label:'CUIL',                                      pos:[3,13],    type:'cuil' },
+      { key:'asig_familiares',        label:'Asignaciones Familiares',                   pos:[14,28],   type:'amount' },
+      { key:'int_prestamos',          label:'Intereses Préstamos al Empleador',          pos:[29,43],   type:'amount' },
+      { key:'indemnizaciones',        label:'Indemnizaciones (Anexo II)',                pos:[44,58],   type:'amount' },
+      { key:'rem_tierra_fuego',       label:'Rem. Tierra del Fuego (Ley 19.640)',        pos:[59,73],   type:'amount' },
+      { key:'rem_pozo',               label:'Rem. Pozo CCT 396 (Ley 26.176)',            pos:[74,88],   type:'amount' },
+      { key:'cursos_seminarios',      label:'Cursos y Seminarios',                       pos:[89,103],  type:'amount' },
+      { key:'indumentaria',           label:'Indumentaria/Equipamiento (Empleador)',     pos:[104,118], type:'amount' },
+      { key:'ajustes_ant_exent',      label:'Ajustes Per. Ant. Exentas',                pos:[119,133], type:'amount' },
+      { key:'otros_asig_fam',         label:'Otros Empl. - Asig. Familiares',           pos:[134,148], type:'amount' },
+      { key:'otros_int_prest',        label:'Otros Empl. - Int. Préstamos',             pos:[149,163], type:'amount' },
+      { key:'otros_indemn',           label:'Otros Empl. - Indemnizaciones',            pos:[164,178], type:'amount' },
+      { key:'otros_tierra_fuego',     label:'Otros Empl. - Tierra del Fuego',           pos:[179,193], type:'amount' },
+      { key:'otros_pozo',             label:'Otros Empl. - Pozo CCT 396',               pos:[194,208], type:'amount' },
+      { key:'otros_cursos',           label:'Otros Empl. - Cursos',                     pos:[209,223], type:'amount' },
+      { key:'otros_indumentaria',     label:'Otros Empl. - Indumentaria',               pos:[224,238], type:'amount' },
+      { key:'otros_ajustes_exent',    label:'Otros Empl. - Ajustes Ant. Exentas',       pos:[239,253], type:'amount' },
+      { key:'total_no_gravada',       label:'TOTAL NO GRAVADA / EXENTA',                pos:[254,268], type:'amount', total:true },
+      { key:'total_remuneraciones',   label:'TOTAL REMUNERACIONES',                     pos:[269,283], type:'amount', total:true },
+      { key:'rem_poder_judicial',     label:'Rem. Poder Judicial (Art.82)',              pos:[284,298], type:'amount' },
+      { key:'otros_rem_poder_judicial',label:'Otros Empl. - Rem. Poder Judicial',       pos:[299,313], type:'amount' },
+    ]
+  },
+  '05': {
+    name: 'Deducciones Generales',
+    len: 478,
+    fields: [
+      { key:'tipo_registro',        label:'Tipo Registro',                               pos:[1,2],     type:'str' },
+      { key:'cuil',                 label:'CUIL',                                        pos:[3,13],    type:'cuil' },
+      { key:'ap_anses',             label:'Aportes Jubil. ANSES',                        pos:[14,28],   type:'amount' },
+      { key:'otros_ap_anses',       label:'Otros Empl. - Aportes ANSES',                pos:[29,43],   type:'amount' },
+      { key:'ap_cajas_prov',        label:'Aportes Cajas Prov./Prof.',                   pos:[44,58],   type:'amount' },
+      { key:'otros_ap_cajas_prov',  label:'Otros Empl. - Cajas Prov.',                  pos:[59,73],   type:'amount' },
+      { key:'ap_obras_sociales',    label:'Aportes Obras Sociales',                      pos:[74,88],   type:'amount' },
+      { key:'otros_ap_ob_soc',      label:'Otros Empl. - Obras Sociales',               pos:[89,103],  type:'amount' },
+      { key:'cuotas_sindicales',    label:'Cuotas Sindicales',                           pos:[104,118], type:'amount' },
+      { key:'otros_cuotas_sind',    label:'Otros Empl. - Cuotas Sindicales',            pos:[119,133], type:'amount' },
+      { key:'cuotas_medico',        label:'Cuotas Médico Asistenciales',                 pos:[134,148], type:'amount' },
+      { key:'primas_seguro_muerte', label:'Primas Seguro Muerte',                        pos:[149,163], type:'amount' },
+      { key:'seg_muerte_mixtos',    label:'Seg. Muerte/Mixtos (SSN)',                    pos:[164,178], type:'amount' },
+      { key:'fci_retiro',           label:'FCI Fines de Retiro',                         pos:[179,193], type:'amount' },
+      { key:'gastos_sepelio',       label:'Gastos de Sepelio',                           pos:[194,208], type:'amount' },
+      { key:'amort_rodados',        label:'Amort. Rodados (Corredores)',                  pos:[209,223], type:'amount' },
+      { key:'donaciones',           label:'Donaciones (Art.26 inc.e/f LIG)',             pos:[224,238], type:'amount' },
+      { key:'alquileres_40',        label:'Alquileres 40% (Art.85 inc.h)',               pos:[239,253], type:'amount' },
+      { key:'desc_obligatorios',    label:'Descuentos Obligatorios (Ley)',               pos:[254,268], type:'amount' },
+      { key:'honorarios_asist',     label:'Honorarios Asistencia Sanitaria',             pos:[269,283], type:'amount' },
+      { key:'int_hipotecarios',     label:'Intereses Hipotecarios',                      pos:[284,298], type:'amount' },
+      { key:'ap_sgr',               label:'Aportes Cap. Soc. SGR',                       pos:[299,313], type:'amount' },
+      { key:'serv_domestico',       label:'Servicio Doméstico',                          pos:[314,328], type:'amount' },
+      { key:'cajas_complement',     label:'Cajas Complementarias de Previsión',          pos:[329,343], type:'amount' },
+      { key:'fondos_compensadores', label:'Fondos Compensadores',                        pos:[344,358], type:'amount' },
+      { key:'otros_ap_jub',         label:'Otros Aportes Jubil. (ANSES Autón.)',         pos:[359,373], type:'amount' },
+      { key:'seg_retiro_privados',  label:'Seguros Retiro Privados (SSN)',               pos:[374,388], type:'amount' },
+      { key:'indumentaria_empleado',label:'Indumentaria/Equipamiento (Empleado)',        pos:[389,403], type:'amount' },
+      { key:'serv_educativos',      label:'Servicios Educativos Cargas Familia',         pos:[404,418], type:'amount' },
+      { key:'alquileres_10',        label:'Alquileres 10% (Art.85 inc.k)',               pos:[419,433], type:'amount' },
+      { key:'antartida',            label:'Antártida Argentina',                         pos:[434,448], type:'amount' },
+      { key:'actores_represent',    label:'Actores - Retribución Representantes',        pos:[449,463], type:'amount' },
+      { key:'total_ded_generales',  label:'TOTAL DEDUCCIONES GENERALES',                pos:[464,478], type:'amount', total:true },
+    ]
+  },
+  '06': {
+    name: 'Deducciones Art. 30',
+    len: 160,
+    fields: [
+      { key:'tipo_registro',       label:'Tipo Registro',                         pos:[1,2],     type:'str' },
+      { key:'cuil',                label:'CUIL',                                  pos:[3,13],    type:'cuil' },
+      { key:'gan_no_imponible',    label:'Ganancia No Imponible',                 pos:[14,28],   type:'amount' },
+      { key:'conyuge',             label:'Cónyuge / Unión Convivencial',          pos:[29,43],   type:'amount' },
+      { key:'hijos_50_cant',       label:'Cant. Hijos/Hijastros 50%',             pos:[44,45],   type:'num' },
+      { key:'hijos_100_cant',      label:'Cant. Hijos/Hijastros 100%',            pos:[46,47],   type:'num' },
+      { key:'hijos_monto',         label:'Hijos/Hijastros ($)',                   pos:[48,62],   type:'amount' },
+      { key:'hijos_incap_50_cant', label:'Cant. Hijos Incap. 50%',               pos:[63,64],   type:'num' },
+      { key:'hijos_incap_100_cant',label:'Cant. Hijos Incap. 100%',              pos:[65,66],   type:'num' },
+      { key:'hijos_incap_monto',   label:'Hijos Incapacitados ($)',               pos:[67,81],   type:'amount' },
+      { key:'total_cargas_fam',    label:'TOTAL CARGAS DE FAMILIA',               pos:[82,96],   type:'amount', total:true },
+      { key:'ded_especial',        label:'Deducción Especial',                    pos:[97,111],  type:'amount' },
+      { key:'ded_esp_adicional',   label:'Ded. Especial Adic. (12va Parte)',      pos:[112,126], type:'amount' },
+      { key:'ded_especifica',      label:'Deducción Específica',                  pos:[127,141], type:'amount' },
+      { key:'total_ded_art30',     label:'TOTAL DEDUCCIONES ART. 30',             pos:[142,156], type:'amount', total:true },
+      { key:'hijos_18_24_50',      label:'Cant. Hijos 18-24 Educ. 50%',          pos:[157,158], type:'num' },
+      { key:'hijos_18_24_100',     label:'Cant. Hijos 18-24 Educ. 100%',         pos:[159,160], type:'num' },
+    ]
+  },
+  '07': {
+    name: 'Pagos a Cuenta',
+    len: 178,
+    fields: [
+      { key:'tipo_registro',  label:'Tipo Registro',                                    pos:[1,2],     type:'str' },
+      { key:'cuil',           label:'CUIL',                                             pos:[3,13],    type:'cuil' },
+      { key:'rg2281',         label:'RG 2281 - Retenciones Aduaneras',                  pos:[14,28],   type:'amount' },
+      { key:'rg2111_cred_deb',label:'RG 2111 - Créditos y Débitos Bancarios',          pos:[29,43],   type:'amount' },
+      { key:'rg2111_fondos',  label:'RG 2111 - Movimientos de Fondos',                 pos:[44,58],   type:'amount' },
+      { key:'rg3819_agencias',label:'RG 3819 - Servicios Exterior (Agencias)',         pos:[59,73],   type:'amount' },
+      { key:'rg3819_transp',  label:'RG 3819 - Transporte Fuera del País',             pos:[74,88],   type:'amount' },
+      { key:'rg5617_a',       label:'RG 5617 inc.a - Compra Divisas Atesoramiento',    pos:[89,103],  type:'amount' },
+      { key:'rg5617_b',       label:'RG 5617 inc.b - Bienes/Servicios Exterior',       pos:[104,118], type:'amount' },
+      { key:'rg5617_c',       label:'RG 5617 inc.c - Servicios No Residentes',         pos:[119,133], type:'amount' },
+      { key:'rg5617_d',       label:'RG 5617 inc.d - Servicios Exterior (Agencias)',   pos:[134,148], type:'amount' },
+      { key:'rg5617_e',       label:'RG 5617 inc.e - Transporte Exterior',             pos:[149,163], type:'amount' },
+      { key:'total_pagos_cuenta',label:'TOTAL PAGOS A CUENTA',                         pos:[164,178], type:'amount', total:true },
+    ]
+  },
+  '08': {
+    name: 'Cálculo del Impuesto',
+    len: 105,
+    fields: [
+      { key:'tipo_registro',        label:'Tipo Registro',                         pos:[1,2],    type:'str' },
+      { key:'cuil',                 label:'CUIL',                                  pos:[3,13],   type:'cuil' },
+      { key:'rem_sujeta_impuesto',  label:'Remuneración Sujeta a Impuesto',        pos:[14,28],  type:'amount', total:true },
+      { key:'alicuota',             label:'Alícuota Art. 94',                      pos:[29,30],  type:'cod', table:'TABLA3' },
+      { key:'impuesto_determinado', label:'Impuesto Determinado',                  pos:[31,45],  type:'amount' },
+      { key:'impuesto_retenido',    label:'Impuesto Retenido',                     pos:[46,60],  type:'amount' },
+      { key:'subtotal_saldo',       label:'Subtotal Saldo (antes Autopagos)',       pos:[61,75],  type:'amount' },
+      { key:'auto_retenido_rg5683', label:'Impuesto Auto-retenido RG 5683',        pos:[76,90],  type:'amount' },
+      { key:'saldo_determinado',    label:'SALDO DETERMINADO',                     pos:[91,105], type:'amount', total:true },
+    ]
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════
+
+let state = {
+  cabecera: null,          // reg 01 data
+  employees: {},           // cuil -> { reg02, reg03, ... reg08 }
+  nomina: {},              // cuil -> { legajo, nombre }
+  nominaRaw: [],           // raw rows from XLS
+  nominaCols: [],          // column names
+  nominaMapping: { cuil: null, legajo: null, nombre: null, apellido: null },
+  currentTab: 'resumen',
+  search: '',
+  sortCol: null,
+  sortDir: 1,
+  txtFileCount: 0,
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════════════
+
+function normalizeCuil(v) {
+  // Handle Excel-stored numbers (may lose leading zeros or use scientific notation)
+  const str = typeof v === 'number' ? Math.round(v).toString() : String(v ?? '');
+  return str.replace(/[^0-9]/g, '');
+}
+
+function formatCuil(v) {
+  const c = normalizeCuil(v);
+  if (c.length === 11) return `${c.slice(0,2)}-${c.slice(2,10)}-${c[10]}`;
+  return v;
+}
+
+function formatDate(v) {
+  if (!v || v.length !== 8 || v === '00000000') return v;
+  return `${v.slice(6,8)}/${v.slice(4,6)}/${v.slice(0,4)}`;
+}
+
+function parseCents(str) {
+  const n = parseInt(str, 10);
+  return isNaN(n) ? 0 : n;
+}
+
+function formatAmount(cents, hideZero = false) {
+  if (hideZero && cents === 0) return '';
+  const val = cents / 100;
+  return '$ ' + val.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatAmountRaw(cents) {
+  return cents / 100;
+}
+
+function getTable(tableName) {
+  if (tableName === 'TABLA1') return TABLA1;
+  if (tableName === 'TABLA2') return TABLA2;
+  if (tableName === 'TABLA3') return TABLA3;
+  return {};
+}
+
+function parseField(line, field) {
+  const raw = line.slice(field.pos[0]-1, field.pos[1]);
+  switch (field.type) {
+    case 'amount': return parseCents(raw);
+    case 'num':    return parseInt(raw, 10) || 0;
+    case 'date':   return raw.trim();
+    case 'cuil':   return raw.trim();
+    case 'cuit':   return raw.trim();
+    case 'mark':   return raw.trim();
+    case 'cod':    return raw.trim();
+    default:       return raw.trim();
+  }
+}
+
+function displayField(value, field) {
+  switch (field.type) {
+    case 'amount': return formatAmount(value, true);
+    case 'date':   return formatDate(value);
+    case 'cuil':
+    case 'cuit':   return formatCuil(value);
+    case 'mark':   return value === '1' ? 'Sí' : 'No';
+    case 'cod': {
+      const t = getTable(field.table);
+      return t[value] ? `${value} - ${t[value]}` : value;
+    }
+    default: return value;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  TXT PARSER
+// ═══════════════════════════════════════════════════════════════════
+
+function parseTxtFile(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  for (const line of lines) {
+    const tipo = line.slice(0, 2);
+    if (!REG_DEFS[tipo]) continue;
+    const def = REG_DEFS[tipo];
+    const rec = {};
+    for (const f of def.fields) {
+      rec[f.key] = parseField(line, f);
+    }
+    if (tipo === '01') {
+      state.cabecera = rec;
+    } else {
+      const cuil = normalizeCuil(rec.cuil);
+      if (!state.employees[cuil]) state.employees[cuil] = {};
+      state.employees[cuil][tipo] = rec;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  FILE HANDLERS
+// ═══════════════════════════════════════════════════════════════════
+
+function handleDropTxt(ev) {
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drag-over');
+  const files = [...ev.dataTransfer.files].filter(f => f.name.toLowerCase().endsWith('.txt'));
+  if (files.length) handleFilesTxt(files);
+}
+
+function handleFilesTxt(files) {
+  const arr = [...files];
+  state.txtFileCount += arr.length;
+  let pending = arr.length;
+  arr.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      parseTxtFile(e.target.result);
+      pending--;
+      if (pending === 0) finalizeTxtLoad(arr);
+    };
+    reader.readAsText(file, 'utf-8');
+  });
+}
+
+function finalizeTxtLoad(files) {
+  const listEl = document.getElementById('txtFileList');
+  listEl.innerHTML = files.map(f => `✓ ${f.name}`).join('<br>');
+  document.getElementById('dropTxt').classList.add('loaded');
+  document.getElementById('statFiles').textContent = state.txtFileCount;
+  document.getElementById('statEmp').textContent = Object.keys(state.employees).length;
+  if (state.cabecera) {
+    const p = state.cabecera.periodo;
+    document.getElementById('statPeriod').textContent = p ? `${p.slice(0,4)} P${p.slice(4)}` : '—';
+    document.getElementById('statCuit').textContent = formatCuil(state.cabecera.cuit_agente);
+  }
+  renderApp();
+}
+
+function handleDropXls(ev) {
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drag-over');
+  const file = ev.dataTransfer.files[0];
+  if (file) handleFileNomina(file);
+}
+
+function handleFileNomina(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    if (!rows.length) { alert('El archivo no tiene datos'); return; }
+    state.nominaRaw = rows;
+    state.nominaCols = Object.keys(rows[0]);
+    document.getElementById('xlsFileList').innerHTML = `✓ ${file.name} (${rows.length} filas)`;
+    document.getElementById('dropXls').classList.add('loaded');
+    // Try auto-detect
+    autoDetectNomina();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function autoDetectNomina() {
+  const cols = state.nominaCols;
+
+  // Normalize a column header: lowercase, remove non-alphanumeric
+  const norm = c => c.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // Find first column whose normalized name includes ANY of the given keywords
+  const find = (kws) => cols.find(c => {
+    const n = norm(c);
+    return kws.some(k => n.includes(k));
+  }) || '';
+
+  // CUIL: cuil, cuit, c.u.i.l → normalized: cuil, cuit
+  const cuilCol = find(['cuil','cuit']);
+
+  // Legajo: legajo, leg, numleg, codleg, idempl, codempl, nroempl, numempl, idleg, codigoleg, codleg, idunico
+  // Also bare "id" or "codigo" columns — but only if nothing more specific found
+  const legajoCol = find(['legajo','numleg','codleg','idempl','codempl','nroempl','numempl','nroleg','idleg','nrodeleg'])
+    || find(['codigo','idemp'])
+    || find(['id']); // last resort: column named exactly "id" or starting with "id"
+
+  // Apellido y Nombre: puede venir junto o separado
+  // Columna con ambos: "nombre y apellido", "apellido y nombre", "apellidonom", etc.
+  const nombreApellidoCol = find(['nombrey','ynombre','apellidonom','nombreyape','apellidonombre','nombreaype','nombreape']);
+  // Columnas separadas
+  const soloNombreCol  = find(['nombre']);
+  const soloApellidoCol = find(['apellido','apell']);
+
+  if (!cuilCol) {
+    openMapModal();
+    return;
+  }
+
+  // Prefer combined column; else use separate
+  let nombreFinal = '', apellidoFinal = '';
+  if (nombreApellidoCol) {
+    nombreFinal = nombreApellidoCol;
+  } else {
+    nombreFinal  = soloNombreCol;
+    apellidoFinal = soloApellidoCol;
+  }
+
+  state.nominaMapping = {
+    cuil:     cuilCol,
+    legajo:   legajoCol,
+    nombre:   nombreFinal,
+    apellido: apellidoFinal,
+  };
+  buildNomina();
+}
+
+function openMapModal() {
+  const opts = ['', ...state.nominaCols].map(c => `<option value="${c}">${c || '— No disponible —'}</option>`).join('');
+  ['mapCuil','mapLegajo','mapNombre','mapApellido'].forEach(id => document.getElementById(id).innerHTML = opts);
+  // Pre-select detected values
+  const m = state.nominaMapping;
+  if (m.cuil)     document.getElementById('mapCuil').value     = m.cuil;
+  if (m.legajo)   document.getElementById('mapLegajo').value   = m.legajo;
+  if (m.nombre)   document.getElementById('mapNombre').value   = m.nombre;
+  if (m.apellido) document.getElementById('mapApellido').value = m.apellido;
+  document.getElementById('mapModal').style.display = 'flex';
+}
+
+function applyNominaMapping() {
+  state.nominaMapping = {
+    cuil:     document.getElementById('mapCuil').value,
+    legajo:   document.getElementById('mapLegajo').value,
+    nombre:   document.getElementById('mapNombre').value,
+    apellido: document.getElementById('mapApellido').value,
+  };
+  document.getElementById('mapModal').style.display = 'none';
+  buildNomina();
+}
+
+function buildNomina() {
+  const { cuil, legajo, nombre, apellido } = state.nominaMapping;
+  state.nomina = {};
+  for (const row of state.nominaRaw) {
+    const c = normalizeCuil(row[cuil] ?? '');
+    if (!c) continue;
+    const nombreVal   = nombre   ? String(row[nombre]   ?? '').trim() : '';
+    const apellidoVal = apellido ? String(row[apellido] ?? '').trim() : '';
+    // Combine as "APELLIDO, Nombre" when both columns exist
+    const fullName = apellidoVal && nombreVal ? `${apellidoVal}, ${nombreVal}`
+                   : apellidoVal || nombreVal;
+    state.nomina[c] = {
+      legajo: legajo ? String(row[legajo] ?? '') : '',
+      nombre: fullName,
+    };
+  }
+  renderApp();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════════════
+
+const TAB_DEFS = [
+  { id: 'resumen', label: 'Resumen General' },
+  { id: '02', label: 'Reg. 02 – Trabajador' },
+  { id: '03', label: 'Reg. 03 – Rem. Gravadas' },
+  { id: '04', label: 'Reg. 04 – Rem. Exentas' },
+  { id: '05', label: 'Reg. 05 – Ded. Generales' },
+  { id: '06', label: 'Reg. 06 – Ded. Art.30' },
+  { id: '07', label: 'Reg. 07 – Pagos a Cuenta' },
+  { id: '08', label: 'Reg. 08 – Impuesto' },
+];
+
+function renderApp() {
+  if (!Object.keys(state.employees).length) return;
+  document.getElementById('statsBar').style.display = 'flex';
+  document.getElementById('mainView').style.display = 'block';
+  document.getElementById('statEmp').textContent = Object.keys(state.employees).length;
+
+  // Render tabs
+  const tabsBar = document.getElementById('tabsBar');
+  tabsBar.innerHTML = TAB_DEFS.map(t =>
+    `<div class="tab${state.currentTab===t.id?' active':''}" onclick="switchTab('${t.id}')">${t.label}</div>`
+  ).join('');
+
+  renderTable();
+}
+
+function switchTab(id) {
+  state.currentTab = id;
+  state.sortCol = null;
+  renderApp();
+}
+
+function applyFilters() {
+  state.search = document.getElementById('searchInput').value.toLowerCase();
+  renderTable();
+}
+
+function getFilteredRows() {
+  const s = state.search;
+  return Object.entries(state.employees).filter(([cuil, regs]) => {
+    if (!s) return true;
+    const nom = state.nomina[cuil] || {};
+    return cuil.includes(s)
+      || formatCuil(cuil).includes(s)
+      || (nom.legajo || '').toLowerCase().includes(s)
+      || (nom.nombre || '').toLowerCase().includes(s);
+  });
+}
+
+function renderTable() {
+  const rows = getFilteredRows();
+  const head = document.getElementById('tableHead');
+  const body = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+
+  if (!rows.length) {
+    head.innerHTML = '';
+    body.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  if (state.currentTab === 'resumen') {
+    renderResumen(rows, head, body);
+  } else {
+    renderRegistro(rows, state.currentTab, head, body);
+  }
+}
+
+function renderResumen(rows, head, body) {
+  const cols = [
+    { key:'legajo',   label:'Legajo' },
+    { key:'cuil',     label:'CUIL' },
+    { key:'nombre',   label:'Nombre' },
+    { key:'meses',    label:'Meses', align:'right' },
+    { key:'periodo_desde', label:'Desde' },
+    { key:'periodo_hasta', label:'Hasta' },
+    { key:'total_rem_gravada',  label:'Rem. Gravada', align:'right' },
+    { key:'total_no_gravada',   label:'Rem. Exenta', align:'right' },
+    { key:'total_remuneraciones', label:'Total Rem.', align:'right' },
+    { key:'total_ded_generales',  label:'Ded. Grales.', align:'right' },
+    { key:'total_ded_art30',      label:'Ded. Art.30', align:'right' },
+    { key:'rem_sujeta_impuesto',  label:'Base Imponible', align:'right' },
+    { key:'alicuota',             label:'Alíc.' },
+    { key:'impuesto_determinado', label:'Imp. Det.', align:'right' },
+    { key:'impuesto_retenido',    label:'Imp. Ret.', align:'right' },
+    { key:'saldo_determinado',    label:'Saldo Det.', align:'right' },
+  ];
+
+  head.innerHTML = `<tr>${cols.map((c,i) =>
+    `<th class="${state.sortCol===i?'sorted':''}" onclick="sortBy(${i})" style="text-align:${c.align||'left'}">${c.label}<span class="sort-icon">${state.sortCol===i?(state.sortDir===1?'▲':'▼'):'⇅'}</span></th>`
+  ).join('')}</tr>`;
+
+  let rowData = rows.map(([cuil, regs]) => {
+    const nom = state.nomina[cuil] || {};
+    const r02 = regs['02'] || {};
+    const r03 = regs['03'] || {};
+    const r04 = regs['04'] || {};
+    const r05 = regs['05'] || {};
+    const r06 = regs['06'] || {};
+    const r08 = regs['08'] || {};
+    return {
+      _cuil: cuil,
+      legajo: nom.legajo || '',
+      cuil: formatCuil(cuil),
+      nombre: nom.nombre || '',
+      meses: r02.meses ?? '',
+      periodo_desde: formatDate(r02.periodo_desde),
+      periodo_hasta: formatDate(r02.periodo_hasta),
+      total_rem_gravada:    r03.total_rem_gravada ?? 0,
+      total_no_gravada:     r04.total_no_gravada ?? 0,
+      total_remuneraciones: r04.total_remuneraciones ?? 0,
+      total_ded_generales:  r05.total_ded_generales ?? 0,
+      total_ded_art30:      r06.total_ded_art30 ?? 0,
+      rem_sujeta_impuesto:  r08.rem_sujeta_impuesto ?? 0,
+      alicuota:             r08.alicuota != null ? (TABLA3[r08.alicuota] || r08.alicuota) : '',
+      impuesto_determinado: r08.impuesto_determinado ?? 0,
+      impuesto_retenido:    r08.impuesto_retenido ?? 0,
+      saldo_determinado:    r08.saldo_determinado ?? 0,
+    };
+  });
+
+  if (state.sortCol !== null) {
+    const key = cols[state.sortCol].key;
+    rowData.sort((a,b) => {
+      let av = a[key], bv = b[key];
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * state.sortDir;
+      return String(av).localeCompare(String(bv), 'es') * state.sortDir;
+    });
+  }
+
+  const amountCols = new Set(['total_rem_gravada','total_no_gravada','total_remuneraciones','total_ded_generales','total_ded_art30','rem_sujeta_impuesto','impuesto_determinado','impuesto_retenido','saldo_determinado']);
+
+  body.innerHTML = rowData.map(r =>
+    `<tr onclick="openDetail('${r._cuil}')">` +
+    cols.map(c => {
+      const v = r[c.key];
+      if (amountCols.has(c.key)) {
+        const cents = v;
+        const cls = cents === 0 ? 'amount zero' : cents < 0 ? 'amount negative' : 'amount';
+        return `<td class="${cls}">${cents === 0 ? '' : formatAmount(cents)}</td>`;
+      }
+      return `<td>${v ?? ''}</td>`;
+    }).join('') +
+    `</tr>`
+  ).join('');
+}
+
+function renderRegistro(rows, tipoReg, head, body) {
+  const def = REG_DEFS[tipoReg];
+  if (!def) return;
+
+  // Prepend Legajo and Nombre
+  const extraCols = [
+    { key:'_legajo', label:'Legajo' },
+    { key:'_nombre', label:'Nombre' },
+  ];
+  const allCols = [...extraCols, ...def.fields.filter(f => f.key !== 'tipo_registro')];
+
+  head.innerHTML = `<tr>${allCols.map((c,i) => {
+    const align = (c.type === 'amount' || c.type === 'num') ? 'right' : 'left';
+    const sorted = state.sortCol === i;
+    return `<th class="${sorted?'sorted':''}" onclick="sortBy(${i})" style="text-align:${align}">${c.label||c.key}<span class="sort-icon">${sorted?(state.sortDir===1?'▲':'▼'):'⇅'}</span></th>`;
+  }).join('')}</tr>`;
+
+  let rowData = rows.map(([cuil, regs]) => {
+    const nom = state.nomina[cuil] || {};
+    const rec = regs[tipoReg] || {};
+    return { _cuil: cuil, _legajo: nom.legajo||'', _nombre: nom.nombre||'', ...rec };
+  });
+
+  if (state.sortCol !== null) {
+    const col = allCols[state.sortCol];
+    const key = col.key;
+    rowData.sort((a,b) => {
+      let av = a[key] ?? '', bv = b[key] ?? '';
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * state.sortDir;
+      return String(av).localeCompare(String(bv), 'es') * state.sortDir;
+    });
+  }
+
+  body.innerHTML = rowData.map(r =>
+    `<tr onclick="openDetail('${r._cuil}')">` +
+    allCols.map(c => {
+      if (c.key === '_legajo') return `<td>${r._legajo}</td>`;
+      if (c.key === '_nombre') return `<td>${r._nombre}</td>`;
+      const val = r[c.key];
+      if (c.type === 'amount') {
+        const cents = val ?? 0;
+        const cls = cents === 0 ? 'amount zero' : cents < 0 ? 'amount negative' : 'amount';
+        return `<td class="${cls}">${cents === 0 ? '' : formatAmount(cents)}</td>`;
+      }
+      const disp = displayField(val, c);
+      const align = c.type === 'num' ? 'style="text-align:right"' : '';
+      return `<td ${align}>${disp}</td>`;
+    }).join('') +
+    `</tr>`
+  ).join('');
+}
+
+function sortBy(colIdx) {
+  if (state.sortCol === colIdx) {
+    state.sortDir = -state.sortDir;
+  } else {
+    state.sortCol = colIdx;
+    state.sortDir = 1;
+  }
+  renderTable();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  DETAIL MODAL
+// ═══════════════════════════════════════════════════════════════════
+
+function openDetail(cuil) {
+  const regs = state.employees[cuil];
+  if (!regs) return;
+  const nom = state.nomina[cuil] || {};
+
+  document.getElementById('detailNombre').textContent = nom.nombre || '(sin nombre)';
+  document.getElementById('detailLegajo').textContent = nom.legajo ? `Legajo ${nom.legajo}` : '';
+  document.getElementById('detailCuil').textContent = formatCuil(cuil);
+
+  const body = document.getElementById('detailBody');
+  body.innerHTML = Object.entries(REG_DEFS).filter(([tipo]) => tipo !== '01').map(([tipo, def]) => {
+    const rec = regs[tipo];
+    if (!rec) return `<div class="reg-block"><h3>${def.name} <span class="reg-badge">Reg. ${tipo} — sin dato</span></h3></div>`;
+
+    const fieldsHtml = def.fields
+      .filter(f => f.key !== 'tipo_registro' && f.key !== 'cuil')
+      .map(f => {
+        const val = rec[f.key];
+        let disp = displayField(val, f);
+        let valClass = '';
+        if (f.type === 'amount') {
+          const cents = val ?? 0;
+          if (cents === 0) valClass = 'zero';
+          else if (cents < 0) valClass = 'negative';
+          disp = cents === 0 ? '$ 0,00' : formatAmount(cents);
+        } else if (f.type === 'mark') {
+          valClass = val === '1' ? 'mark-yes' : 'mark-no';
+        }
+        return `<div class="field-item${f.total?' style="border:1px solid var(--accent2);background:var(--surface)"':''}">
+          <div class="label">${f.label}</div>
+          <div class="value amount ${valClass}">${disp}</div>
+        </div>`;
+      }).join('');
+
+    return `<div class="reg-block">
+      <h3>${def.name} <span class="reg-badge">Reg. ${tipo}</span></h3>
+      <div class="field-grid">${fieldsHtml}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('detailModal').style.display = 'flex';
+}
+
+function closeDetail() {
+  document.getElementById('detailModal').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  EXCEL EXPORT
+// ═══════════════════════════════════════════════════════════════════
+
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+  const filteredCuils = new Set(getFilteredRows().map(([c]) => c));
+
+  // Build one row per employee with ALL fields from ALL registros
+  const allFields = []; // { header, getter(regs, nom) }
+
+  // Identificación
+  allFields.push({ h: 'Legajo',     g: (r,n) => n.legajo || '' });
+  allFields.push({ h: 'CUIL',       g: (r,n,cuil) => formatCuil(cuil) });
+  allFields.push({ h: 'Nombre',     g: (r,n) => n.nombre || '' });
+
+  // Por cada registro 02-08, todos sus campos (excepto tipo_registro y cuil repetido)
+  for (const [tipo, def] of Object.entries(REG_DEFS)) {
+    if (tipo === '01') continue;
+    const fields = def.fields.filter(f => f.key !== 'tipo_registro' && f.key !== 'cuil');
+    for (const f of fields) {
+      const label = `Reg${tipo} - ${f.label}`;
+      const fRef = f; // capture
+      allFields.push({
+        h: label,
+        g: (regs) => {
+          const rec = regs[tipo] || {};
+          const val = rec[fRef.key];
+          if (fRef.type === 'amount') return val != null ? formatAmountRaw(val) : 0;
+          if (fRef.type === 'date')   return formatDate(val);
+          if (fRef.type === 'cuil' || fRef.type === 'cuit') return formatCuil(val||'');
+          if (fRef.type === 'mark')   return val === '1' ? 'Sí' : 'No';
+          if (fRef.type === 'cod') { const t = getTable(fRef.table); return val != null ? (t[val]||val) : ''; }
+          if (fRef.type === 'num')    return val ?? 0;
+          return val ?? '';
+        }
+      });
+    }
+  }
+
+  const headers = allFields.map(f => f.h);
+  const dataRows = [];
+
+  for (const [cuil, regs] of Object.entries(state.employees)) {
+    if (!filteredCuils.has(cuil)) continue;
+    const nom = state.nomina[cuil] || {};
+    const row = allFields.map(f => {
+      // Distinguir entre getters que necesitan cuil como 3er arg
+      return f.g(regs, nom, cuil);
+    });
+    dataRows.push(row);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+
+  // Column widths: narrow for counts/codes, wide for labels, medium for amounts
+  ws['!cols'] = allFields.map(f => {
+    if (f.h.includes('Cant.') || f.h.includes('Meses') || f.h.includes('Alíc')) return { wch: 10 };
+    if (f.h === 'Legajo' || f.h === 'CUIL') return { wch: 16 };
+    if (f.h === 'Nombre') return { wch: 30 };
+    return { wch: 22 };
+  });
+
+  // Freeze header row
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+  const sheetName = `SIRADIG F1359`;
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  const fileName = `SIRADIG_F1359_${state.cabecera?.periodo||'export'}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+}
+
+function styleSheet(ws, numCols) {
+  // Set column widths
+  ws['!cols'] = Array(numCols).fill({ wch: 20 });
+}
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetail();
+});
+</script>
+</body>
+</html>
