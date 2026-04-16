@@ -386,10 +386,23 @@
     line-height: 1.7;
   }
 
-  .scrollable { max-height: calc(100vh - 180px); overflow-y: auto; padding-right: 4px; }
-  .scrollable::-webkit-scrollbar { width: 4px; }
+  .scrollable { max-height: calc(100vh - 180px); overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .scrollable::-webkit-scrollbar { width: 8px; }
   .scrollable::-webkit-scrollbar-track { background: transparent; }
-  .scrollable::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .scrollable::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+  .scrollable::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+
+  .masiva-search { display:flex; gap:8px; margin-bottom:12px; }
+  .masiva-search input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); padding:7px 12px; font-size:13px; outline:none; transition:border-color .15s; }
+  .masiva-search input:focus { border-color:var(--accent); }
+  .masiva-search input::placeholder { color:var(--muted); }
+  .col-legajo { font-family:var(--mono); font-size:12px; color:var(--text2); white-space:nowrap; }
+  .chip-not-found { background:rgba(239,68,68,.13); color:#ef4444; }
+  .detail-section details { margin-bottom:6px; }
+  .detail-section details summary { cursor:pointer; font-weight:600; font-size:12px; color:var(--text2); padding:5px 0 4px 0; user-select:none; list-style:none; display:flex; align-items:center; gap:6px; border-bottom:1px solid var(--border); margin-bottom:6px; }
+  .detail-section details summary::-webkit-details-marker { display:none; }
+  .detail-section details summary::before { content:'▶'; font-size:9px; color:var(--muted); transition:transform .15s; }
+  .detail-section details[open] summary::before { transform:rotate(90deg); }
 
   .report-textarea {
     width: 100%;
@@ -491,6 +504,11 @@
 
   /* ── TABLA RESUMEN MASIVA ──────────────────────────── */
   .masiva-summary-bar { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+  /* chips como filtros */
+  .masiva-filter-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+  .chip-filter { cursor:pointer; border:none; font-family:inherit; transition:opacity .15s, box-shadow .15s; }
+  .chip-filter:hover { opacity:.85; }
+  .chip-filter-active { box-shadow: 0 0 0 2px var(--accent), inset 0 0 0 1px rgba(255,255,255,.1) !important; opacity:1 !important; }
   .masiva-table-wrap { overflow-x:auto; }
   .masiva-table {
     width: 100%;
@@ -835,7 +853,10 @@
   </div>
   <div class="header-actions">
     <button class="btn-icon" id="btnTheme" onclick="toggleTheme()" title="Cambiar tema">☀️ Claro</button>
+    <button class="btn-icon" onclick="toggleAyuda()" title="Qué hace este control · Paso a paso">❓ Ayuda</button>
     <button class="btn-icon" onclick="toggleSidebar()" title="Referencia rápida">📋 Referencia</button>
+    <button class="btn-icon" onclick="window.open('https://auth.afip.gob.ar/contribuyente_/login.xhtml','_blank')" title="Ir a ARCA (AFIP)">🏛 ARCA</button>
+    <button class="btn-icon" id="btnExportErrors" onclick="exportErrorsExcel()" title="Descargar errores en Excel" style="display:none">📊 Errores</button>
   </div>
 </div>
 
@@ -848,6 +869,83 @@
   </div>
   <div class="err-sidebar-body" id="errSidebarBody">
     <div style="color:var(--muted);font-size:12px;padding:16px">Validar un archivo para ver el detalle.</div>
+  </div>
+</div>
+
+<!-- AYUDA MODAL -->
+<div class="sidebar-overlay" id="ayudaOverlay" onclick="toggleAyuda()"></div>
+<div class="sidebar" id="ayudaPanel">
+  <div class="sidebar-head">
+    <h2>❓ Qué hace este control</h2>
+    <button class="sidebar-close" onclick="toggleAyuda()">✕</button>
+  </div>
+  <div class="sidebar-body" style="padding:16px;overflow-y:auto;flex:1;">
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">¿Para qué sirve?</div>
+      <p style="font-size:12px;color:var(--text2);line-height:1.6;margin:0 0 8px">
+        Este validador controla que el archivo <strong>TXT del Formulario 1.359</strong> que genera el sistema de liquidación de sueldos sea <strong>consistente con las reglas del Manual del Desarrollador de ARCA</strong> y, si se carga un reporte Excel (Meta 4), también verifica que los <strong>importes del TXT coincidan con el resumen de ganancias liquidado</strong>.
+      </p>
+      <p style="font-size:12px;color:var(--text2);line-height:1.6;margin:0">
+        Si se carga una <strong>nómina de empleados</strong> (Excel con Legajo, CUIL, etc.) el sistema muestra el número de legajo en la tabla y detecta empleados presentes en la nómina pero ausentes en el TXT.
+      </p>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Tipos de problemas detectados</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:#ef4444;font-weight:700;min-width:52px">Error</span>
+          <span style="color:var(--text2)">Incumplimiento de una regla formal del manual ARCA (longitud de campo, código inválido, tope de deducciones, etc.).</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:#f59e0b;font-weight:700;min-width:52px">Diferencia</span>
+          <span style="color:var(--text2)">El importe del TXT no coincide con el que figura en el reporte de liquidación cargado (Meta 4 u otro sistema).</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="color:#22c55e;font-weight:700;min-width:52px">OK</span>
+          <span style="color:var(--text2)">Campo validado sin observaciones.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Paso a paso — Nómina completa</div>
+      <ol style="font-size:12px;color:var(--text2);line-height:1.8;margin:0;padding-left:18px;">
+        <li>Seleccioná el <strong>año fiscal</strong> y el <strong>tipo de presentación</strong>.</li>
+        <li>Cargá el <strong>archivo TXT</strong> generado por el sistema de liquidación (puede tener múltiples empleados).</li>
+        <li><em>(Opcional)</em> Cargá el <strong>reporte Excel de ganancias</strong> (Meta 4 u equivalente) para validar importes.</li>
+        <li><em>(Opcional)</em> Cargá la <strong>nómina de empleados</strong> para mostrar legajos y detectar ausentes en el TXT.</li>
+        <li>Hacé clic en <strong>Validar</strong>.</li>
+        <li>Revisá el resumen: chips de totales, tabla por empleado, columnas <em>Error</em> (formato ARCA) y <em>Diferencia</em> (cruce con reporte).</li>
+        <li>Usá el <strong>buscador</strong> para filtrar por legajo, nombre o CUIL.</li>
+        <li>Descargá el detalle en Excel con <strong>📊 Errores</strong> para compartirlo o archivarlo.</li>
+      </ol>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Paso a paso — Individual</div>
+      <ol style="font-size:12px;color:var(--text2);line-height:1.8;margin:0;padding-left:18px;">
+        <li>Seleccioná el <strong>año fiscal</strong> y el <strong>tipo de presentación</strong>.</li>
+        <li>Cargá el <strong>archivo TXT individual</strong> del empleado.</li>
+        <li><em>(Opcional)</em> Cargá el <strong>reporte Excel</strong> para cruzar importes.</li>
+        <li>Hacé clic en <strong>Validar</strong> y revisá el resultado.</li>
+        <li>Si hay errores corregibles, usá los botones de <strong>Aplicar corrección</strong> para parchear el TXT y descargarlo.</li>
+      </ol>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Columnas de la tabla masiva</div>
+      <div style="font-size:12px;color:var(--text2);display:flex;flex-direction:column;gap:4px;">
+        <div><strong>Legajo</strong> — número de legajo (requiere nómina cargada).</div>
+        <div><strong>CUIL</strong> — identificador del empleado en el TXT.</div>
+        <div><strong>Nombre</strong> — tomado de la nómina o del reporte Meta 4.</div>
+        <div><strong>Error</strong> — errores de formato según manual ARCA.</div>
+        <div><strong>Diferencia</strong> — discrepancias al cruzar TXT con reporte de liquidación.</div>
+        <div><strong>Detalle</strong> — botón para expandir el panel de ese empleado.</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1051,6 +1149,23 @@
           columnas con los mismos nombres que el reporte de ganancias de Meta 4.<br>
           <strong>Sin Excel:</strong> solo se valida el formato del TXT para todos los empleados.
         </div>
+      </div>
+
+      <div class="field-group" style="margin-top:16px;">
+        <label>Nómina de empleados <span class="badge" style="background:rgba(16,185,129,.15);color:#10b981;">legajo</span></label>
+        <div id="dropzoneNomina" class="dropzone" style="border-color:rgba(16,185,129,0.4);">
+          <input type="file" id="fileNomina" accept=".xlsx,.xls,.csv" />
+          <div class="dropzone-icon" style="background:rgba(16,185,129,0.08)">
+            <svg viewBox="0 0 24 24" stroke-width="1.5" style="stroke:#10b981"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <p><strong>Soltá la nómina acá</strong><br>Excel con columnas: Legajo · Nombre · Apellido · CUIL · Empresa (opcional)</p>
+        </div>
+        <div id="fileInfoNomina" style="display:none" class="file-loaded">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span id="fileNameNomina"></span>
+          <button class="btn-clear" onclick="clearNomina()" title="Quitar">✕</button>
+        </div>
+        <div class="masiva-hint">Opcional. Permite mostrar Legajo en la tabla, detectar empleados sin TXT, y exportar errores con datos completos.</div>
       </div>
 
     </div><!-- /secMasiva -->
@@ -1946,6 +2061,21 @@ function applyFieldFilter() {
   if (el) el.textContent = `${visible} de ${total} campos`;
 }
 
+// Versión para masiva: opera sobre la tabla adyacente al checkbox (por idSuffix)
+function applyFieldFilterFor(chk) {
+  const suffix = chk.dataset.suffix || '';
+  const showAll = chk.checked;
+  const wrap = chk.closest('.cross-filter')?.nextElementSibling;
+  if (!wrap) return;
+  wrap.querySelectorAll('tbody tr.row-no-data').forEach(tr => {
+    tr.style.display = showAll ? '' : 'none';
+  });
+  const allRows = [...wrap.querySelectorAll('tbody tr:not(.row-reg-header)')];
+  const visible = allRows.filter(tr => tr.style.display !== 'none').length;
+  const el = document.getElementById('crossFieldCount' + suffix);
+  if (el) el.textContent = `${visible} de ${allRows.length} campos`;
+}
+
 // Parsear _reg y _col desde posDesc "Reg.03 · C5 · col.44–58"
 function parseRegCol(posDesc) {
   const m = posDesc?.match(/Reg\.(\d+).*?C(\d+)/);
@@ -2046,6 +2176,18 @@ function crossValidar(rd, trabajadores) {
     rows.push({ f1359Name: 'SAC (Primera o Segunda Cuota)', repLabel: 'Sac Real',
       repVal: sacReal, ...best, note: 'Buscado en C5 (SAC 1ra) y C6 (SAC 2da).', _patch: sacPatch,
       ...parseRegCol(best.posDesc) });
+  }
+
+  // SAC Total (solo cuando viene del Excel Meta 4 — TOT_SAC_PRORRA + IG_SAC_PRES vs C5+C6 TXT)
+  const sacTotalRep = rd['SAC Total'] !== undefined
+    ? (rd['SAC Total'] ?? 0) + (rd['SAC Total_2'] ?? 0)
+    : null;
+  if (sacTotalRep !== null) {
+    const c5 = numLine(r03, 44);
+    const c6 = numLine(r03, 59);
+    addCalc('SAC Total (1ra + 2da Cuota)', 'Reg.03 · C5+C6 · col.44–73',
+      'SAC Total', sacTotalRep, c5 + c6,
+      'SAC 1er semestre (C5) + SAC 2do semestre (C6).');
   }
 
   // Control ARCA 13592303: C13 = C3+C4+C5+C6+C7+C8+C9+C10+C11+C12
@@ -2307,6 +2449,175 @@ function crossValidar(rd, trabajadores) {
   return combined;
 }
 
+// ── TABLA DE CRUCE REUTILIZABLE (individual + masiva) ───────────────────────
+// opts.showPatch = true  → checkboxes + botón "Aplicar" (solo modo individual)
+// opts.idSuffix  = ''    → sufijo para IDs únicos (en masiva: '-0', '-1', etc.)
+function buildCrossTableHTML(crossResults, opts) {
+  const showPatch = opts?.showPatch ?? false;
+  const idSuffix  = opts?.idSuffix  ?? '';
+  if (!crossResults || crossResults.length === 0) return '';
+  let html = '';
+
+  const cOk      = crossResults.filter(r => r.status === 'ok').length;
+  const cShifted = crossResults.filter(r => r.status === 'shifted').length;
+  const cMismatch= crossResults.filter(r => r.status === 'mismatch').length;
+  const cTxtOnly = crossResults.filter(r => r.status === 'txt-only').length;
+  const hasPatchable = showPatch && crossResults.some(r => r._patch && (r.status === 'mismatch' || r.status === 'shifted'));
+  const hasControl   = crossResults.some(r => r.controlVal !== null && r.controlVal !== undefined);
+  const colCount     = hasPatchable ? (hasControl ? 8 : 7) : (hasControl ? 7 : 6);
+
+  // Chips resumen
+  html += `<div class="cross-summary">`;
+  if (cMismatch > 0) html += `<div class="summary-chip chip-err">✗ ${cMismatch} discrepancia${cMismatch!==1?'s':''}</div>`;
+  if (cShifted  > 0) html += `<div class="summary-chip chip-warn">↔ ${cShifted} corrida${cShifted!==1?'s':''} en TXT</div>`;
+  html += `<div class="summary-chip chip-ok">✓ ${cOk} coincide${cOk!==1?'n':''}</div>`;
+  if (cTxtOnly  > 0) html += `<div class="summary-chip chip-info">● ${cTxtOnly} solo en TXT</div>`;
+  html += `</div>`;
+
+  // Filtro mostrar todos los campos
+  html += `<div class="cross-filter">
+    <label class="cross-filter-label">
+      <input type="checkbox" id="chkShowAll${idSuffix}"${showPatch ? '' : ` data-suffix="${idSuffix}" onchange="applyFieldFilterFor(this)"`}>
+      Mostrar todos los campos (incluir sin datos en IG ni TXT)
+    </label>
+    <span id="crossFieldCount${idSuffix}" class="cross-field-count"></span>
+  </div>`;
+
+  // Encabezado tabla
+  html += `<table class="cross-table"><thead><tr>`;
+  if (hasPatchable) html += `<th class="td-patch"><input type="checkbox" id="patchSelectAll${idSuffix}" title="Seleccionar todo"></th>`;
+  html += `<th class="td-status"></th>
+    <th class="td-label">Campo F.1359 · Origen reporte</th>
+    <th class="td-num">Reporte IG</th>
+    <th class="td-num">TXT 1359</th>`;
+  if (hasControl) html += `<th class="td-ctrl">Control ARCA</th>`;
+  html += `<th class="td-diff">Diferencia</th>
+    <th class="td-pos">Posición TXT</th>
+  </tr></thead><tbody>`;
+
+  const fmt = v => v === null || v === undefined
+    ? '<span style="color:var(--muted)">—</span>'
+    : `$\u00a0${(Math.abs(v)/100).toLocaleString('es-AR',{minimumFractionDigits:2})}${v < 0 ? '<span style="font-size:10px;color:var(--muted)"> (neg.)</span>' : ''}`;
+
+  let lastReg = null;
+  for (let idx = 0; idx < crossResults.length; idx++) {
+    const r = crossResults[idx];
+
+    // Separador de grupo por registro
+    if (r._reg && r._reg !== lastReg) {
+      lastReg = r._reg;
+      html += `<tr class="row-reg-header"><td colspan="${colCount}">Reg. ${r._reg} — ${NOMBRES_REG[r._reg] || ''}</td></tr>`;
+    }
+
+    let icon, rowCls, txtCell, repCell;
+
+    // Filas ARCA-puras (sin valor IG, solo Control ARCA)
+    if (r.repVal === null && r.controlVal !== null && r.controlVal !== undefined) {
+      rowCls  = r.status === 'ok' ? 'row-ok' : 'row-err';
+      icon    = r.status === 'ok' ? '<span class="cross-ok">✓</span>' : '<span class="cross-err">✗</span>';
+      txtCell = r.status === 'ok' ? fmt(r.txtExact)
+        : `<span style="color:var(--danger)">${fmt(r.txtExact)}</span>`;
+      repCell = `<span style="color:var(--muted);font-size:10px">Solo Control ARCA</span>`;
+    } else if (r.status === 'ok') {
+      icon = '<span class="cross-ok">✓</span>'; rowCls = 'row-ok';
+      txtCell = fmt(r.txtExact);
+    } else if (r.status === 'shifted') {
+      const dir = r.delta > 0 ? `+${r.delta}` : `${r.delta}`;
+      icon = '<span class="cross-warn">↔</span>'; rowCls = 'row-warn';
+      txtCell = `<span style="color:var(--warn)">corrida ${dir} col.</span>`
+              + `<span class="note-inline">En pos. esperada: ${fmt(r.txtExact)}</span>`;
+    } else if (r.status === 'mismatch') {
+      icon = '<span class="cross-err">✗</span>'; rowCls = 'row-err';
+      txtCell = `<span style="color:var(--danger)">${fmt(r.txtExact)}</span>`
+              + `<span class="note-inline">Valor no encontrado en ±30 col.</span>`;
+    } else if (r.status === 'warn') {
+      icon = '<span class="cross-warn">⚠</span>'; rowCls = 'row-warn';
+      txtCell = fmt(r.txtExact);
+    } else if (r.status === 'txt-only') {
+      icon = '<span class="cross-skip">●</span>'; rowCls = 'row-info';
+      if (r._isCuil && r.txtExact !== null) {
+        const cs = String(r.txtExact).padStart(11, '0');
+        txtCell = `<span style="font-family:var(--mono)">${cs.slice(0,2)}-${cs.slice(2,10)}-${cs.slice(10)}</span>`;
+      } else {
+        txtCell = (r.txtExact !== null && r.txtExact !== 0) ? fmt(r.txtExact) : '<span style="color:var(--muted)">—</span>';
+      }
+    } else if (r.status === 'no-data') {
+      icon = '<span class="cross-skip">—</span>'; rowCls = 'row-no-data';
+      txtCell = '<span style="color:var(--muted)">—</span>';
+    } else {
+      icon = '<span class="cross-skip">—</span>'; rowCls = 'row-skip';
+      txtCell = '<span style="color:var(--muted)">—</span>';
+    }
+
+    if (r.repVal !== null || r.controlVal === null || r.controlVal === undefined) {
+      repCell = r.repVal !== null
+        ? `<span style="color:var(--text)">${fmt(r.repVal)}</span>`
+        : (r.status === 'txt-only'
+            ? '<span style="color:var(--muted);font-size:11px">Sin datos IG</span>'
+            : '<span style="color:var(--muted)">—</span>');
+    }
+
+    // Columna Control ARCA
+    let ctrlCell = '';
+    if (hasControl) {
+      if (r.controlVal !== null && r.controlVal !== undefined) {
+        const ctrlMatch = Math.abs((r.txtExact ?? 0) - r.controlVal) <= 1;
+        const fmtCtrl = (Math.abs(r.controlVal)/100).toLocaleString('es-AR',{minimumFractionDigits:2});
+        ctrlCell = ctrlMatch
+          ? `<td class="td-ctrl"><span style="color:var(--ok);font-size:11px">✓ $\u00a0${fmtCtrl}</span></td>`
+          : `<td class="td-ctrl"><span style="color:var(--danger);font-size:11px">$\u00a0${fmtCtrl}</span><br><span class="note-inline" style="color:var(--muted);font-size:10px">ARCA espera este valor</span></td>`;
+      } else {
+        ctrlCell = `<td class="td-ctrl"><span style="color:var(--muted)">—</span></td>`;
+      }
+    }
+
+    // Columna diferencia
+    let diffCell = '<span style="color:var(--muted)">—</span>';
+    if (r.repVal !== null && r.txtExact !== null && r.status !== 'txt-only') {
+      const diff = r.repVal - r.txtExact;
+      if (diff === 0) {
+        diffCell = '<span style="color:var(--ok);font-size:11px">= 0</span>';
+      } else {
+        const sign = diff > 0 ? '+' : '';
+        const fmtd = (Math.abs(diff)/100).toLocaleString('es-AR',{minimumFractionDigits:2});
+        diffCell = `<span style="color:var(--danger)">${sign}${fmtd}</span>`;
+      }
+    }
+
+    const patchable = r._patch && (r.status === 'mismatch' || r.status === 'shifted');
+    const cbHtml = hasPatchable
+      ? `<td class="td-patch">${patchable ? `<input type="checkbox" class="patch-cb" data-idx="${idx}">` : ''}</td>`
+      : '';
+
+    const labelNote = r.repLabel
+      ? `<span class="note-inline" style="color:var(--muted)">← ${r.repLabel}${r.note ? ' · ' + r.note : ''}</span>`
+      : (r.note ? `<span class="note-inline" style="color:var(--muted)">${r.note}</span>` : '');
+
+    const hiddenAttr = (r.status === 'no-data') ? ' style="display:none"' : '';
+
+    html += `<tr class="${rowCls}"${hiddenAttr}>
+      ${cbHtml}
+      <td class="td-status">${icon}</td>
+      <td class="td-label"><strong>${r.f1359Name}</strong>${labelNote}</td>
+      <td class="td-num">${repCell}</td>
+      <td class="td-num">${txtCell}</td>
+      ${ctrlCell}
+      <td class="td-diff">${diffCell}</td>
+      <td class="td-pos">${r.posDesc || ''}</td>
+    </tr>`;
+  }
+
+  html += `</tbody></table>`;
+
+  if (hasPatchable) {
+    html += `<div class="patch-controls">`;
+    html += `<button id="btnApplyPatch" class="btn-patch" disabled>Aplicar correcciones seleccionadas</button>`;
+    html += `<span id="patchCount" class="patch-count"></span>`;
+    html += `</div>`;
+  }
+  return html;
+}
+
 function renderResults(errores, advertencias, oks, infos, lines, crossResults) {
   const container = document.getElementById('resultsContainer');
 
@@ -2334,163 +2645,8 @@ function renderResults(errores, advertencias, oks, infos, lines, crossResults) {
 
   // ── 2. CRUCE CON REPORTE IG — META 4 ─────────────────────
   if (crossResults && crossResults.length > 0) {
-    const cOk       = crossResults.filter(r => r.status === 'ok').length;
-    const cShifted  = crossResults.filter(r => r.status === 'shifted').length;
-    const cMismatch = crossResults.filter(r => r.status === 'mismatch').length;
-    const cTxtOnly  = crossResults.filter(r => r.status === 'txt-only').length;
-    const hasPatchable = crossResults.some(r => r._patch && (r.status === 'mismatch' || r.status === 'shifted'));
-    const hasControl   = crossResults.some(r => r.controlVal !== null && r.controlVal !== undefined);
-    const colCount     = hasPatchable ? (hasControl ? 8 : 7) : (hasControl ? 7 : 6);
-
     html += `<div class="result-section-title" style="color:var(--accent2);margin-bottom:12px">Cruce con reporte de liquidación — Meta 4</div>`;
-    html += `<div class="cross-summary">`;
-    if (cMismatch > 0) html += `<div class="summary-chip chip-err">✗ ${cMismatch} discrepancia${cMismatch!==1?'s':''}</div>`;
-    if (cShifted  > 0) html += `<div class="summary-chip chip-warn">↔ ${cShifted} corrida${cShifted!==1?'s':''} en TXT</div>`;
-    html += `<div class="summary-chip chip-ok">✓ ${cOk} coincide${cOk!==1?'n':''}</div>`;
-    if (cTxtOnly  > 0) html += `<div class="summary-chip chip-info">● ${cTxtOnly} solo en TXT</div>`;
-    html += `</div>`;
-
-    // Filtro de campos
-    html += `<div class="cross-filter">
-      <label class="cross-filter-label">
-        <input type="checkbox" id="chkShowAll">
-        Mostrar todos los campos (incluir sin datos en IG ni TXT)
-      </label>
-      <span id="crossFieldCount" class="cross-field-count"></span>
-    </div>`;
-
-    html += `<table class="cross-table"><thead><tr>`;
-    if (hasPatchable) html += `<th class="td-patch"><input type="checkbox" id="patchSelectAll" title="Seleccionar todo"></th>`;
-    html += `<th class="td-status"></th>
-      <th class="td-label">Campo F.1359 · Origen reporte</th>
-      <th class="td-num">Reporte IG</th>
-      <th class="td-num">TXT 1359</th>`;
-    if (hasControl) html += `<th class="td-ctrl">Control ARCA</th>`;
-    html += `<th class="td-diff">Diferencia</th>
-      <th class="td-pos">Posición TXT</th>
-    </tr></thead><tbody>`;
-
-    let lastReg = null;
-    for (let idx = 0; idx < crossResults.length; idx++) {
-      const r = crossResults[idx];
-
-      // Separador de grupo por registro
-      if (r._reg && r._reg !== lastReg) {
-        lastReg = r._reg;
-        html += `<tr class="row-reg-header"><td colspan="${colCount}">Reg. ${r._reg} — ${NOMBRES_REG[r._reg] || ''}</td></tr>`;
-      }
-
-      const fmt = v => v === null || v === undefined
-        ? '<span style="color:var(--muted)">—</span>'
-        : `$\u00a0${(Math.abs(v)/100).toLocaleString('es-AR',{minimumFractionDigits:2})}${v < 0 ? '<span style="font-size:10px;color:var(--muted)"> (neg.)</span>' : ''}`;
-
-      let icon, rowCls, txtCell, repCell;
-
-      // Filas ARCA-puras (sin valor IG, solo Control ARCA)
-      if (r.repVal === null && r.controlVal !== null && r.controlVal !== undefined) {
-        rowCls  = r.status === 'ok' ? 'row-ok' : 'row-err';
-        icon    = r.status === 'ok' ? '<span class="cross-ok">✓</span>' : '<span class="cross-err">✗</span>';
-        txtCell = r.status === 'ok' ? fmt(r.txtExact)
-          : `<span style="color:var(--danger)">${fmt(r.txtExact)}</span>`;
-        repCell = `<span style="color:var(--muted);font-size:10px">Solo Control ARCA</span>`;
-      } else if (r.status === 'ok') {
-        icon = '<span class="cross-ok">✓</span>'; rowCls = 'row-ok';
-        txtCell = fmt(r.txtExact);
-      } else if (r.status === 'shifted') {
-        const dir = r.delta > 0 ? `+${r.delta}` : `${r.delta}`;
-        icon = '<span class="cross-warn">↔</span>'; rowCls = 'row-warn';
-        txtCell = `<span style="color:var(--warn)">corrida ${dir} col.</span>`
-                + `<span class="note-inline">En pos. esperada: ${fmt(r.txtExact)}</span>`;
-      } else if (r.status === 'mismatch') {
-        icon = '<span class="cross-err">✗</span>'; rowCls = 'row-err';
-        txtCell = `<span style="color:var(--danger)">${fmt(r.txtExact)}</span>`
-                + `<span class="note-inline">Valor no encontrado en ±30 col.</span>`;
-      } else if (r.status === 'warn') {
-        icon = '<span class="cross-warn">⚠</span>'; rowCls = 'row-warn';
-        txtCell = fmt(r.txtExact);
-      } else if (r.status === 'txt-only') {
-        icon = '<span class="cross-skip">●</span>'; rowCls = 'row-info';
-        // CUIL: formatear como XX-XXXXXXXX-X (no es valor monetario)
-        if (r._isCuil && r.txtExact !== null) {
-          const cs = String(r.txtExact).padStart(11, '0');
-          txtCell = `<span style="font-family:var(--mono)">${cs.slice(0,2)}-${cs.slice(2,10)}-${cs.slice(10)}</span>`;
-        } else {
-          txtCell = (r.txtExact !== null && r.txtExact !== 0) ? fmt(r.txtExact) : '<span style="color:var(--muted)">—</span>';
-        }
-      } else if (r.status === 'no-data') {
-        icon = '<span class="cross-skip">—</span>'; rowCls = 'row-no-data';
-        txtCell = '<span style="color:var(--muted)">—</span>';
-      } else {
-        icon = '<span class="cross-skip">—</span>'; rowCls = 'row-skip';
-        txtCell = '<span style="color:var(--muted)">—</span>';
-      }
-
-      // repCell: solo sobreescribir si NO es fila ARCA-pura (ya fue seteado arriba)
-      if (r.repVal !== null || r.controlVal === null || r.controlVal === undefined) {
-        repCell = r.repVal !== null
-          ? `<span style="color:var(--text)">${fmt(r.repVal)}</span>`
-          : (r.status === 'txt-only'
-              ? '<span style="color:var(--muted);font-size:11px">Sin datos IG</span>'
-              : '<span style="color:var(--muted)">—</span>');
-      }
-
-      // Columna Control ARCA
-      let ctrlCell = '';
-      if (hasControl) {
-        if (r.controlVal !== null && r.controlVal !== undefined) {
-          const ctrlMatch = Math.abs((r.txtExact ?? 0) - r.controlVal) <= 1;
-          const fmtCtrl = (Math.abs(r.controlVal)/100).toLocaleString('es-AR',{minimumFractionDigits:2});
-          ctrlCell = ctrlMatch
-            ? `<td class="td-ctrl"><span style="color:var(--ok);font-size:11px">✓ $\u00a0${fmtCtrl}</span></td>`
-            : `<td class="td-ctrl"><span style="color:var(--danger);font-size:11px">$\u00a0${fmtCtrl}</span><br><span class="note-inline" style="color:var(--muted);font-size:10px">ARCA espera este valor</span></td>`;
-        } else {
-          ctrlCell = `<td class="td-ctrl"><span style="color:var(--muted)">—</span></td>`;
-        }
-      }
-
-      // Columna diferencia
-      let diffCell = '<span style="color:var(--muted)">—</span>';
-      if (r.repVal !== null && r.txtExact !== null && r.status !== 'txt-only') {
-        const diff = r.repVal - r.txtExact;
-        if (diff === 0) {
-          diffCell = '<span style="color:var(--ok);font-size:11px">= 0</span>';
-        } else {
-          const sign = diff > 0 ? '+' : '';
-          const fmtd = (Math.abs(diff)/100).toLocaleString('es-AR',{minimumFractionDigits:2});
-          diffCell = `<span style="color:var(--danger)">${sign}${fmtd}</span>`;
-        }
-      }
-
-      const patchable = r._patch && (r.status === 'mismatch' || r.status === 'shifted');
-      const cbHtml = hasPatchable
-        ? `<td class="td-patch">${patchable ? `<input type="checkbox" class="patch-cb" data-idx="${idx}">` : ''}</td>`
-        : '';
-
-      const labelNote = r.repLabel
-        ? `<span class="note-inline" style="color:var(--muted)">← ${r.repLabel}${r.note ? ' · ' + r.note : ''}</span>`
-        : (r.note ? `<span class="note-inline" style="color:var(--muted)">${r.note}</span>` : '');
-
-      const hiddenAttr = (r.status === 'no-data') ? ' style="display:none"' : '';
-
-      html += `<tr class="${rowCls}"${hiddenAttr}>
-        ${cbHtml}
-        <td class="td-status">${icon}</td>
-        <td class="td-label"><strong>${r.f1359Name}</strong>${labelNote}</td>
-        <td class="td-num">${repCell}</td>
-        <td class="td-num">${txtCell}</td>
-        ${ctrlCell}
-        <td class="td-diff">${diffCell}</td>
-        <td class="td-pos">${r.posDesc || ''}</td>
-      </tr>`;
-    }
-    html += `</tbody></table>`;
-
-    if (hasPatchable) {
-      html += `<div class="patch-controls">`;
-      html += `<button id="btnApplyPatch" class="btn-patch" disabled>Aplicar correcciones seleccionadas</button>`;
-      html += `<span id="patchCount" class="patch-count"></span>`;
-      html += `</div>`;
-    }
+    html += buildCrossTableHTML(crossResults, { showPatch: true, idSuffix: '' });
   }
 
   // ── 3. DETALLE VALIDACIONES TXT (ARCA / Manual del Desarrollador) ──
@@ -2735,7 +2891,7 @@ function downloadPatchedFile(content) {
 }
 
 // ── VERSIÓN (actualizar acá en cada release) ──────────────
-const APP_VERSION = 'v2.5';
+const APP_VERSION = 'v2.5.2';
 function buildSidebarFieldRef() {
   const container = document.getElementById('sbFieldRef');
   if (!container) return;
@@ -2890,6 +3046,15 @@ function applyTxtPatch(btn) {
   btn.style.color = '#fff';
 }
 
+// ── AYUDA ────────────────────────────────────────────────
+function toggleAyuda() {
+  const panel = document.getElementById('ayudaPanel');
+  const ov    = document.getElementById('ayudaOverlay');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  ov.classList.toggle('open', !isOpen);
+}
+
 // ── SIDEBAR ───────────────────────────────────────────────
 function toggleSidebar() {
   const sb = document.getElementById('sidebar');
@@ -2969,7 +3134,10 @@ function expandConfig() {
 
 // ── MODO INDIVIDUAL / MASIVA ──────────────────────────────
 let currentMode = 'individual';
-let excelContent = null; // ArrayBuffer del Excel cargado
+let excelContent  = null; // ArrayBuffer del Excel Meta4
+let nominaContent = null; // ArrayBuffer de la nómina (legajo/nombre/apellido/cuil/empresa)
+window._nominaData          = null; // [{legajo,nombre,apellido,cuil,empresa}]
+window._lastResultadosMasiva = null; // para exportErrorsExcel
 
 function setMode(mode) {
   currentMode = mode;
@@ -3028,6 +3196,85 @@ function clearExcel() {
   document.getElementById('fileExcel').value = '';
 }
 
+// ── NÓMINA (legajo / nombre / apellido / empresa) ─────────
+document.addEventListener('DOMContentLoaded', () => {
+  const nomInput = document.getElementById('fileNomina');
+  if (nomInput) nomInput.addEventListener('change', e => { const f = e.target.files[0]; if (f) loadNomina(f); });
+  const dzNom = document.getElementById('dropzoneNomina');
+  if (dzNom) {
+    dzNom.addEventListener('dragover',  e => { e.preventDefault(); dzNom.classList.add('drag-over'); });
+    dzNom.addEventListener('dragleave', () => dzNom.classList.remove('drag-over'));
+    dzNom.addEventListener('drop', e => { e.preventDefault(); dzNom.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) loadNomina(f); });
+  }
+});
+
+function loadNomina(file) {
+  document.getElementById('dropzoneNomina').style.display = 'none';
+  document.getElementById('fileInfoNomina').style.display = 'flex';
+  document.getElementById('fileNameNomina').textContent = file.name + ' (' + Math.round(file.size / 1024) + ' KB)';
+  const reader = new FileReader();
+  reader.onload = e => {
+    nominaContent = e.target.result;
+    try { window._nominaData = parseExcelNomina(nominaContent); }
+    catch(err) { window._nominaData = null; console.warn('Error al parsear nómina:', err); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function clearNomina() {
+  nominaContent = null; window._nominaData = null;
+  document.getElementById('dropzoneNomina').style.display = 'block';
+  document.getElementById('fileInfoNomina').style.display = 'none';
+  document.getElementById('fileNomina').value = '';
+}
+
+function parseExcelNomina(buf) {
+  const wb = XLSX.read(buf, { type: 'array' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  if (!rows || rows.length < 2) return [];
+
+  // Detectar fila de headers (primera con ≥2 celdas no vacías)
+  let hdrIdx = 0;
+  for (let i = 0; i < Math.min(rows.length, 8); i++) {
+    if (rows[i].filter(c => String(c).trim()).length >= 2) { hdrIdx = i; break; }
+  }
+
+  const headers = rows[hdrIdx].map(h => normHeader(String(h)));
+  const colOf = key => {
+    const aliases = {
+      legajo:   ['legajo','nro legajo','numero legajo','leg','n legajo','leg nro'],
+      nombre:   ['nombre','first name','nombres'],
+      apellido: ['apellido','apellidos','last name','surname'],
+      cuil:     ['cuil','nro cuil','cuit','cuil empleado','numero cuil'],
+      empresa:  ['empresa','razon social','empleador','company'],
+    };
+    for (const a of (aliases[key] || [])) {
+      const i = headers.indexOf(a);
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
+
+  const iLeg = colOf('legajo'), iNom = colOf('nombre'), iApe = colOf('apellido');
+  const iCuil = colOf('cuil'),  iEmp = colOf('empresa');
+
+  const result = [];
+  for (let i = hdrIdx + 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (row.every(c => String(c).trim() === '')) continue;
+    const cuil = iCuil >= 0 ? String(row[iCuil] ?? '').replace(/\D/g, '') : '';
+    result.push({
+      legajo:   iLeg  >= 0 ? String(row[iLeg]  ?? '').trim() : '',
+      nombre:   iNom  >= 0 ? String(row[iNom]  ?? '').trim() : '',
+      apellido: iApe  >= 0 ? String(row[iApe]  ?? '').trim() : '',
+      cuil:     cuil.length >= 10 ? cuil.slice(-11).padStart(11,'0') : cuil,
+      empresa:  iEmp  >= 0 ? String(row[iEmp]  ?? '').trim() : '',
+    });
+  }
+  return result;
+}
+
 // ── EXCEL PARSER (Meta 4) ─────────────────────────────────
 // Normaliza un header para comparación flexible
 function normHeader(s) {
@@ -3040,6 +3287,8 @@ function normHeader(s) {
 // Mapa de headers del Excel → clave interna Meta 4
 const EXCEL_HEADER_MAP = {
   'cuil': 'cuil', 'nro cuil': 'cuil', 'cuit': 'cuil', 'numero cuil': 'cuil',
+  'n cuil': 'cuil', 'cuil empleado': 'cuil', 'cuil nro': 'cuil',
+  'cuit cuil': 'cuil', 'legajo cuil': 'cuil', 'nro cuit': 'cuil',
   'nombre': 'nombre', 'apellido y nombre': 'nombre', 'empleado': 'nombre',
   'haberes imponibles': 'Haberes imponibles',
   'total haberes': 'TOTAL HABERES',
@@ -3069,12 +3318,48 @@ const EXCEL_HEADER_MAP = {
   'impuesto a las ganancias de la liquidacion': 'Impuesto a las ganancias de la liquidación',
   'impuesto ganancias liquidacion': 'Impuesto a las ganancias de la liquidación',
   'impuesto ganancias': 'Impuesto a las ganancias de la liquidación',
+  // Columnas técnicas del reporte IMPGAN de Meta 4 (IG_CAMPO_ST / TOT_CAMPO)
+  // normHeader() elimina underscores (no son letras/dígitos/espacios), por eso las claves van sin ellos
+  'igtotcimst': 'TOTAL HABERES',           // IG_TOT_C_IM_ST
+  'iggnoimp': 'Mínimo no imponible',        // IG_G_NO_IMP
+  'baseimpuesto': 'Monto Imponible',        // BASE_IMPUESTO
+  'baseimponsex': 'Monto Imponible',        // BASE_IMPON_SEX
+  'impuestototal': 'Impuesto a las ganancias de la liquidación', // IMPUESTO_TOTAL
+  'acmimpuesto': 'Impuesto retenido acumulado', // ACM_IMPUESTO
+  'igtotjubst': 'Jubilación',               // IG_TOT_JUB_ST
+  'totjubilacion': 'Jubilación',             // TOT_JUBILACION
+  'igt19032st': 'Ley 19032',                 // IG_T_19032_ST
+  'totley19032': 'Ley 19032',                // TOT_LEY_19032
+  'igtotobsst': 'Obra Social',               // IG_TOT_OB_S_ST
+  'totobrasoc': 'Obra Social',               // TOT_OBRA_SOC
+  'obrasocial': 'Obra Social',               // OBRA_SOCIAL
+  'totsacprorra': 'SAC Total',               // TOT_SAC_PRORRA
+  'igsacpres': 'SAC Total',                  // IG_SAC_PRES
+  'igcuotsac': 'SAC Total',                  // IG_CUOT_SAC
+  'igdedesp': 'Deducción especial',          // IG_DED_ESP (acumulado)
+  'igdedesp1': 'Deducción especial',         // IG_DED_ESP1 (período)
+  'igdedesp2': 'Deducción especial 2° Párr. Art. 30', // IG_DED_ESP2
+  'igconyugerem': 'Cónyuge',                 // IG_CONYUGE_REM
+  'ighijosrem': 'Hijos',                     // IG_HIJOS_REM
+  'igcmasisremun': 'Cuotas médico asistenciales', // IG_CMASIS_REMUN
+  'iggastoseduc': 'Gastos de Educación',     // IG_GASTOS_EDUC
+  'impdebbanst': 'Creditos y debitos bancarios', // IMP_DEB_BAN_ST
+  'impuesto': 'Impuesto Escala',             // IMPUESTO (período)
+  'igretpres': 'Retención SACPresunto',      // IG_RET_PRES
 };
 
 function parseExcelMeta4(arrayBuffer) {
   const wb = XLSX.read(arrayBuffer, { type: 'array' });
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false });
+
+  // Helper: leer valor raw de una celda (evita notación científica en CUILs numéricos)
+  function rawCell(ws, r, c) {
+    const ref = XLSX.utils.encode_cell({ r, c });
+    const cell = ws[ref];
+    if (!cell) return '';
+    return String(cell.v ?? '');
+  }
 
   // Encontrar fila de headers (primera fila con ≥3 textos no vacíos)
   let headerRowIdx = -1;
@@ -3084,12 +3369,17 @@ function parseExcelMeta4(arrayBuffer) {
     const nonEmpty = row.filter(c => c && String(c).trim()).length;
     if (nonEmpty >= 3) {
       headerRowIdx = i;
+      const keyOcc = {}; // cuenta ocurrencias de cada key interno
       row.forEach((cell, idx) => {
         const norm = normHeader(cell || '');
         const mapped = EXCEL_HEADER_MAP[norm];
-        if (mapped) colMap[mapped] = idx;
-        // CUIL detection by value pattern if header unclear
-        if (norm.includes('cuil') || norm.includes('cuit')) colMap['cuil'] = idx;
+        if (mapped && mapped !== 'cuil' && mapped !== 'nombre') {
+          keyOcc[mapped] = (keyOcc[mapped] || 0) + 1;
+          const storeKey = keyOcc[mapped] === 1 ? mapped : mapped + '_2';
+          colMap[storeKey] = idx;
+        }
+        if (mapped === 'cuil' || norm.includes('cuil') || norm.includes('cuit')) colMap['cuil'] = idx;
+        if (mapped === 'nombre') colMap['nombre'] = idx;
       });
       break;
     }
@@ -3099,10 +3389,11 @@ function parseExcelMeta4(arrayBuffer) {
 
   // Detectar columna CUIL por contenido si no encontrada en headers
   if (colMap['cuil'] === undefined) {
-    const sampleRow = rows[headerRowIdx + 1] || [];
-    sampleRow.forEach((cell, idx) => {
-      const s = String(cell || '').replace(/\D/g, '');
-      if (s.length === 11) colMap['cuil'] = idx;
+    const sampleRowIdx = headerRowIdx + 1;
+    const sampleRow = rows[sampleRowIdx] || [];
+    sampleRow.forEach((_, idx) => {
+      const s = rawCell(ws, sampleRowIdx, idx).replace(/\D/g, '');
+      if (s.length === 11 && colMap['cuil'] === undefined) colMap['cuil'] = idx;
     });
   }
 
@@ -3114,7 +3405,7 @@ function parseExcelMeta4(arrayBuffer) {
     if (!row || row.every(c => !c || String(c).trim() === '')) continue;
 
     const cuil = colMap['cuil'] !== undefined
-      ? String(row[colMap['cuil']] || '').replace(/\D/g, '')
+      ? rawCell(ws, i, colMap['cuil']).replace(/\D/g, '')
       : null;
     const nombre = colMap['nombre'] !== undefined
       ? String(row[colMap['nombre']] || '').trim()
@@ -3127,6 +3418,16 @@ function parseExcelMeta4(arrayBuffer) {
       const raw = String(row[colIdx] || '').trim();
       const val = parseArgNum(raw.replace(/\./g, ',').includes(',') ? raw : raw + ',00');
       if (val !== null) rd[key] = val;
+    }
+
+    // Derivar valores que no tienen columna directa en el Excel IMPGAN Meta 4
+    const totSACExcel = (rd['SAC Total'] ?? 0) + (rd['SAC Total_2'] ?? 0);
+    if (!rd['Haberes imponibles'] && rd['TOTAL HABERES']) {
+      // Rem Bruta = Total Gravada - SAC Total
+      rd['Haberes imponibles'] = Math.max(0, (rd['TOTAL HABERES'] ?? 0) - totSACExcel);
+    }
+    if (!rd['Sac Real'] && totSACExcel > 0) {
+      rd['Sac Real'] = totSACExcel;
     }
 
     result.push({ cuil, nombre, rd, rowIdx: i + 1 });
@@ -3200,19 +3501,25 @@ async function validarMasiva() {
     excelRows.forEach(r => { if (r.cuil && r.cuil.length === 11) cuilMap.set(r.cuil, r); });
   }
 
+  // 3b. Mapa de nómina por CUIL
+  const nominaMap = new Map();
+  if (window._nominaData) {
+    window._nominaData.forEach(n => { if (n.cuil) nominaMap.set(n.cuil, n); });
+  }
+
   // 4. Validar cada trabajador
   const resultados = [];
   const software = document.getElementById('softwareLiqMasiva').value;
 
   for (let i = 0; i < trabajadores.length; i++) {
     const t = trabajadores[i];
-    const cuil = t.lines['02'] ? str(t.lines['02'], 3, 11) : `#${i+1}`;
+    const cuil = t.lines['02'] ? str(t.lines['02'], 3, 11).replace(/\D/g, '') : `#${i+1}`;
 
     // Errores de formato de este trabajador
     const tErr  = errores.filter(e => e._tidx === i);
     const tWarn = advertencias.filter(e => e._tidx === i);
 
-    // Cruce con Excel
+    // Cruce con Excel Meta4
     let crossResults = null;
     let excelRow = cuilMap.get(cuil);
     if (!excelRow && excelRows && excelRows[i]) excelRow = excelRows[i]; // fallback posición
@@ -3224,24 +3531,43 @@ async function validarMasiva() {
     const crossWarn = crossResults ? crossResults.filter(r => r.status === 'shifted').length  : 0;
     const crossOk   = crossResults ? crossResults.filter(r => r.status === 'ok').length       : 0;
 
-    resultados.push({ t, cuil, nombre: excelRow?.nombre || '', tErr, tWarn, crossResults, crossErr, crossWarn, crossOk, idx: i });
+    // Datos de nómina
+    const nominaRow   = nominaMap.get(cuil) || null;
+    const legajo      = nominaRow?.legajo || '';
+    const nombreNomina = nominaRow ? `${nominaRow.apellido || ''}${nominaRow.apellido && nominaRow.nombre ? ', ' : ''}${nominaRow.nombre || ''}`.trim() : '';
+    const empresa     = nominaRow?.empresa || '';
+    const sinNomina   = window._nominaData != null && !nominaRow;
+
+    resultados.push({ t, cuil, nombre: excelRow?.nombre || '', legajo, nombreNomina, empresa, sinNomina, tErr, tWarn, crossResults, crossErr, crossWarn, crossOk, idx: i });
   }
 
-  renderResultsMasiva(resultados, errores, advertencias, oks, infos, excelMeta);
+  // 5. Empleados en nómina pero sin TXT
+  const cuilesTxt = new Set(resultados.map(r => r.cuil));
+  const sinTxt = window._nominaData
+    ? window._nominaData.filter(n => n.cuil && !cuilesTxt.has(n.cuil))
+    : [];
+
+  window._lastResultadosMasiva = { resultados, sinTxt };
+  renderResultsMasiva(resultados, errores, advertencias, oks, infos, excelMeta, sinTxt);
 }
 
-function renderResultsMasiva(resultados, errores, advertencias, oks, infos, excelMeta) {
+function renderResultsMasiva(resultados, errores, advertencias, oks, infos, excelMeta, sinTxt = []) {
   const container = document.getElementById('resultsContainer');
-  const total   = resultados.length;
-  const conErr  = resultados.filter(r => r.tErr.length > 0 || r.crossErr > 0).length;
-  const conWarn = resultados.filter(r => r.tWarn.length > 0 || r.crossWarn > 0).length;
-  const ok      = resultados.filter(r => r.tErr.length === 0 && r.crossErr === 0 && r.crossWarn === 0).length;
+  const total        = resultados.length;
+  const conErrTxt    = resultados.filter(r => r.tErr.length > 0).length;
+  const conErrDif    = resultados.filter(r => r.crossErr > 0).length;
+  const conWarn      = resultados.filter(r => r.tWarn.length > 0 || r.crossWarn > 0).length;
+  const ok           = resultados.filter(r => r.tErr.length === 0 && r.crossErr === 0 && r.crossWarn === 0).length;
+  const sinNominaCount = resultados.filter(r => r.sinNomina).length;
 
-  let html = `<div class="masiva-summary-bar">`;
-  html += `<div class="summary-chip chip-info">👥 ${total} empleado${total !== 1 ? 's' : ''}</div>`;
-  if (conErr)  html += `<div class="summary-chip chip-err">✗ ${conErr} con errores</div>`;
-  if (conWarn) html += `<div class="summary-chip chip-warn">↔ ${conWarn} con corrimientos</div>`;
-  html += `<div class="summary-chip chip-ok">✓ ${ok} sin problemas</div>`;
+  let html = `<div class="masiva-filter-bar">`;
+  html += `<button class="summary-chip chip-info chip-filter" data-filter="all" onclick="applyChipFilter(this)">👥 ${total} empleado${total !== 1 ? 's' : ''}</button>`;
+  if (conErrTxt)  html += `<button class="summary-chip chip-err chip-filter" data-filter="errARCA" onclick="applyChipFilter(this)">✗ ${conErrTxt} con errores ARCA</button>`;
+  if (conErrDif)  html += `<button class="summary-chip chip-err chip-filter" data-filter="dif" onclick="applyChipFilter(this)">⚡ ${conErrDif} con diferencias</button>`;
+  if (conWarn)    html += `<button class="summary-chip chip-warn chip-filter" data-filter="adv" onclick="applyChipFilter(this)">⚠ ${conWarn} con advertencias</button>`;
+  html += `<button class="summary-chip chip-ok chip-filter" data-filter="ok" onclick="applyChipFilter(this)">✓ ${ok} sin problemas</button>`;
+  if (sinNominaCount) html += `<button class="summary-chip chip-not-found chip-filter" data-filter="sinNomina" onclick="applyChipFilter(this)">⚠ ${sinNominaCount} sin nómina</button>`;
+  if (sinTxt.length)  html += `<span class="summary-chip chip-not-found">⚠ ${sinTxt.length} en nómina sin TXT</span>`;
   html += `</div>`;
 
   if (excelMeta?.warning) {
@@ -3263,42 +3589,86 @@ function renderResultsMasiva(resultados, errores, advertencias, oks, infos, exce
     html += `</div>`;
   }
 
+  // Sección: empleados en nómina sin TXT
+  if (sinTxt.length) {
+    html += `<div class="result-section" style="margin-bottom:16px;">
+      <div class="result-section-title" style="color:#ef4444;margin-bottom:6px;">Empleados en nómina sin registro en TXT (${sinTxt.length})</div>`;
+    for (const n of sinTxt) {
+      const nombreMostrar = `${n.apellido || ''}${n.apellido && n.nombre ? ', ' : ''}${n.nombre || ''}`.trim() || '—';
+      html += `<div class="result-item item-err" style="margin-bottom:4px"><div class="dot dot-err"></div><div class="msg">Legajo <strong>${n.legajo || '—'}</strong> · CUIL ${n.cuil || '—'} · ${nombreMostrar}${n.empresa ? ' · ' + n.empresa : ''} — no encontrado en el archivo TXT.</div></div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Buscador
+  html += `<div class="masiva-search"><input type="text" id="searchMasiva" placeholder="Buscar por legajo, nombre o CUIL..." oninput="filterMasiva(this.value)"></div>`;
+
   // Tabla resumen
+  const hasNomina = window._nominaData != null;
   html += `<div class="masiva-table-wrap"><table class="masiva-table">
   <thead><tr>
+    ${hasNomina ? '<th class="col-legajo">Legajo</th>' : ''}
     <th>#</th>
     <th>CUIL</th>
     <th>Nombre</th>
-    <th class="col-icon" title="Formato TXT">TXT</th>
-    <th class="col-icon" title="Cruce reporte">Cruce</th>
+    <th class="col-icon" title="Errores de formato según manual ARCA">ARCA</th>
+    <th class="col-icon" title="Diferencias TXT vs reporte de liquidación">Dif.</th>
+    <th class="col-icon" title="Advertencias">Adv.</th>
     <th class="col-detail">Detalle</th>
   </tr></thead><tbody>`;
 
+  const colSpan = hasNomina ? 8 : 7;
+
   for (const r of resultados) {
-    const hasErr  = r.tErr.length > 0 || r.crossErr > 0;
-    const hasWarn = r.tWarn.length > 0 || r.crossWarn > 0;
-    const rowCls  = hasErr ? 'has-err' : hasWarn ? 'has-warn' : '';
+    const isErrARCA  = r.tErr.length > 0;
+    const isDif      = r.crossErr > 0;
+    const isAdv      = r.tWarn.length > 0 || r.crossWarn > 0;
+    const isOk       = !isErrARCA && !isDif && !isAdv;
+    const isSinNomina = r.sinNomina;
 
-    const txtIcon = r.tErr.length > 0 ? `<span class="cross-err" title="${r.tErr.length} error(es)">✗ ${r.tErr.length}</span>`
-                  : r.tWarn.length > 0 ? `<span class="cross-warn" title="${r.tWarn.length} advertencia(s)">⚠ ${r.tWarn.length}</span>`
-                  : `<span class="cross-ok">✓</span>`;
+    const cats = [
+      isErrARCA   ? 'errARCA'   : '',
+      isDif       ? 'dif'       : '',
+      isAdv       ? 'adv'       : '',
+      isOk        ? 'ok'        : '',
+      isSinNomina ? 'sinNomina' : '',
+    ].filter(Boolean).join(' ');
 
-    const cruceIcon = r.crossResults === null
+    const rowCls = isErrARCA || isDif ? 'has-err' : isAdv ? 'has-warn' : '';
+
+    const arcaIcon = isErrARCA
+      ? `<span class="cross-err" title="${r.tErr.length} error(es) ARCA">✗ ${r.tErr.length}</span>`
+      : `<span class="cross-ok">✓</span>`;
+
+    const difIcon = r.crossResults === null
       ? `<span class="cross-skip">—</span>`
-      : r.crossErr > 0  ? `<span class="cross-err">✗ ${r.crossErr}</span>`
-      : r.crossWarn > 0 ? `<span class="cross-warn">↔ ${r.crossWarn}</span>`
-      : `<span class="cross-ok">✓ ${r.crossOk}</span>`;
+      : isDif       ? `<span class="cross-err" title="${r.crossErr} diferencia(s)">⚡ ${r.crossErr}</span>`
+      : r.crossOk   ? `<span class="cross-ok">✓ ${r.crossOk}</span>`
+      : `<span class="cross-skip">—</span>`;
 
-    html += `<tr class="${rowCls}" id="row-${r.idx}">
+    const advIcon = isAdv
+      ? `<span class="cross-warn" title="${r.tWarn.length + r.crossWarn} advertencia(s)">⚠ ${r.tWarn.length + r.crossWarn}</span>`
+      : `<span class="cross-ok">✓</span>`;
+
+    const nombreMostrar = r.nombreNomina || r.nombre || '';
+    const legajoCell = r.sinNomina
+      ? `<td class="col-legajo"><span style="color:#ef4444" title="No encontrado en nómina">—</span></td>`
+      : `<td class="col-legajo">${r.legajo || '<span style="color:var(--muted)">—</span>'}</td>`;
+
+    const searchStr = `${r.legajo} ${r.nombreNomina} ${r.nombre} ${r.cuil}`.toLowerCase();
+
+    html += `<tr class="${rowCls}" id="row-${r.idx}" data-search="${searchStr.replace(/"/g,'').trim()}" data-cats="${cats}">
+      ${hasNomina ? legajoCell : ''}
       <td class="col-num">${r.idx + 1}</td>
-      <td class="col-cuil">${r.cuil}</td>
-      <td>${r.nombre || '<span style="color:var(--muted)">—</span>'}</td>
-      <td class="col-icon">${txtIcon}</td>
-      <td class="col-icon">${cruceIcon}</td>
+      <td class="col-cuil">${r.cuil && r.cuil.length === 11 ? `${r.cuil.slice(0,2)}-${r.cuil.slice(2,10)}-${r.cuil.slice(10)}` : r.cuil || '—'}</td>
+      <td>${nombreMostrar || '<span style="color:var(--muted)">—</span>'}</td>
+      <td class="col-icon">${arcaIcon}</td>
+      <td class="col-icon">${difIcon}</td>
+      <td class="col-icon">${advIcon}</td>
       <td class="col-detail"><button class="btn-ver" onclick="toggleDetail(${r.idx})">Ver</button></td>
     </tr>
     <tr class="detail-row" id="detail-row-${r.idx}">
-      <td colspan="6"><div class="detail-inner" id="detail-${r.idx}">
+      <td colspan="${colSpan}"><div class="detail-inner" id="detail-${r.idx}">
         ${renderDetailMasiva(r)}
       </div></td>
     </tr>`;
@@ -3307,40 +3677,52 @@ function renderResultsMasiva(resultados, errores, advertencias, oks, infos, exce
   html += `</tbody></table></div>`;
   container.innerHTML = html;
 
+  // Mostrar botón de exportar errores
+  const btnExp = document.getElementById('btnExportErrors');
+  if (btnExp) btnExp.style.display = '';
+
   // Colapsar panel de config al mostrar resultados
   collapseConfig();
 }
 
 function renderDetailMasiva(r) {
-  let h = '';
+  let h = '<div class="detail-section">';
+  let hasContent = false;
+
+  // Cabecera con legajo/empresa si hay nómina
+  if (r.legajo || r.empresa) {
+    h += `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">`;
+    if (r.legajo)  h += `Legajo: <strong style="color:var(--text)">${r.legajo}</strong>`;
+    if (r.empresa) h += `${r.legajo ? ' · ' : ''}Empresa: <strong style="color:var(--text)">${r.empresa}</strong>`;
+    h += `</div>`;
+  }
+  if (r.sinNomina) {
+    h += `<div class="result-item item-warn" style="margin-bottom:8px"><div class="dot dot-warn"></div><div class="msg">CUIL no encontrado en la nómina cargada.</div></div>`;
+    hasContent = true;
+  }
+
   if (r.tErr.length || r.tWarn.length) {
-    h += `<div class="result-section-title" style="margin-bottom:8px">Errores de formato TXT</div>`;
+    hasContent = true;
+    const count = r.tErr.length + r.tWarn.length;
+    h += `<div class="result-section-title" style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;">Errores de formato TXT <span class="badge" style="background:${r.tErr.length?'rgba(239,68,68,.15)':'rgba(251,191,36,.15)'};color:${r.tErr.length?'#ef4444':'#f59e0b'}">${count}</span></div>`;
     for (const e of r.tErr)
       h += `<div class="result-item item-err" style="margin-bottom:4px"><div class="dot dot-err"></div><div class="msg">${e.msg}${e.pos?`<div class="pos-badge pos-err">${e.pos}</div>`:''}</div></div>`;
     for (const w of r.tWarn)
       h += `<div class="result-item item-warn" style="margin-bottom:4px"><div class="dot dot-warn"></div><div class="msg">${w.msg}</div></div>`;
   }
+
   if (r.crossResults) {
-    h += `<div class="result-section-title" style="margin-top:12px;margin-bottom:8px">Cruce con reporte</div>`;
-    h += `<table class="cross-table"><thead><tr>
-      <th class="td-status"></th><th>Campo F.1359</th>
-      <th class="td-num">Reporte</th><th class="td-num">TXT</th>
-      <th>Posición</th></tr></thead><tbody>`;
-    const fmt = v => v === null ? '—' : '$\u00a0' + (Math.abs(v)/100).toLocaleString('es-AR',{minimumFractionDigits:2});
-    for (const row of r.crossResults) {
-      const icon = row.status==='ok'?'<span class="cross-ok">✓</span>'
-                 : row.status==='shifted'?`<span class="cross-warn">↔${row.delta>0?'+'+row.delta:row.delta}</span>`
-                 : row.status==='mismatch'?'<span class="cross-err">✗</span>'
-                 : '<span class="cross-skip">—</span>';
-      h += `<tr class="row-${row.status}"><td class="td-status">${icon}</td>
-        <td class="td-label"><strong>${row.f1359Name}</strong><span class="note-inline">${row.repLabel||''}</span></td>
-        <td class="td-num">${fmt(row.repVal)}</td>
-        <td class="td-num">${fmt(row.txtExact)}</td>
-        <td class="td-pos">${row.posDesc||''}</td></tr>`;
-    }
-    h += `</tbody></table>`;
+    hasContent = true;
+    const cErr = r.crossErr, cWarn = r.crossWarn, cOk = r.crossOk;
+    const badgeColor = cErr ? 'rgba(239,68,68,.15)' : cWarn ? 'rgba(251,191,36,.15)' : 'rgba(34,197,94,.15)';
+    const badgeTxt   = cErr ? '#ef4444' : cWarn ? '#f59e0b' : '#22c55e';
+    const badgeLabel = cErr ? `✗ ${cErr}` : cWarn ? `↔ ${cWarn}` : `✓ ${cOk}`;
+    h += `<div class="result-section-title" style="font-size:11px;font-weight:600;color:var(--text2);margin:10px 0 6px;">Diferencias — cruce con reporte <span class="badge" style="background:${badgeColor};color:${badgeTxt}">${badgeLabel}</span></div>`;
+    h += buildCrossTableHTML(r.crossResults, { showPatch: false, idSuffix: `-${r.idx}` });
   }
-  if (!h) h = `<span style="color:var(--muted);font-size:12px;">Sin errores ni advertencias para este empleado.</span>`;
+
+  if (!hasContent) h += `<span style="color:var(--muted);font-size:12px;">Sin errores ni advertencias para este empleado.</span>`;
+  h += '</div>';
   return h;
 }
 
@@ -3350,6 +3732,69 @@ function toggleDetail(idx) {
   const open = div.classList.toggle('open');
   if (btn) btn.classList.toggle('open', open);
   if (btn) btn.textContent = open ? 'Cerrar' : 'Ver';
+}
+
+let _activeChipFilter = 'all';
+
+function applyChipFilter(btn) {
+  const filter = btn.dataset.filter;
+  _activeChipFilter = _activeChipFilter === filter && filter !== 'all' ? 'all' : filter;
+  // Update active style on all chips
+  document.querySelectorAll('#resultsContainer .chip-filter').forEach(b => {
+    b.classList.toggle('chip-filter-active', b.dataset.filter === _activeChipFilter);
+  });
+  _applyFilters();
+}
+
+function filterMasiva(q) {
+  _applyFilters();
+}
+
+function _applyFilters() {
+  const term = ((document.getElementById('searchMasiva')?.value) || '').toLowerCase().trim();
+  const rows = document.querySelectorAll('#resultsContainer tbody tr[data-search]');
+  rows.forEach(tr => {
+    const matchText = !term || tr.dataset.search.includes(term);
+    const matchCat  = _activeChipFilter === 'all' || (tr.dataset.cats || '').split(' ').includes(_activeChipFilter);
+    const show = matchText && matchCat;
+    tr.style.display = show ? '' : 'none';
+    const detail = tr.nextElementSibling;
+    if (detail?.classList.contains('detail-row')) detail.style.display = show ? '' : 'none';
+  });
+}
+
+function exportErrorsExcel() {
+  const data = window._lastResultadosMasiva;
+  if (!data) return;
+  const rows = [['Legajo', 'CUIL', 'Nombre', 'Empresa', 'Tipo', 'Descripción', 'Registro', 'Posición']];
+  for (const r of data.resultados) {
+    const leg  = r.legajo || '';
+    const cuil = r.cuil   || '';
+    const nom  = r.nombreNomina || r.nombre || '';
+    const emp  = r.empresa || '';
+    for (const e of r.tErr)
+      rows.push([leg, cuil, nom, emp, 'Error TXT', e.msg, e.rec || '', e.pos || '']);
+    for (const w of r.tWarn)
+      rows.push([leg, cuil, nom, emp, 'Advertencia TXT', w.msg, w.rec || '', w.pos || '']);
+    if (r.crossResults) {
+      for (const c of r.crossResults.filter(x => x.status === 'mismatch' || x.status === 'shifted')) {
+        const tipo = c.status === 'mismatch' ? 'Discrepancia cruce' : 'Corrimiento cruce';
+        const desc = `${c.f1359Name || ''}: TXT=${c.txtExact != null ? c.txtExact : '—'}  Reporte=${c.repVal != null ? c.repVal : '—'}`;
+        rows.push([leg, cuil, nom, emp, tipo, desc, c.posDesc || '', '']);
+      }
+    }
+  }
+  for (const n of (data.sinTxt || [])) {
+    const nom = `${n.apellido || ''}${n.apellido && n.nombre ? ', ' : ''}${n.nombre || ''}`.trim();
+    rows.push([n.legajo || '', n.cuil || '', nom, n.empresa || '', 'Sin TXT', 'Empleado en nómina sin registro en el archivo TXT', '', '']);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  // Auto-ancho básico
+  const colWidths = rows[0].map((_, ci) => ({ wch: Math.min(60, Math.max(12, ...rows.map(r => String(r[ci] || '').length))) }));
+  ws['!cols'] = colWidths;
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Errores F1359');
+  XLSX.writeFile(wb, 'errores_f1359.xlsx');
 }
 
 // ── PARSEO TXT — núcleo compartido por individual y masiva ────────────────
@@ -3458,6 +3903,7 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
   }
 
   // ── Post-loop: validaciones por trabajador ───────────────
+  const tipoPres = reg01 && reg01.length === 38 ? str(reg01, 33, 1) : null;
   for (const t of trabajadores) {
     currentTidx = t.idx - 1;
     const idx = t.idx;
@@ -3528,6 +3974,11 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
           if (interesesHip > topes.intereses_hip) pe({ msg: `Trabajador #${idx} — Reg.05: Intereses Hipotecarios ($${interesesHip.toLocaleString('es-AR',{minimumFractionDigits:2})}) supera el tope de $${topes.intereses_hip.toLocaleString('es-AR')} (fijo por ley).`, rec: `Línea ${ln05}`, pos: p('05','21') });
           if (sepelio > topes.sepelio)             pe({ msg: `Trabajador #${idx} — Reg.05: Gastos de Sepelio ($${sepelio.toLocaleString('es-AR',{minimumFractionDigits:2})}) supera el tope de $${topes.sepelio.toLocaleString('es-AR',{minimumFractionDigits:2})}.`, rec: `Línea ${ln05}`, pos: p('05','15') });
 
+          // Extraer campos para regla 5% (se valida más abajo, cuando se tiene Reg.08 C3)
+          const c11_r05 = num(r05, 134, 15); // Cuotas Médico Asistenciales
+          const c17_r05 = num(r05, 224, 15); // Donaciones Fiscos (Art.26 inc.e/f LIG)
+          const c20_r05 = num(r05, 269, 15); // Honorarios Asistencia Sanitaria/Médica
+
           if (r06 && r06.length === 160) {
             const gni         = num(r06, 14,15), conyuge    = num(r06, 29,15);
             const hijos        = num(r06, 48,15), hijosInc  = num(r06, 67,15);
@@ -3554,7 +4005,17 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
             } else {
               pok({ msg: `Trabajador #${idx} — Reg.06: Total Deducciones Art. 30 cuadra.`, rec: `Línea ${ln06}`, pos: p('06','15') });
             }
-            if (gni/100 > topes.gni * 1.01) pw({ msg: `Trabajador #${idx} — Reg.06: Ganancia No Imponible ($${(gni/100).toLocaleString('es-AR',{minimumFractionDigits:2})}) excede el tope ${anio} de $${topes.gni.toLocaleString('es-AR',{minimumFractionDigits:2})}.`, rec: `Línea ${ln06}`, pos: p('06','3') });
+            if (gni/100 > topes.gni * 1.01) pe({ msg: `Trabajador #${idx} — Reg.06: Ganancia No Imponible ($${(gni/100).toLocaleString('es-AR',{minimumFractionDigits:2})}) excede el tope ${anio} de $${topes.gni.toLocaleString('es-AR',{minimumFractionDigits:2})}.`, rec: `Línea ${ln06}`, pos: p('06','3') });
+            // Tope cónyuge/UC: C4 ≤ GNI
+            if (conyuge/100 > topes.gni * 1.01) pe({ msg: `Trabajador #${idx} — Reg.06: Cónyuge/Unión Convivencial ($${(conyuge/100).toLocaleString('es-AR',{minimumFractionDigits:2})}) supera el tope ${anio} de GNI = $${topes.gni.toLocaleString('es-AR',{minimumFractionDigits:2})}.`, rec: `Línea ${ln06}`, pos: p('06','4') });
+            // Tope hijos: C7 ≤ (cant50% × GNI×0.25) + (cant100% × GNI×0.5)
+            const c5_h = num(r06, 44, 2), c6_h = num(r06, 46, 2);
+            const maxHijosP = c5_h * topes.gni * 0.25 + c6_h * topes.gni * 0.5;
+            if (maxHijosP > 0 && hijos/100 > maxHijosP * 1.01) pe({ msg: `Trabajador #${idx} — Reg.06: Hijos/Hijastros ($${(hijos/100).toLocaleString('es-AR',{minimumFractionDigits:2})}) supera el máximo calculado $${maxHijosP.toLocaleString('es-AR',{minimumFractionDigits:2})} (${c5_h} al 50% + ${c6_h} al 100% × GNI ${anio}).`, rec: `Línea ${ln06}`, pos: p('06','7') });
+            // Tope hijos incapacitados: C10 ≤ (cant50% × GNI×0.5) + (cant100% × GNI)
+            const c8_h = num(r06, 63, 2), c9_h = num(r06, 65, 2);
+            const maxHijosIncP = c8_h * topes.gni * 0.5 + c9_h * topes.gni;
+            if (maxHijosIncP > 0 && hijosInc/100 > maxHijosIncP * 1.01) pe({ msg: `Trabajador #${idx} — Reg.06: Hijos/Hijastros incapacitados ($${(hijosInc/100).toLocaleString('es-AR',{minimumFractionDigits:2})}) supera el máximo calculado $${maxHijosIncP.toLocaleString('es-AR',{minimumFractionDigits:2})} (${c8_h} al 50% + ${c9_h} al 100% × GNI ${anio}).`, rec: `Línea ${ln06}`, pos: p('06','10') });
             // ARCA 13592612: TOTAL DED. ART.30 ≤ Rem. Gravada + No Gravada (Art. 25 LIG)
             const maxDedArt30 = totalGravada + totalNoGravada;
             if (totalArt30 > maxDedArt30 + 1) pe({ msg: `Trabajador #${idx} — Reg.06: TOTAL DED. ART. 30 ($${(totalArt30/100).toLocaleString('es-AR',{minimumFractionDigits:2})}) supera Rem. Gravada + No Gravada ($${(maxDedArt30/100).toLocaleString('es-AR',{minimumFractionDigits:2})}). Art. 25 LIG. Código ARCA 13592612.`, rec: `Línea ${ln06}`, pos: p('06','15') });
@@ -3568,6 +4029,12 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
                 pe({ msg: `Trabajador #${idx} — Reg.08: REMUNERACIÓN SUJETA A IMPUESTO (${remSujetaImp.toLocaleString('es-AR')}) ≠ Rem. Gravada − Ded. Generales − Ded. Art.30 = ${esperadoRSI.toLocaleString('es-AR')}.`, rec: `Línea ${ln08}`, pos: p('08','3') });
               } else {
                 pok({ msg: `Trabajador #${idx} — Reg.08: Remuneración Sujeta a Impuesto cuadra.`, rec: `Línea ${ln08}`, pos: p('08','3') });
+              }
+              // Reg.05 C11+C17+C20 ≤ 5% de la ganancia neta (Reg.08 C3)
+              if (remSujetaImp > 0) {
+                const sumMedEdu = c11_r05 + c17_r05 + c20_r05;
+                const limite5pct = Math.floor(remSujetaImp * 0.05);
+                if (sumMedEdu > limite5pct + 1) pe({ msg: `Trabajador #${idx} — Reg.05: Cuotas Médico Asistenciales + Donaciones + Honorarios Médicos ($${(sumMedEdu/100).toLocaleString('es-AR',{minimumFractionDigits:2})}) supera el 5% de la ganancia neta sujeta a impuesto ($${(limite5pct/100).toLocaleString('es-AR',{minimumFractionDigits:2})}). Art.81 LIG.`, rec: `Línea ${ln05}`, pos: `${p('05','11')} + ${p('05','17')} + ${p('05','20')}` });
               }
               // Impuesto Retenido debería ser 0 en liquidaciones anuales/finales
               if (impRet > 0) {
@@ -3597,6 +4064,7 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
                 } else {
                   pok({ msg: `Trabajador #${idx} — Reg.07: Total Pagos a Cuenta cuadra.`, rec: `Línea ${ln07}`, pos: p('07','13') });
                 }
+                if (tipoPres === '3' && totalPagos !== 0) pe({ msg: `Trabajador #${idx} — Reg.07: Presentación Informativa (tipo 3) — TOTAL PAGOS A CUENTA debe ser 0. Encontrado: $${(totalPagos/100).toLocaleString('es-AR',{minimumFractionDigits:2})}.`, rec: `Línea ${ln07}`, pos: p('07','13') });
               }
               const esperadoSaldo = subtotal - autoret - totalPagos;
               if (Math.abs(saldoDet - Math.max(0, esperadoSaldo)) > 1) {
