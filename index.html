@@ -863,28 +863,7 @@
             <span class="ch-pill" id="musicSource">YouTube</span>
           </div>
           <div class="card-body">
-            <div class="music-player">
-              <div class="music-top">
-                <div class="music-cover">🎵</div>
-                <div class="music-info">
-                  <div class="music-track" id="musicTrack">Lo-fi Beats to Work</div>
-                  <div class="music-artist" id="musicArtist">Playlist Payroll · H&A</div>
-                </div>
-              </div>
-              <div class="music-ctrl">
-                <button title="Anterior">⏮</button>
-                <button class="play-btn" id="playBtn" onclick="togglePlay()" title="Reproducir/Pausar">▶</button>
-                <button title="Siguiente">⏭</button>
-                <button title="Volumen" style="margin-left:auto">🔊</button>
-              </div>
-              <div class="music-prog" onclick="seekMusic(event)">
-                <div class="music-fill" id="musicFill"></div>
-              </div>
-              <div class="music-time">
-                <span id="musicCurrent">0:00</span>
-                <span id="musicTotal">—</span>
-              </div>
-            </div>
+            <div id="musicEmbed" style="border-radius:var(--r-sm);overflow:hidden;"></div>
             <div class="music-type-toggle">
               <button class="toggle-btn active" onclick="setMusicType('youtube',this)">📺 YouTube</button>
               <button class="toggle-btn" onclick="setMusicType('spotify',this)">🟢 Spotify</button>
@@ -1074,13 +1053,7 @@ const CONFIG = {
     },
   ],
 
-  /* ── Noticias laborales — datos fijos de demostración ───── */
-  noticias: [
-    { fuente:'iProfesional', titulo:'ARCA actualizó los topes de retenciones de Ganancias para el período 2026', hace:'Hace 2 h',  url:'https://www.iprofesional.com/impuestos' },
-    { fuente:'Ámbito',       titulo:'Paritarias comercio: acuerdo salarial del 8% para abril',                   hace:'Ayer',     url:'https://www.ambito.com' },
-    { fuente:'El Cronista',  titulo:'SIPA: nueva base imponible máxima a partir de mayo 2026',                   hace:'Ayer',     url:'https://www.cronista.com' },
-    { fuente:'iProfesional', titulo:'Monotributo: recategorización obligatoria antes del 30 de abril',           hace:'2 días',   url:'https://www.iprofesional.com/impuestos' },
-  ],
+  noticias: [],
 
   /* ── Música ──────────────────────────────────────────────── */
   musicaYoutube: {
@@ -1141,7 +1114,7 @@ async function cargarDatos() {
   renderBirthdays();
   renderEventos();
   renderQuote();
-  renderNoticias();
+  fetchNoticias();
 
   // Notificamos la altura al iframe de SharePoint
   // (lo hacemos después del render para que el DOM esté completo)
@@ -1373,77 +1346,81 @@ function nextQuote() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   NOTICIAS
+   NOTICIAS — RSS via rss2json.com (proxy CORS gratuito)
 ═══════════════════════════════════════════════════════════ */
-function renderNoticias() {
-  const body = document.getElementById('newsBody');
-  body.innerHTML = CONFIG.noticias.map(n => `
-    <div class="news-item" onclick="window.open('${n.url}','_blank')">
-      <div class="news-source">${n.fuente}</div>
-      <div class="news-hl">${n.titulo}</div>
-      <div class="news-meta"><span>${n.hace}</span></div>
-    </div>`).join('');
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
+  if (diff < 60)   return `Hace ${diff} min`;
+  if (diff < 1440) return `Hace ${Math.floor(diff/60)} h`;
+  if (diff < 2880) return 'Ayer';
+  return `Hace ${Math.floor(diff/1440)} días`;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   MÚSICA — reproductor simulado (sin iframe por defecto,
-   en SharePoint usar el web part Embed con la URL)
-═══════════════════════════════════════════════════════════ */
-let isPlaying = false;
-let musicProgress = 35; // % inicial demo
-let musicTimer = null;
-let currentMusicType = 'youtube';
-
-function togglePlay() {
-  isPlaying = !isPlaying;
-  document.getElementById('playBtn').textContent = isPlaying ? '⏸' : '▶';
-  if (isPlaying) {
-    musicTimer = setInterval(() => {
-      musicProgress = Math.min(musicProgress + 0.2, 100);
-      document.getElementById('musicFill').style.width = musicProgress + '%';
-      const total = 222 * 60; // 3h42m in seconds (demo)
-      const current = Math.floor(total * musicProgress / 100);
-      document.getElementById('musicCurrent').textContent = secToTime(current);
-      if (musicProgress >= 100) { clearInterval(musicTimer); isPlaying = false; document.getElementById('playBtn').textContent = '▶'; }
-    }, 500);
-  } else {
-    clearInterval(musicTimer);
+async function fetchNoticias() {
+  const body = document.getElementById('newsBody');
+  body.innerHTML = '<div class="news-item" style="color:var(--text-3);font-size:0.75rem">Cargando noticias…</div>';
+  const feeds = [
+    { url:'https://www.iprofesional.com/rss/impuestos.xml',  fuente:'iProfesional' },
+    { url:'https://www.ambito.com/rss/economia.xml',         fuente:'Ámbito'       },
+  ];
+  try {
+    const proxy = 'https://api.rss2json.com/v1/api.json?count=3&rss_url=';
+    const results = await Promise.allSettled(
+      feeds.map(f => fetch(proxy + encodeURIComponent(f.url)).then(r => r.json()).then(d => ({ d, fuente: f.fuente })))
+    );
+    const items = results
+      .filter(r => r.status === 'fulfilled' && r.value.d.status === 'ok')
+      .flatMap(r => r.value.d.items.slice(0,3).map(i => ({
+        fuente: r.value.fuente,
+        titulo: i.title,
+        hace:   timeAgo(i.pubDate),
+        url:    i.link,
+      })))
+      .sort((a,b) => 0); // mantener orden intercalado
+    if (!items.length) throw new Error('sin items');
+    body.innerHTML = items.map(n => `
+      <div class="news-item" onclick="window.open('${n.url}','_blank')">
+        <div class="news-source">${n.fuente}</div>
+        <div class="news-hl">${n.titulo}</div>
+        <div class="news-meta"><span>${n.hace}</span></div>
+      </div>`).join('');
+  } catch {
+    body.innerHTML = '<div class="news-item" style="color:var(--text-3);font-size:0.75rem">No se pudieron cargar las noticias.</div>';
   }
 }
 
-function secToTime(s) {
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  return h > 0
-    ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
-    : `${m}:${String(sec).padStart(2,'0')}`;
-}
-
-function seekMusic(e) {
-  const bar = e.currentTarget;
-  const rect = bar.getBoundingClientRect();
-  musicProgress = Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width * 100));
-  document.getElementById('musicFill').style.width = musicProgress + '%';
-}
-
+/* ═══════════════════════════════════════════════════════════
+   MÚSICA — iframes embed reales (Spotify / YouTube)
+═══════════════════════════════════════════════════════════ */
 function setMusicType(type, btn) {
-  currentMusicType = type;
   document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const data = type === 'spotify' ? CONFIG.musicaSpotify : CONFIG.musicaYoutube;
-  document.getElementById('musicTrack').textContent  = data.track;
-  document.getElementById('musicArtist').textContent = data.artist;
-  document.getElementById('musicTotal').textContent  = data.total;
   document.getElementById('musicSource').textContent = type === 'spotify' ? 'Spotify' : 'YouTube';
-  musicProgress = 0;
-  document.getElementById('musicFill').style.width = '0%';
-  document.getElementById('musicCurrent').textContent = '0:00';
-  if (isPlaying) { clearInterval(musicTimer); isPlaying = false; document.getElementById('playBtn').textContent = '▶'; }
+  const embed = document.getElementById('musicEmbed');
+  if (type === 'spotify') {
+    embed.innerHTML = `<iframe
+      src="${CONFIG.musicaSpotify.embedUrl}"
+      width="100%" height="152"
+      frameborder="0"
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      loading="lazy"
+      style="border-radius:10px;display:block;">
+    </iframe>`;
+  } else {
+    embed.innerHTML = `<iframe
+      src="${CONFIG.musicaYoutube.embedUrl}"
+      width="100%" height="200"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      loading="lazy"
+      style="border-radius:10px;display:block;">
+    </iframe>`;
+  }
 }
 
-// init total time
-document.getElementById('musicTotal').textContent = CONFIG.musicaYoutube.total;
+// inicializar con YouTube al cargar
+setMusicType('youtube', document.querySelector('.toggle-btn.active'));
 
 /* ═══════════════════════════════════════════════════════════
    CONFETTI — canvas puro, sin dependencias externas
