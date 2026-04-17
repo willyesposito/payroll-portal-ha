@@ -3974,10 +3974,20 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
           if (interesesHip > topes.intereses_hip) pe({ msg: `Trabajador #${idx} — Reg.05: Intereses Hipotecarios ($${interesesHip.toLocaleString('es-AR',{minimumFractionDigits:2})}) supera el tope de $${topes.intereses_hip.toLocaleString('es-AR')} (fijo por ley).`, rec: `Línea ${ln05}`, pos: p('05','21') });
           if (sepelio > topes.sepelio)             pe({ msg: `Trabajador #${idx} — Reg.05: Gastos de Sepelio ($${sepelio.toLocaleString('es-AR',{minimumFractionDigits:2})}) supera el tope de $${topes.sepelio.toLocaleString('es-AR',{minimumFractionDigits:2})}.`, rec: `Línea ${ln05}`, pos: p('05','15') });
 
-          // Extraer campos para regla 5% (se valida más abajo, cuando se tiene Reg.08 C3)
+          // Extraer campos para regla 5%
           const c11_r05 = num(r05, 134, 15); // Cuotas Médico Asistenciales
           const c17_r05 = num(r05, 224, 15); // Donaciones Fiscos (Art.26 inc.e/f LIG)
           const c20_r05 = num(r05, 269, 15); // Honorarios Asistencia Sanitaria/Médica
+
+          // Validar Art.81 LIG: C11+C17+C20 ≤ 5% de la ganancia neta del ejercicio
+          // Base = totalGravada − (sumCompR05 − c11_r05 − c17_r05 − c20_r05)
+          const gananciaNeta = totalGravada - (sumCompR05 - c11_r05 - c17_r05 - c20_r05);
+          if (gananciaNeta > 0) {
+            const sumMedEdu  = c11_r05 + c17_r05 + c20_r05;
+            const limite5pct = Math.floor(gananciaNeta * 0.05);
+            if (sumMedEdu > limite5pct + 1)
+              pe({ msg: `Reg.05: Cuotas Médico Asistenciales + Donaciones + Honorarios Médicos ($${fmt(sumMedEdu/100)}) supera el 5% de la ganancia neta del ejercicio ($${fmt(gananciaNeta/100)}, límite $${fmt(limite5pct/100)}). Art.81 LIG.`, rec: 'Revisar C11, C17 y C20 del Reg.05.', pos: `${p('05','11')} · ${p('05','17')} · ${p('05','20')}` });
+          }
 
           if (r06 && r06.length === 160) {
             const gni         = num(r06, 14,15), conyuge    = num(r06, 29,15);
@@ -4029,12 +4039,6 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
                 pe({ msg: `Trabajador #${idx} — Reg.08: REMUNERACIÓN SUJETA A IMPUESTO (${remSujetaImp.toLocaleString('es-AR')}) ≠ Rem. Gravada − Ded. Generales − Ded. Art.30 = ${esperadoRSI.toLocaleString('es-AR')}.`, rec: `Línea ${ln08}`, pos: p('08','3') });
               } else {
                 pok({ msg: `Trabajador #${idx} — Reg.08: Remuneración Sujeta a Impuesto cuadra.`, rec: `Línea ${ln08}`, pos: p('08','3') });
-              }
-              // Reg.05 C11+C17+C20 ≤ 5% de la ganancia neta (Reg.08 C3)
-              if (remSujetaImp > 0) {
-                const sumMedEdu = c11_r05 + c17_r05 + c20_r05;
-                const limite5pct = Math.floor(remSujetaImp * 0.05);
-                if (sumMedEdu > limite5pct + 1) pe({ msg: `Trabajador #${idx} — Reg.05: Cuotas Médico Asistenciales + Donaciones + Honorarios Médicos ($${(sumMedEdu/100).toLocaleString('es-AR',{minimumFractionDigits:2})}) supera el 5% de la ganancia neta sujeta a impuesto ($${(limite5pct/100).toLocaleString('es-AR',{minimumFractionDigits:2})}). Art.81 LIG.`, rec: `Línea ${ln05}`, pos: `${p('05','11')} + ${p('05','17')} + ${p('05','20')}` });
               }
               // Impuesto Retenido debería ser 0 en liquidaciones anuales/finales
               if (impRet > 0) {
