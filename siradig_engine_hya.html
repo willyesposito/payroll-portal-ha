@@ -572,8 +572,22 @@ function parseXML(xmlStr){
   const ret=[];
   const retNodes=doc.getElementsByTagName('retPerPago');
   for(let i=0;i<retNodes.length;i++){
-    const r=retNodes[i];const monto=tagf(r,'montoTotal');
-    if(monto>0)ret.push({tipo:r.getAttribute('tipo')||'',denominacion:tag(r,'denominacion'),monto});
+    const r=retNodes[i];
+    const monto=tagf(r,'montoTotal')||tagf(r,'monto');
+    if(monto===0)continue;
+    let mes='';
+    const kids=r.children||r.childNodes||[];
+    for(let k=0;k<kids.length;k++){
+      const node=kids[k];if(node.nodeType&&node.nodeType!==1)continue;
+      const nm=(node.nodeName||'').toLowerCase();
+      if(nm==='mes'){mes=String(parseInt(node.textContent||'')||'')||mes;if(mes)break;}
+      if(nm.indexOf('fecha')>=0){
+        const txt=node.textContent||'';
+        const m=txt.match(/^\d{4}-(\d{2})/)||txt.match(/(\d{2})\/(\d{2})\/\d{4}/);
+        if(m){mes=String(parseInt(m[m.length>2?2:1]));break;}
+      }
+    }
+    ret.push({tipo:r.getAttribute('tipo')||'',cuit:tag(r,'cuit')||tag(r,'cuitAgente')||'',denominacion:tag(r,'denominacion'),mes,monto});
   }
   data.retPerPagos=ret;
   const cargas=[];
@@ -725,15 +739,18 @@ function buildAppData(dic,pre,nomina,clientName,periodo1,periodo2){
     const ooee_rows={};OOEE_F.forEach(f=>{const vd=sumOF(d.ganLiqOtrosEmpEnt,f),vp=sumOF(p.ganLiqOtrosEmpEnt,f);if(vd||vp)ooee_rows[f]={dic:vd,pre:vp,dif:vp-vd};});
     const total_ooee_dic=Object.values(ooee_rows).reduce((s,v)=>s+v.dic,0);
     const total_ooee_pre=Object.values(ooee_rows).reduce((s,v)=>s+v.pre,0);
-    const ret_dic=d.retPerPagos||[];const ret_pre=p.retPerPagos||[];
+    const ret_dic_raw=d.retPerPagos||[];const ret_pre_raw=p.retPerPagos||[];
+    const aggRet=(arr)=>{const map=new Map();for(const r of arr){const k=(r.tipo||'')+'|'+(r.cuit||'')+'|'+(r.denominacion||'');if(!map.has(k))map.set(k,{tipo:r.tipo,cuit:r.cuit,denominacion:r.denominacion,monto:0});map.get(k).monto+=r.monto;}return [...map.values()].filter(x=>Math.abs(x.monto)>0.001);};
+    const ret_dic=aggRet(ret_dic_raw);const ret_pre=aggRet(ret_pre_raw);
     const total_ret_dic=ret_dic.reduce((s,r)=>s+r.monto,0);
     const total_ret_pre=ret_pre.reduce((s,r)=>s+r.monto,0);
+    const hasNeg=Object.values(ded_rows).some(v=>v.pre<-0.01||v.dic<-0.01)||ret_pre.some(r=>r.monto<-0.01)||ret_dic.some(r=>r.monto<-0.01)||Object.values(ooee_rows||{}).some(v=>v.pre<-0.01||v.dic<-0.01);
     const total_dif_full=(total_pre-total_dic)+(total_ret_pre-total_ret_dic)+(total_ooee_pre-total_ooee_dic);
     const nom=nomina[cuit]||{};
     const in_nomina=hasNomina?!!nom.CUIL:true;
     const id_empresa=nom.ID_EMPRESA?parseInt(nom.ID_EMPRESA):null;
     const id_convenio=nom.ID_CONVENIO?parseInt(nom.ID_CONVENIO):null;
-    employees.push({cuit,apellido,nombre,legajo:nom.ID_EMPLEADO?String(parseInt(nom.ID_EMPLEADO)):'',empresa:EMPRESA_LABELS[id_empresa]||'',id_empresa,cct:CONV_LABELS[id_convenio]||'',id_convenio,puesto:nom.N_PUESTO||'',departamento:nom.N_DEPARTAMENTO||'',in_nomina,only_in_pre:!dic[cuit],nroPres_dic:d.nroPresentacion||'',nroPres_pre:p.nroPresentacion||'',fecha_dic:d.fechaPresentacion||'',fecha_pre:p.fechaPresentacion||'',deds:ded_rows,total_dic,total_pre,total_dif:total_pre-total_dic,total_dif_full,cargas,ret_dic,ret_pre,total_ret_dic,total_ret_pre,tipo99_detail:p.tipo99_detail||d.tipo99_detail||[],ooee_rows,total_ooee_dic,total_ooee_pre,ganLiqOtrosEmpEnt_pre:p.ganLiqOtrosEmpEnt||[],ganLiqOtrosEmpEnt_dic:d.ganLiqOtrosEmpEnt||[]});
+    employees.push({cuit,apellido,nombre,legajo:nom.ID_EMPLEADO?String(parseInt(nom.ID_EMPLEADO)):'',empresa:EMPRESA_LABELS[id_empresa]||'',id_empresa,cct:CONV_LABELS[id_convenio]||'',id_convenio,puesto:nom.N_PUESTO||'',departamento:nom.N_DEPARTAMENTO||'',in_nomina,only_in_pre:!dic[cuit],nroPres_dic:d.nroPresentacion||'',nroPres_pre:p.nroPresentacion||'',fecha_dic:d.fechaPresentacion||'',fecha_pre:p.fechaPresentacion||'',deds:ded_rows,total_dic,total_pre,total_dif:total_pre-total_dic,total_dif_full,cargas,ret_dic,ret_pre,ret_dic_raw,ret_pre_raw,total_ret_dic,total_ret_pre,hasNeg,tipo99_detail:p.tipo99_detail||d.tipo99_detail||[],ooee_rows,total_ooee_dic,total_ooee_pre,ganLiqOtrosEmpEnt_pre:p.ganLiqOtrosEmpEnt||[],ganLiqOtrosEmpEnt_dic:d.ganLiqOtrosEmpEnt||[]});
   }
   // ── SORT: legajo numérico asc, luego apellido/nombre asc ──
   employees.sort((a,b)=>{
@@ -869,7 +886,7 @@ function buildCard(e,tl){
   const hasRet=e.ret_pre.length>0;
   const hasOOEE=Object.keys(e.ooee_rows||{}).length>0;
   const pills=[e.only_in_pre?'<span class="pill-new">NUEVO</span>':'',parseInt(e.nroPres_pre||0)>5?`<span class="pill-rect">Rect.${e.nroPres_pre}</span>`:'',!e.in_nomina?'<span class="pill-baja">⚠ Baja</span>':''].filter(Boolean).join('');
-  const subTags=[e.nroPres_dic?`Pres. ${APP_LABEL.p1} #${e.nroPres_dic}`:`Sin pres. ${APP_LABEL.p1}`,`Pres. ${APP_LABEL.p2} #${e.nroPres_pre||'—'}`,hasRet?'<span class="tag-pago">🏷 Pagos a cuenta</span>':'',hasOOEE?'<span class="tag-ooee">🏢 Otros Emp./Ent.</span>':'',hasCargaChange?'<span class="tag-carga">🏷 Cambio en cargas</span>':''].filter(Boolean).join('<span class="sep">·</span>');
+  const subTags=[e.nroPres_dic?`Pres. ${APP_LABEL.p1} #${e.nroPres_dic}`:`Sin pres. ${APP_LABEL.p1}`,`Pres. ${APP_LABEL.p2} #${e.nroPres_pre||'—'}`,hasRet?'<span class="tag-pago">🏷 Pagos a cuenta</span>':'',hasOOEE?'<span class="tag-ooee">🏢 Otros Emp./Ent.</span>':'',hasCargaChange?'<span class="tag-carga">🏷 Cambio en cargas</span>':'',e.hasNeg?'<span class="tag-neg" style="background:#fee;color:#c62828;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid #ef9a9a">⚠ Valores negativos</span>':''].filter(Boolean).join('<span class="sep">·</span>');
   const meta=[empPill(e.empresa,e.id_empresa),cctPill(e.cct),e.legajo?`<span class="mpill mpill-gray">Leg. ${e.legajo}</span>`:'',e.puesto?`<span class="mpill mpill-gray">${e.puesto}</span>`:''].filter(Boolean).join('');
   const dv=e.total_dif_full;const dc=dv>0.01?'pos':dv<-0.01?'neg':'zero';
   let tDic=0,tPre=0;for(const v of Object.values(e.deds)){tDic+=v.dic;tPre+=v.pre;}
@@ -883,7 +900,7 @@ function buildCard(e,tl){
     if(parseInt(t)===99&&e.tipo99_detail.length)sub99=`<span class="sub99">${e.tipo99_detail.map(x=>x.denom).slice(0,3).join(' · ')}${e.tipo99_detail.length>3?' …':''}</span>`;
     dedRows+=`<tr class="${rc}"><td class="rubro-name">${label}${sub99}</td><td class="num">${v.dic>0?fmt(v.dic):'—'}</td><td class="num">${v.pre>0?fmt(v.pre):'—'}</td><td class="${dc2}">${v.dif!==0?sfmt(v.dif):'Sin cambio'}</td></tr>`;
   }
-  for(const r of e.ret_pre){dedRows+=`<tr class="row-pago"><td class="rubro-name">🏷 ${RET_LABELS[r.tipo]||'Pago a cta.'}<span class="sub99">${r.denominacion||''}</span></td><td class="num">—</td><td class="num">${fmt(r.monto)}</td><td class="dif-pos">+${fmt(r.monto)}</td></tr>`;}
+  for(const r of e.ret_pre){const cls=r.monto<-0.01?'dif-neg':r.monto>0.01?'dif-pos':'dif-zero';dedRows+=`<tr class="row-pago"><td class="rubro-name">🏷 ${RET_LABELS[r.tipo]||'Pago a cta.'}<span class="sub99">${r.denominacion||''}</span></td><td class="num">—</td><td class="num">${fmt(r.monto)}</td><td class="${cls}">${sfmt(r.monto)}</td></tr>`;}
   const tDif=tPre-tDic;
   const OOEE_LBL={ganBrut:'Gan. Bruta',retGan:'Ret. Ganancias',obraSoc:'Obra Social',segSocANSES:'Seg.Soc. ANSES',segSocCajas:'Seg.Soc. Cajas',sind:'Sindicato',retribNoHab:'Retrib. No Hab.',ajusteRemGravadas:'Aj. Rem. Grav.',ajusteRemExeNoAlcanzadas:'Aj. Rem. Exe.',asignFam:'Asig. Familiares',intPrestEmp:'Int. Préstamo',indemLey4003:'Indem. L.4003',remunLey19640:'Rem. L.19640',remunCctPetro:'Rem. CCT Petro.',cursosSemin:'Cursos/Semin.',indumEquipEmp:'Indum./Equip.',sac:'SAC'};
   const tOoeedic=Object.values(e.ooee_rows||{}).reduce((s,v)=>s+v.dic,0);
@@ -1058,15 +1075,46 @@ function downloadExcel(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r1),'1 - Resumen');
   const hdr=['Legajo','CUIL','Apellido','Nombre','Empresa','CCT','Puesto','Dpto.','Pres.'+p1,'Pres.'+p2];
   for(const t of all_tipos){const l=tipo_labels[String(t)]||`Tipo ${t}`;hdr.push(`${l}-${p1}`,`${l}-${p2}`,`${l}-Dif`);}
-  hdr.push('Ret.cta.'+p1,'Ret.cta.'+p2,'[OTROS EMP./ENT.]-'+p1,'[OTROS EMP./ENT.]-'+p2,'[OTROS EMP./ENT.]-Dif','Total '+p1,'Total '+p2,'Dif.Final');
-  const mkRow=e=>{const r=[e.legajo,e.cuit,e.apellido,e.nombre,e.empresa,e.cct,e.puesto,e.departamento,e.nroPres_dic,e.nroPres_pre];for(const t of all_tipos){const v=e.deds[t];r.push(v?fN(v.dic):0,v?fN(v.pre):0,v?fN(v.dif):0);}r.push(fN(e.total_ret_dic||0),fN(e.total_ret_pre||0),fN(e.total_ooee_dic||0),fN(e.total_ooee_pre||0),fN((e.total_ooee_pre||0)-(e.total_ooee_dic||0)),fN(e.total_dic),fN(e.total_pre),fN(e.total_dif_full));return r;};
+  const OOEE_F_ALL=['ganBrut','retGan','obraSoc','segSocANSES','segSocCajas','sind','retribNoHab','ajusteRemGravadas','ajusteRemExeNoAlcanzadas','asignFam','intPrestEmp','indemLey4003','remunLey19640','remunCctPetro','cursosSemin','indumEquipEmp','sac'];
+  const OOEE_LBL_XLS={ganBrut:'Gan. Bruta',retGan:'Ret. Ganancias',obraSoc:'Obra Social',segSocANSES:'Seg.Soc. ANSES',segSocCajas:'Seg.Soc. Cajas',sind:'Sindicato',retribNoHab:'Retrib. No Hab.',ajusteRemGravadas:'Aj. Rem. Grav.',ajusteRemExeNoAlcanzadas:'Aj. Rem. Exe.',asignFam:'Asig. Familiares',intPrestEmp:'Int. Préstamo',indemLey4003:'Indem. L.4003',remunLey19640:'Rem. L.19640',remunCctPetro:'Rem. CCT Petro.',cursosSemin:'Cursos/Semin.',indumEquipEmp:'Indum./Equip.',sac:'SAC'};
+  const active_ooee_f=OOEE_F_ALL.filter(f=>employees.some(e=>e.ooee_rows&&e.ooee_rows[f]));
+  hdr.push('Ret.cta.'+p1,'Ret.cta.'+p2);
+  for(const f of active_ooee_f){const l='[OOEE] '+OOEE_LBL_XLS[f];hdr.push(l+'-'+p1,l+'-'+p2,l+'-Dif');}
+  hdr.push('[OOEE] Total-'+p1,'[OOEE] Total-'+p2,'[OOEE] Total-Dif','Total '+p1,'Total '+p2,'Dif.Final');
+  const mkRow=e=>{const r=[e.legajo,e.cuit,e.apellido,e.nombre,e.empresa,e.cct,e.puesto,e.departamento,e.nroPres_dic,e.nroPres_pre];for(const t of all_tipos){const v=e.deds[t];r.push(v?fN(v.dic):0,v?fN(v.pre):0,v?fN(v.dif):0);}r.push(fN(e.total_ret_dic||0),fN(e.total_ret_pre||0));for(const f of active_ooee_f){const v=e.ooee_rows&&e.ooee_rows[f];r.push(v?fN(v.dic):0,v?fN(v.pre):0,v?fN(v.dif):0);}r.push(fN(e.total_ooee_dic||0),fN(e.total_ooee_pre||0),fN((e.total_ooee_pre||0)-(e.total_ooee_dic||0)),fN(e.total_dic),fN(e.total_pre),fN(e.total_dif_full));return r;};
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([hdr,...employees.map(mkRow)]),'2 - Comparativa completa');
   const wc=employees.filter(e=>Math.abs(e.total_dif_full)>0.01||e.cargas.some(c=>c.estado!=='sin cambio')).sort((a,b)=>Math.abs(b.total_dif_full)-Math.abs(a.total_dif_full));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([hdr,...wc.map(mkRow)]),'3 - Solo con cambios');
   const r4=[['Legajo','CUIL','Apellido','Nombre','Familiar','Parentesco','Fecha Nac.','Estado',`${p1} Desde`,`${p1} Hasta`,`${p2} Desde`,`${p2} Hasta`,'Dic%','Pre%'],...employees.flatMap(e=>e.cargas.map(c=>[e.legajo,e.cuit,e.apellido,e.nombre,`${c.apellido} ${c.nombre}`,c.parentesco,c.fechaNac,c.estado,c.dic_desde,c.dic_hasta,c.pre_desde,c.pre_hasta,c.dic_pct,c.pre_pct]))];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r4),'4 - Cargas de familia');
-  const r5=[['Legajo','CUIL','Apellido','Nombre','Período','Tipo','Descripción','Entidad','Monto'],...employees.flatMap(e=>[...e.ret_dic.map(r=>[e.legajo,e.cuit,e.apellido,e.nombre,p1,r.tipo,RET_LABELS[r.tipo]||'Tipo '+r.tipo,r.denominacion||'',fN(r.monto)]),...e.ret_pre.map(r=>[e.legajo,e.cuit,e.apellido,e.nombre,p2,r.tipo,RET_LABELS[r.tipo]||'Tipo '+r.tipo,r.denominacion||'',fN(r.monto)])])];
+  const r5=[['Legajo','CUIL','Apellido','Nombre','Período','Tipo','Descripción','CUIT Agente','Entidad','Mes','Monto','Negativo'],...employees.flatMap(e=>[...(e.ret_dic_raw||[]).map(r=>[e.legajo,e.cuit,e.apellido,e.nombre,p1,r.tipo,RET_LABELS[r.tipo]||'Tipo '+r.tipo,r.cuit||'',r.denominacion||'',r.mes||'',fN(r.monto),r.monto<0?'SÍ':'']),...(e.ret_pre_raw||[]).map(r=>[e.legajo,e.cuit,e.apellido,e.nombre,p2,r.tipo,RET_LABELS[r.tipo]||'Tipo '+r.tipo,r.cuit||'',r.denominacion||'',r.mes||'',fN(r.monto),r.monto<0?'SÍ':''])])];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r5),'5 - Pagos a cuenta');
+  // 5b - Pagos a Cuenta - Detalle (rubro → subtotal por agente → mes a mes)
+  const MES_LBL=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const RUBRO_FULL={"28":"Pago a Cuenta - Per. Tarjetas p. Compras en el Ext. - RG 5617/2024, Ley 27541 Art. 35 inc. b)","29":"Pago a Cuenta - Per. Tarjetas p. Pago Serv. a No Resid. - RG 5617/2024, Ley 27541 Art. 35 inc. c)","30":"Pago a Cuenta - C. de Billetes y Divisas en M. Ext. - RG 5617/2024, Ley 27541 Art. 35 inc. a)"};
+  const r5b=[['Legajo','CUIL','Apellido','Nombre','Período','Rubro','CUIT Agente','Entidad','Mes','Monto','Subtotal Rubro','Total Rubro','Negativo']];
+  const emitDetalle=(e,per,rows)=>{
+    if(!rows||!rows.length)return;
+    const byTipo=new Map();
+    for(const r of rows){if(!byTipo.has(r.tipo))byTipo.set(r.tipo,[]);byTipo.get(r.tipo).push(r);}
+    for(const [tipo,arr] of byTipo){
+      const rubroLbl=RUBRO_FULL[tipo]||(RET_LABELS[tipo]||'Pago a cta.')+' (tipo '+tipo+')';
+      const totalRubro=arr.reduce((s,r)=>s+r.monto,0);
+      const byAg=new Map();
+      for(const r of arr){const k=(r.cuit||'')+'|'+(r.denominacion||'');if(!byAg.has(k))byAg.set(k,{cuit:r.cuit,denom:r.denominacion,items:[]});byAg.get(k).items.push(r);}
+      for(const [,ag] of byAg){
+        const sub=ag.items.reduce((s,r)=>s+r.monto,0);
+        const byMes=new Map();
+        for(const r of ag.items){const m=r.mes||'';byMes.set(m,(byMes.get(m)||0)+r.monto);}
+        const mesesSorted=[...byMes.entries()].sort((a,b)=>(parseInt(a[0])||99)-(parseInt(b[0])||99));
+        for(const [mes,monto] of mesesSorted){
+          r5b.push([e.legajo,e.cuit,e.apellido,e.nombre,per,rubroLbl,ag.cuit||'',ag.denom||'',mes?(MES_LBL[parseInt(mes)]||mes):'',fN(monto),fN(sub),fN(totalRubro),monto<0?'SÍ':'']);
+        }
+      }
+    }
+  };
+  for(const e of employees){emitDetalle(e,p1,e.ret_dic_raw);emitDetalle(e,p2,e.ret_pre_raw);}
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r5b),'5b - Pagos a Cuenta - Detalle');
   const r6=[['Legajo','CUIL','Apellido','Nombre','Denominación (Tipo 99)','Monto '+p2],...employees.flatMap(e=>e.tipo99_detail.map(x=>[e.legajo,e.cuit,e.apellido,e.nombre,x.denom,fN(x.monto)]))];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r6),'6 - Detalle Otras Ded (99)');
   const r7=[['=== BAJAS — EN SIRADIG SIN NÓMINA ==='],['CUIL','Apellido','Nombre','Pres. '+p2,'Total deducciones'],...auditoria.huerfanos_xml.map(e=>[e.cuit,e.apellido,e.nombre,e.nroPres_pre,fN(e.total_pre)]),[],[`=== EN NÓMINA SIN F572 (${auditoria.sin_xml_nom.length}) ===`],['Legajo','CUIL','Apellido','Nombre','Empresa','CCT','Puesto','Dpto.'],...auditoria.sin_xml_nom.map(e=>[e.legajo,e.cuil,e.apellido,e.nombre,e.empresa,e.cct,e.puesto,e.departamento])];
