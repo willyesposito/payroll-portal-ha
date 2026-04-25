@@ -3,590 +3,556 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Casos de Uso: Opus vs Sonnet vs Haiku</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <title>Cómo usar Claude — Payroll & HR</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --haiku: #c95a28;
-      --sonnet: #1655a0;
-      --opus: #4a3fb0;
-      --bg: #f5f4f0;
-      --card: #ffffff;
-      --border: #e2e0db;
-      --text: #1e1c18;
-      --muted: #7a7670;
-      --accent: #2f4de0;
-      --new-badge: #d4491e;
+      --bg:#faf7f2; --card:#ffffff; --border:#e6e1d6; --border-strong:#cdc6b8;
+      --orange:#D97706; --orange-pale:#fff8ec; --orange-dark:#a85d04;
+      --dark:#19170f; --text:#2c2820; --muted:#726c62; --faint:#a09890;
+      --haiku:#c0511f; --sonnet:#1450a0; --opus:#483eac;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;}
+
+    .topbar{background:var(--dark);padding:11px 28px;display:flex;align-items:center;gap:10px;}
+    .topbar-logo{width:26px;height:26px;flex-shrink:0;}
+    .topbar-name{font-size:14px;font-weight:500;color:#f0ece4;letter-spacing:-.1px;}
+    .topbar-sep{color:#4a4640;font-size:14px;margin:0 2px;}
+    .topbar-sub{font-size:13px;color:#877f74;}
+    .topbar-badge{margin-left:auto;background:rgba(217,119,6,.18);border:1px solid rgba(217,119,6,.35);color:#f8b84a;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.2px;}
+
+    .page{max-width:1200px;margin:0 auto;padding:36px 24px 48px;}
+    .page-header{margin-bottom:32px;}
+    h1{font-family:'DM Serif Display',serif;font-size:30px;font-weight:400;color:var(--dark);letter-spacing:-.3px;margin-bottom:6px;}
+    .page-subtitle{font-size:14px;color:var(--muted);}
+
+    .section-eyebrow{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.9px;color:var(--faint);margin-bottom:10px;}
+    .profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:30px;}
+    .profile-card{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .18s;display:flex;gap:13px;align-items:flex-start;}
+    .profile-card:hover{border-color:var(--orange);}
+    .profile-card.active{border-color:var(--orange);background:var(--orange-pale);}
+    .p-icon{width:38px;height:38px;background:#f0ece4;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .18s;}
+    .p-icon svg{color:var(--orange-dark);}
+    .profile-card.active .p-icon{background:var(--orange);}
+    .profile-card.active .p-icon svg{color:#fff;}
+    .p-name{font-size:14px;font-weight:600;color:var(--dark);margin-bottom:3px;}
+    .p-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+
+    .case-nav{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1.5px solid var(--border);margin-bottom:22px;}
+    .case-tab{padding:8px 14px;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;border-radius:5px 5px 0 0;transition:all .15s;}
+    .case-tab:hover{color:var(--orange);}
+    .case-tab.active{color:var(--orange-dark);border-bottom-color:var(--orange);font-weight:600;}
+
+    .case-header{margin-bottom:22px;}
+    .case-tag{display:inline-block;background:var(--orange-pale);border:1px solid rgba(217,119,6,.25);color:var(--orange-dark);font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;margin-bottom:8px;}
+    .case-title{font-size:19px;font-weight:600;color:var(--dark);margin-bottom:5px;}
+    .case-desc{font-size:13px;color:var(--muted);line-height:1.75;max-width:780px;}
+
+    .models-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;}
+    .model-card{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:16px;position:relative;transition:box-shadow .15s;}
+    .model-card:hover{box-shadow:0 3px 14px rgba(0,0,0,.07);}
+    .model-card.is-opus{border-color:rgba(72,62,172,.3);background:linear-gradient(155deg,#fdfcff 0%,#f4f2ff 100%);}
+
+    .model-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;margin-bottom:12px;border-bottom:2px solid;}
+    .model-header.haiku{border-color:var(--haiku);}
+    .model-header.sonnet{border-color:var(--sonnet);}
+    .model-header.opus{border-color:var(--opus);}
+    .model-label{font-size:14px;font-weight:600;}
+    .model-label.haiku{color:var(--haiku);}
+    .model-label.sonnet{color:var(--sonnet);}
+    .model-label.opus{color:var(--opus);}
+    .v47-tag{background:var(--opus);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.3px;}
+
+    .metric{display:flex;justify-content:space-between;padding:7px 0;font-size:12px;border-bottom:1px solid #f2ede6;}
+    .metric:last-of-type{border-bottom:none;}
+    .m-label{color:var(--muted);}
+    .m-val{font-weight:600;}
+    .c-green{color:#1a7a4a;} .c-amber{color:#a85d04;} .c-blue{color:#1450a0;} .c-purple{color:#483eac;}
+
+    .conf-track{background:#ede8df;height:4px;border-radius:2px;margin-top:5px;overflow:hidden;}
+    .conf-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+
+    .quality-block{margin-top:11px;padding-top:11px;border-top:1px solid #f2ede6;}
+    .q-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);margin-bottom:4px;}
+    .q-text{font-size:12px;color:#514c46;line-height:1.65;}
+
+    .opus-strip{background:linear-gradient(90deg,#f0eeff,#f8f7ff);border:1px solid rgba(72,62,172,.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .os-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--opus);}
+    .os-chip{background:rgba(72,62,172,.08);border:1px solid rgba(72,62,172,.18);border-radius:20px;padding:2px 10px;font-size:11px;color:var(--opus);font-weight:500;}
+
+    .verdict{background:var(--orange-pale);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:13px 16px;}
+    .v-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--orange-dark);margin-bottom:5px;}
+    .v-text{font-size:13px;color:#4a4438;line-height:1.75;}
+
+    .page-footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+    .footer-brand{display:flex;align-items:center;gap:8px;}
+    .footer-dot{width:8px;height:8px;background:var(--orange);border-radius:50%;}
+    .footer-name{font-size:12px;font-weight:600;color:var(--dark);}
+    .footer-note{font-size:11px;color:var(--faint);}
+
+    @media(max-width:768px){
+      .profile-grid{grid-template-columns:1fr;}
+      .models-grid{grid-template-columns:1fr;}
+      .topbar-sub,.topbar-badge{display:none;}
+      .artifacts-grid{grid-template-columns:1fr;}
+      .main-tabs{flex-wrap:wrap;}
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* ============ TABS PRINCIPALES (Por tarea / Por visualización) ============ */
+    .main-tabs{display:flex;gap:6px;background:#f0ece4;padding:5px;border-radius:10px;margin-bottom:28px;width:fit-content;}
+    .main-tab{padding:9px 18px;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-radius:7px;transition:all .18s;display:flex;align-items:center;gap:7px;}
+    .main-tab:hover{color:var(--orange-dark);}
+    .main-tab.active{background:var(--card);color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,.06);}
+    .main-tab-icon{font-size:14px;}
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      padding: 2.5rem 1.25rem;
-      line-height: 1.6;
-      color: var(--text);
-    }
+    /* ============ VISTA DE ARTIFACTS ============ */
+    .view-hidden{display:none;}
 
-    .container { max-width: 1360px; margin: 0 auto; }
+    .model-variation-info{background:linear-gradient(155deg,#fdfcff 0%,#f4f2ff 100%);border:1px solid rgba(72,62,172,.18);border-radius:10px;padding:16px 18px;margin-bottom:24px;}
+    .mvi-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--opus);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+    .mvi-text{font-size:13px;color:#4a4438;line-height:1.7;margin-bottom:8px;}
+    .mvi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;}
+    .mvi-pill{background:rgba(255,255,255,.7);border:1px solid rgba(72,62,172,.15);border-radius:7px;padding:8px 11px;}
+    .mvi-pill-name{font-size:11px;font-weight:700;margin-bottom:2px;}
+    .mvi-pill-name.haiku{color:var(--haiku);}
+    .mvi-pill-name.sonnet{color:var(--sonnet);}
+    .mvi-pill-name.opus{color:var(--opus);}
+    .mvi-pill-text{font-size:11px;color:#5a564f;line-height:1.5;}
+    @media(max-width:768px){.mvi-grid{grid-template-columns:1fr;}}
 
-    /* HEADER */
-    .header { margin-bottom: 2rem; }
-    h1 {
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 4px;
-      letter-spacing: -0.3px;
-    }
-    .subtitle { color: var(--muted); font-size: 14px; }
+    .category-header{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--orange-dark);margin:24px 0 12px;display:flex;align-items:center;gap:8px;}
+    .category-header:first-of-type{margin-top:8px;}
+    .category-header::before{content:'';width:18px;height:1.5px;background:var(--orange);}
 
-    /* NEW MODEL BANNER */
-    .new-model-banner {
-      background: linear-gradient(135deg, #1e1c18 0%, #2d2b26 100%);
-      color: #fff;
-      border-radius: 10px;
-      padding: 14px 18px;
-      margin-bottom: 2rem;
-      display: flex;
-      gap: 14px;
-      align-items: flex-start;
-      border-left: 4px solid var(--new-badge);
-    }
-    .banner-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
-    .banner-content { flex: 1; }
-    .banner-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: #ff6b3d;
-      margin-bottom: 5px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      font-family: 'Space Mono', monospace;
-    }
-    .banner-text { font-size: 13px; color: #d0cdc8; line-height: 1.7; }
-    .banner-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 8px;
-    }
-    .banner-pill {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 20px;
-      padding: 2px 10px;
-      font-size: 11px;
-      color: #e0ddd8;
-      font-weight: 500;
-    }
-    .banner-pill.green { background: rgba(39,174,96,0.2); border-color: rgba(39,174,96,0.4); color: #7ef0a8; }
-    .banner-pill.orange { background: rgba(230,126,34,0.2); border-color: rgba(230,126,34,0.4); color: #ffc97a; }
+    .artifacts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
 
-    /* CONTROLS */
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 8px;
-      margin-bottom: 2.5rem;
-    }
-    button.tab-btn {
-      padding: 10px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 7px;
-      background: var(--card);
-      font-size: 13px;
-      font-weight: 500;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      transition: all 0.18s;
-      color: var(--text);
-    }
-    button.tab-btn:hover { background: #eeece8; border-color: #b8b5ae; }
-    button.tab-btn.active {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
+    .artifact-card{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:16px;transition:all .18s;position:relative;}
+    .artifact-card:hover{box-shadow:0 3px 14px rgba(0,0,0,.07);border-color:var(--border-strong);}
+    .artifact-card.recommended{border-color:rgba(217,119,6,.4);background:linear-gradient(155deg,#fffdf8 0%,#fff8ec 100%);}
+    .artifact-card.recommended::before{content:'★ Recomendado';position:absolute;top:-9px;right:14px;background:var(--orange);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.4px;}
 
-    /* CASE HEADER */
-    .case-header {
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 2px solid var(--border);
-    }
-    .case-title { font-size: 21px; font-weight: 700; margin-bottom: 6px; }
-    .case-desc { color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .artifact-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-bottom:11px;margin-bottom:11px;border-bottom:1.5px solid #f2ede6;}
+    .artifact-head-left{flex:1;min-width:0;}
+    .artifact-num{font-size:10px;font-weight:700;color:var(--faint);letter-spacing:.6px;margin-bottom:3px;}
+    .artifact-name{font-size:14px;font-weight:600;color:var(--dark);margin-bottom:3px;}
+    .artifact-type{font-size:11px;color:var(--muted);}
+    .artifact-tokens{background:#e8f4ec;border:1px solid #c9e3d3;color:#1a7a4a;font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;white-space:nowrap;letter-spacing:.2px;flex-shrink:0;}
 
-    /* MODEL CARDS */
-    .models-comparison {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 18px;
-      margin-bottom: 1.75rem;
-    }
-    .model-card {
-      background: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      padding: 1.4rem;
-      transition: box-shadow 0.18s;
-      position: relative;
-    }
-    .model-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-    .model-card.upgraded {
-      border-color: rgba(74,63,176,0.4);
-      background: linear-gradient(160deg, #fdfcff 0%, #f5f3ff 100%);
-    }
+    .artifact-prompt{background:#faf7f2;border:1px dashed var(--border-strong);border-radius:7px;padding:9px 11px;margin-bottom:11px;}
+    .artifact-prompt-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--faint);margin-bottom:3px;}
+    .artifact-prompt-text{font-size:12px;color:var(--text);font-family:'DM Mono',ui-monospace,monospace;font-style:italic;line-height:1.5;}
 
-    .new-badge {
-      position: absolute;
-      top: -9px;
-      right: 14px;
-      background: var(--new-badge);
-      color: white;
-      font-size: 9px;
-      font-weight: 700;
-      font-family: 'Space Mono', monospace;
-      padding: 2px 8px;
-      border-radius: 20px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .model-name {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      padding-bottom: 10px;
-      border-bottom: 2px solid;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-    .model-name.haiku { color: var(--haiku); border-color: var(--haiku); }
-    .model-name.sonnet { color: var(--sonnet); border-color: var(--sonnet); }
-    .model-name.opus { color: var(--opus); border-color: var(--opus); }
-
-    .metric-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 9px 0;
-      font-size: 13px;
-      border-bottom: 1px solid #f2f0eb;
-    }
-    .metric-row:last-of-type { border-bottom: none; }
-    .metric-label { color: var(--muted); font-weight: 500; }
-    .metric-value { font-weight: 700; color: var(--text); }
-    .tokens-val { color: #1a9e4e; }
-    .time-val { color: #c17a1a; }
-    .iter-val { color: #1a6fc7; }
-    .conf-val { color: #8148c9; }
-
-    .quality-section {
-      margin-top: 1rem;
-      padding-top: 0.9rem;
-      border-top: 1px solid #f2f0eb;
-    }
-    .quality-title {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--muted);
-      margin-bottom: 5px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-    }
-    .quality-text { font-size: 13px; color: #555; line-height: 1.6; }
-
-    /* METRIC COMPARISON STRIP */
-    .metric-comparison {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 1.75rem;
-    }
-    .comparison-box {
-      background: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      text-align: center;
-    }
-    .comparison-label {
-      font-size: 10px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 5px;
-      font-weight: 600;
-    }
-    .comparison-model { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
-    .comparison-value { font-size: 15px; font-weight: 700; }
-    .haiku-val { color: var(--haiku); }
-    .sonnet-val { color: var(--sonnet); }
-    .opus-val { color: var(--opus); }
-
-    /* OPUS 4.7 UPGRADE BLOCK */
-    .upgrade-block {
-      background: linear-gradient(135deg, #f0eeff 0%, #faf5ff 100%);
-      border: 1.5px solid rgba(74,63,176,0.25);
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin-bottom: 1.75rem;
-    }
-    .upgrade-block-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--opus);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .upgrade-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 8px;
-    }
-    .upgrade-item {
-      background: rgba(255,255,255,0.7);
-      border-radius: 7px;
-      padding: 8px 10px;
-      font-size: 12px;
-      color: #3b2fa0;
-      font-weight: 500;
-      display: flex;
-      align-items: flex-start;
-      gap: 6px;
-    }
-    .upgrade-item-icon { font-size: 14px; flex-shrink: 0; }
-
-    /* VERDICT */
-    .verdict-box {
-      background: linear-gradient(135deg, #e8f0fd 0%, #f0ecfb 100%);
-      border-left: 4px solid var(--accent);
-      padding: 1.2rem 1.4rem;
-      border-radius: 8px;
-      margin-top: 0;
-    }
-    .verdict-title { font-weight: 700; margin-bottom: 6px; color: var(--text); font-size: 14px; }
-    .verdict-text { font-size: 13px; color: #444; line-height: 1.75; }
-
-    /* SCORE STARS / BARS */
-    .conf-bar-wrap { margin-top: 6px; }
-    .conf-bar-bg { background: #ece9e2; height: 6px; border-radius: 3px; overflow: hidden; }
-    .conf-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
-
-    @media (max-width: 768px) {
-      .controls { grid-template-columns: 1fr 1fr; }
-      .models-comparison { grid-template-columns: 1fr; }
-      h1 { font-size: 20px; }
-      .metric-comparison { grid-template-columns: 1fr; }
-      .upgrade-grid { grid-template-columns: 1fr; }
-    }
+    .artifact-points{display:flex;flex-direction:column;gap:6px;}
+    .artifact-point{display:flex;gap:8px;font-size:12px;line-height:1.55;}
+    .artifact-point-icon{flex-shrink:0;font-size:13px;width:18px;}
+    .artifact-point-text{color:#514c46;}
+    .artifact-point-text strong{color:var(--dark);font-weight:600;}
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Comparativa de Modelos por Caso de Uso</h1>
-      <p class="subtitle">Análisis basado en casos laborales reales · Datos verificados al 16 de abril 2026</p>
-    </div>
 
-    <!-- NEW MODEL BANNER -->
-    <div class="new-model-banner">
-      <div class="banner-icon">🆕</div>
-      <div class="banner-content">
-        <div class="banner-title">Opus 4.7 — lanzado hoy, 16 de abril 2026</div>
-        <div class="banner-text">
-          Reemplaza directamente a Opus 4.6 al <strong>mismo precio</strong> ($5/$25 por millón de tokens). No hay razón para seguir usando 4.6.
-          La tabla fue actualizada con datos reales de benchmarks del lanzamiento oficial de Anthropic.
+<div class="topbar">
+  <svg class="topbar-logo" viewBox="0 0 26 26" fill="none">
+    <circle cx="13" cy="13" r="12" fill="#D97706" opacity=".2"/>
+    <circle cx="13" cy="13" r="7"  fill="#D97706"/>
+    <circle cx="13" cy="10" r="2.5" fill="#fff" opacity=".9"/>
+  </svg>
+  <span class="topbar-name">Claude</span>
+  <span class="topbar-sep">·</span>
+  <span class="topbar-sub">Cómo usar Claude — Payroll &amp; HR</span>
+  <span class="topbar-badge">Guía interna · v2</span>
+</div>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Cómo usar Claude en Payroll</h1>
+    <p class="page-subtitle">Encontrá qué modelo elegir según la tarea y qué tipo de visualización pedirle a Claude — adaptado a tu rol.</p>
+  </div>
+
+  <div class="main-tabs">
+    <button class="main-tab active" id="tab-tasks" onclick="switchView('tasks')">
+      <span class="main-tab-icon">📋</span>Por tarea
+    </button>
+    <button class="main-tab" id="tab-artifacts" onclick="switchView('artifacts')">
+      <span class="main-tab-icon">🎨</span>Por visualización
+    </button>
+  </div>
+
+  <div class="section-eyebrow">Tu perfil</div>
+  <div class="profile-grid">
+    <div class="profile-card active" id="p-liquidador" onclick="selectProfile('liquidador')">
+      <div class="p-icon">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M5 4h10M5 8l3 8 2-5 2 5 3-8"/>
+        </svg>
+      </div>
+      <div>
+        <div class="p-name">Liquidador/a</div>
+        <div class="p-desc">Operativa diaria, cálculos, cruces y debugging</div>
+      </div>
+    </div>
+    <div class="profile-card" id="p-jefe" onclick="selectProfile('jefe')">
+      <div class="p-icon">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="10" width="3" height="7"/><rect x="8.5" y="6" width="3" height="11"/><rect x="14" y="3" width="3" height="14"/>
+        </svg>
+      </div>
+      <div>
+        <div class="p-name">Jefe de Payroll</div>
+        <div class="p-desc">Reportes, comunicaciones y supervisión de procesos</div>
+      </div>
+    </div>
+    <div class="profile-card" id="p-gerente" onclick="selectProfile('gerente')">
+      <div class="p-icon">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="10" cy="7" r="3.5"/><path d="M3 18c0-4 3-6 7-6s7 2 7 6"/>
+        </svg>
+      </div>
+      <div>
+        <div class="p-name">Gerente / Dirección</div>
+        <div class="p-desc">Decisiones estratégicas e informes ejecutivos</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-tasks">
+    <div id="case-nav" class="case-nav"></div>
+    <div id="case-content"></div>
+  </div>
+
+  <div id="view-artifacts" class="view-hidden">
+    <div class="model-variation-info">
+      <div class="mvi-title">⚙️ Cómo varía pedirle el mismo artifact a cada modelo</div>
+      <div class="mvi-text">El tipo de artifact lo elegís vos según el resultado que querés. El modelo (Haiku, Sonnet, Opus) afecta sobre todo la <strong>calidad del diseño, profundidad del código y velocidad</strong>. Misma pregunta, distinto pulido:</div>
+      <div class="mvi-grid">
+        <div class="mvi-pill">
+          <div class="mvi-pill-name haiku">Haiku 4.5</div>
+          <div class="mvi-pill-text">Rápido pero artifacts más simples y planos. Ideal para iterar borradores o cuando la velocidad importa más que el pulido.</div>
         </div>
-        <div class="banner-pills">
-          <span class="banner-pill green">+13% en coding benchmarks</span>
-          <span class="banner-pill green">3× más tareas de producción resueltas</span>
-          <span class="banner-pill green">Visión 3.75 MP (3× anterior)</span>
-          <span class="banner-pill orange">Nuevo tokenizer: 1.0–1.35× más tokens por mismo input</span>
-          <span class="banner-pill orange">Nuevo nivel de esfuerzo: xhigh</span>
+        <div class="mvi-pill">
+          <div class="mvi-pill-name sonnet">Sonnet 4.6</div>
+          <div class="mvi-pill-text">Balance ideal — diseño profesional, código limpio y tiempos razonables. La opción default para casi todo.</div>
+        </div>
+        <div class="mvi-pill">
+          <div class="mvi-pill-name opus">Opus 4.7</div>
+          <div class="mvi-pill-text">Mejor calidad visual, anticipa problemas de UX y maneja artifacts complejos con muchos componentes. Para entregables finales.</div>
         </div>
       </div>
     </div>
 
-    <div class="controls">
-      <button class="tab-btn active" onclick="loadCase('sql')">🗄️ SQL debugging</button>
-      <button class="tab-btn" onclick="loadCase('redaccion')">✍️ Redacción profesional</button>
-      <button class="tab-btn" onclick="loadCase('analisis')">📊 Análisis de datos</button>
-      <button class="tab-btn" onclick="loadCase('documentacion')">📖 Documentación técnica</button>
-      <button class="tab-btn" onclick="loadCase('investigacion')">🔍 Investigación compleja</button>
-    </div>
-
-    <div id="case-content"></div>
+    <div id="artifacts-content"></div>
   </div>
 
-  <script>
-    const cases = {
-      sql: {
-        title: "SQL debugging: Explorar vistas Meta4 PeopleNet",
-        desc: "El cliente reporta que VALOR2 en M4T_VARIACIONES_X_EMPL muestra 0 para concept 1003. Necesitás inspeccionar la vista M4_VARIACIONES_X_EMPL y encontrar dónde falla la lógica de cálculo. Contexto: +3KB de DDL, +5 queries ejecutadas, 2 tablas relacionadas.",
-        models: {
-          haiku: {
-            tokens: "~2.8K", time: "3-4s", iterations: 3, confidence: 65,
-            quality: "Identifica obvious issues (NULL joins, missing filters) pero falla en lógica de acumulación multi-año. Requiere varias iteraciones para explorar tablas relacionadas.",
-            barColor: "#e07a50"
-          },
-          sonnet: {
-            tokens: "~4.2K", time: "5-8s", iterations: 1, confidence: 92,
-            quality: "Encuentra la causa raíz en el primer intento. Traza el flujo de la vista, identifica dónde VALOR2 se calcula mal, sugiere fix y propone optimización.",
-            barColor: "#2e78c7"
-          },
-          opus: {
-            tokens: "~5.1K", time: "7-11s", iterations: 1, confidence: 97,
-            quality: "Análisis exhaustivo con auto-verificación: examina índices, detecta lógica inconsistente, verifica su propia respuesta antes de entregarla. Nuevo nivel xhigh recomendado para vistas con múltiples joins. Overkill si Sonnet ya resuelve.",
-            barColor: "#6255c7",
-            upgraded: true
-          }
-        },
-        upgradeItems: [
-          { icon: "✅", text: "Auto-verifica la solución antes de entregártela" },
-          { icon: "📈", text: "+13% en coding benchmarks vs 4.6" },
-          { icon: "⚙️", text: "Nivel xhigh para SQL complejo multi-tabla" },
-          { icon: "💰", text: "Mismo precio que Opus 4.6 ($5/$25/MTok)" },
-        ],
-        verdict: "Usá Sonnet 4.6 como primera opción — resuelve en una iteración sin costo excesivo. Escalá a Opus 4.7 (no 4.6) si Sonnet da respuesta incompleta o el SQL cruza 3+ vistas/stored procedures. Opus 4.7 tiene auto-verificación de su propia solución, que en SQL complejo puede ahorrar una vuelta de depuración.",
-        tokensPerMonth: { haiku: 84000, sonnet: 126000, opus: 153000 },
-      },
-      redaccion: {
-        title: "Redacción profesional: Respuesta a vendor sobre ticket TK 38364",
-        desc: "Necesitás draftar una respuesta a Axton IT explicando el issue de rutinas R75/R76 con vacaciones administrativas/liquidadas. Tono: profesional pero directo. ~800 palabras, incluir detalles técnicos y propuesta de solución.",
-        models: {
-          haiku: {
-            tokens: "~1.2K", time: "2-3s", iterations: 4, confidence: 48,
-            quality: "Draft plano, falta coherencia. Estructura desorganizada, repeticiones, omite detalles clave. Requiere rewrite completo.",
-            barColor: "#e07a50"
-          },
-          sonnet: {
-            tokens: "~2.1K", time: "4-6s", iterations: 1, confidence: 88,
-            quality: "Draft profesional listo para enviar. Estructura clara, detalles técnicos bien presentados, tono apropiado. Necesita solo ediciones menores.",
-            barColor: "#2e78c7"
-          },
-          opus: {
-            tokens: "~2.5K", time: "6-9s", iterations: 0, confidence: 96,
-            quality: "Draft excelente con mayor gusto y creatividad (mejora documentada en 4.7). Incorpora contexto de conversaciones previas, anticipa preguntas, propone timeline claro. Mejor calidad visual si incluís tablas o listas en el email. Envíable sin cambios.",
-            barColor: "#6255c7",
-            upgraded: true
-          }
-        },
-        upgradeItems: [
-          { icon: "✨", text: "Mejor gusto y calidad creativa en textos profesionales" },
-          { icon: "🧠", text: "Memoria entre sesiones: recuerda historial del ticket" },
-          { icon: "🔎", text: "Anticipa objeciones del vendor con más profundidad" },
-          { icon: "💰", text: "Mismo precio que Opus 4.6" },
-        ],
-        verdict: "Usá Sonnet 4.6 para comunicaciones estándar con clientes y vendors — ahorra 30 min vs escritura manual. Escalá a Opus 4.7 solo para propuestas de alto valor o escalaciones críticas donde el tono importa mucho. La mejora de 'gusto y creatividad' documentada en 4.7 se nota más en redacción larga.",
-        tokensPerMonth: { haiku: 36000, sonnet: 63000, opus: 75000 },
-      },
-      analisis: {
-        title: "Análisis de datos: Consolidar roturas en salarios mensuales",
-        desc: "CSV con 500 registros de variaciones salariales de 3 años. Necesitás: detectar anomalías, calcular trends, identificar patrones por concepto. Genera tabla pivot y visualización.",
-        models: {
-          haiku: {
-            tokens: "~1.8K", time: "3-5s", iterations: 2, confidence: 70,
-            quality: "Calcula medias/sumas correctamente pero pierde outliers. Pivot incompleto (faltan breakdowns por concepto). Gráfico básico, sin insights cualitativos.",
-            barColor: "#e07a50"
-          },
-          sonnet: {
-            tokens: "~2.6K", time: "5-7s", iterations: 1, confidence: 90,
-            quality: "Análisis completo: detalla anomalías, segmenta por concepto, identifica uptrends. Pivot correcto, gráfico interpretable. Buena relación costo-calidad.",
-            barColor: "#2e78c7"
-          },
-          opus: {
-            tokens: "~3.2K", time: "7-10s", iterations: 0, confidence: 97,
-            quality: "Análisis profundo con disciplina de datos superior (benchmark GDPval-AA). Reporta cuando faltan datos en vez de inventar valores plausibles (comportamiento verificado en 4.7). Detecta correlaciones mes a mes, propone filtros para análisis futuros. Listo para presentar a dirección.",
-            barColor: "#6255c7",
-            upgraded: true
-          }
-        },
-        upgradeItems: [
-          { icon: "🛡️", text: "No inventa valores cuando faltan datos (benchmark verificado)" },
-          { icon: "📐", text: "Mejor razonamiento deductivo en finanzas (GDPval-AA)" },
-          { icon: "🔗", text: "Detecta correlaciones que Sonnet puede perder" },
-          { icon: "💰", text: "Mismo precio que Opus 4.6" },
-        ],
-        verdict: "Usá Sonnet 4.6 para análisis operativos del día a día. Escalá a Opus 4.7 (no 4.6) para informes a dirección o cuando necesitás máxima disciplina con los datos — Opus 4.7 fue específicamente mejorado para no inventar valores plausibles cuando faltan datos, crítico en payroll.",
-        tokensPerMonth: { haiku: 54000, sonnet: 78000, opus: 96000 },
-      },
-      documentacion: {
-        title: "Documentación técnica: Dataflow Meta4 → sistemas downstream",
-        desc: "Necesitás documentar cómo datos fluyen desde Meta4 PeopleNet a sistemas de BI y contabilidad. Incluir: tablas clave, transformaciones, frecuencia, latencia esperada. ~1500 palabras.",
-        models: {
-          haiku: {
-            tokens: "~1.4K", time: "2-4s", iterations: 3, confidence: 55,
-            quality: "Estructura base pero superficial. Omite detalles de transformación, latencia, dependency graph. No menciona failure modes.",
-            barColor: "#e07a50"
-          },
-          sonnet: {
-            tokens: "~2.3K", time: "4-7s", iterations: 1, confidence: 87,
-            quality: "Documentación completa: tablas listadas, transformaciones explicadas, diagrama ASCII de flujo. Listo para wiki interna.",
-            barColor: "#2e78c7"
-          },
-          opus: {
-            tokens: "~2.8K", time: "6-9s", iterations: 0, confidence: 96,
-            quality: "Documentación enterprise-grade con mejor calidad visual y de presentación (mejora documentada en 4.7 para slides y docs). Incluye SLA esperado, disaster recovery steps, troubleshooting guide. Apto para auditoría, onboarding y partners externos.",
-            barColor: "#6255c7",
-            upgraded: true
-          }
-        },
-        upgradeItems: [
-          { icon: "📑", text: "Mejor calidad visual para docs, slides e interfaces" },
-          { icon: "🎯", text: "Seguimiento estricto de instrucciones de formato" },
-          { icon: "🔗", text: "Mantiene coherencia en documentos largos y multi-sesión" },
-          { icon: "💰", text: "Mismo precio que Opus 4.6" },
-        ],
-        verdict: "Usá Sonnet 4.6 para documentación interna del equipo. Escalá a Opus 4.7 si el destino es externo (partner, auditor, cliente) — la mejora en 'gusto y calidad' de 4.7 para documentos es notoria, y el seguimiento preciso de instrucciones garantiza que el formato quede como lo pedís.",
-        tokensPerMonth: { haiku: 42000, sonnet: 69000, opus: 84000 },
-      },
-      investigacion: {
-        title: "Investigación compleja: Diagnóstico de performance degradation",
-        desc: "Sistema está lento. No sabés si es SQL, red, o aplicación. Necesitás framework de troubleshooting: qué medir, en qué orden, cómo escalar escaleras de causa. Incluir referencias.",
-        models: {
-          haiku: {
-            tokens: "~1.5K", time: "3-5s", iterations: 4, confidence: 42,
-            quality: "Lista genérica de checks. Sin priorización, sin método, omite herramientas específicas (sp_whoisactive, query plans).",
-            barColor: "#e07a50"
-          },
-          sonnet: {
-            tokens: "~2.4K", time: "5-8s", iterations: 1, confidence: 82,
-            quality: "Framework sólido: steps ordenados, herramientas concretas, métricas clave. Útil pero sin contexto de tu stack específico.",
-            barColor: "#2e78c7"
-          },
-          opus: {
-            tokens: "~3.5K", time: "7-11s", iterations: 0, confidence: 96,
-            quality: "Framework personalizado con razonamiento sostenido durante horas (mejora clave de 4.7). Anticipa tu environment (SQL 2012, Meta4), integra específicas de Cegid, propone queries diagnosticadoras readymade. Verifica su propio razonamiento antes de dártelo. Ideal para debugging multi-capa.",
-            barColor: "#6255c7",
-            upgraded: true
-          }
-        },
-        upgradeItems: [
-          { icon: "⏱️", text: "Razonamiento sostenido por horas sin perder contexto" },
-          { icon: "✅", text: "Verifica su propio razonamiento antes de entregarlo" },
-          { icon: "🧩", text: "+14% en flujos multi-step complejos vs Opus 4.6" },
-          { icon: "🔧", text: "Nivel xhigh para máxima profundidad de investigación" },
-        ],
-        verdict: "Usá Opus 4.7 directamente para investigaciones complejas. Es el caso donde más se nota la diferencia vs Sonnet y vs el anterior Opus 4.6: el razonamiento sostenido durante tareas largas fue el principal foco de mejora en 4.7. Activá nivel xhigh de esfuerzo para este tipo de análisis.",
-        tokensPerMonth: { haiku: 45000, sonnet: 72000, opus: 105000 },
-      }
-    };
+  <div class="page-footer">
+    <div class="footer-brand">
+      <div class="footer-dot"></div>
+      <span class="footer-name">Claude · Anthropic</span>
+    </div>
+    <span class="footer-note">Datos verificados · Lanzamiento Opus 4.7 · 16 abril 2026 · anthropic.com/news/claude-opus-4-7</span>
+  </div>
+</div>
 
-    function loadCase(caseKey) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
+<script>
+const profiles={
+  liquidador:{label:'Liquidador/a',        cases:['debug','formulas','cruces','stats']},
+  jefe:      {label:'Jefe de Payroll',      cases:['comunicacion','reportes','stats','documentacion','debug']},
+  gerente:   {label:'Gerente / Dirección',  cases:['reportes','decisiones','comunicacion','documentacion']}
+};
+const caseLabels={
+  debug:'🐛 Errores de liquidación', formulas:'🧮 Fórmulas de cálculo',
+  cruces:'🔀 Cruces de datos', stats:'📊 Estadísticas',
+  comunicacion:'✉️ Comunicaciones', reportes:'📋 Reportes',
+  decisiones:'🎯 Decisiones', documentacion:'📖 Documentación'
+};
+const cases={
+  debug:{
+    title:'Resolver errores de liquidación',
+    desc:'Un concepto muestra valor incorrecto o cero para ciertos empleados. Necesitás rastrear la lógica de cálculo, identificar dónde falla y proponer la corrección.',
+    chips:['Auto-verifica la solución antes de entregártela','+13% coding vs Opus 4.6','Nivel xhigh para errores multi-concepto'],
+    verdict:'Usá Sonnet 4.6 como primera opción — resuelve el 90% de los errores en una sola iteración. Escalá a Opus 4.7 si el error involucra 3 o más conceptos encadenados, o si Sonnet no llega en 2 intentos.',
+    haiku: {tokens:'~2.5K',time:'3–4s',iter:3,conf:62,quality:'Detecta errores obvios (valores nulos, campos vacíos) pero no logra trazar lógica de cálculo encadenada. Requiere guía manual en cada paso.'},
+    sonnet:{tokens:'~4K',  time:'5–8s',iter:1,conf:91,quality:'Traza el flujo de cálculo de punta a punta, identifica la causa raíz y propone corrección en el primer intento. Cubre el 90% de los errores típicos.'},
+    opus:  {tokens:'~5K',  time:'7–11s',iter:1,conf:97,quality:'Auto-verifica su análisis antes de darte la respuesta (mejora clave de 4.7). Ideal cuando el error cruza múltiples conceptos encadenados o reglas de negocio complejas.'}
+  },
+  formulas:{
+    title:'Entender fórmulas de cálculo',
+    desc:'Una fórmula de proporcionalidad, SAC, retención o haberes variables no da el resultado esperado. Necesitás entender cada paso, identificar casos borde y detectar errores en la lógica.',
+    chips:['Detecta errores estructurales en la lógica','Seguimiento preciso de instrucciones','Razonamiento deductivo mejorado en 4.7'],
+    verdict:'Sonnet para entender fórmulas del día a día. Opus 4.7 si necesitás auditar una fórmula heredada, detectar errores estructurales o documentar la lógica para un proceso formal.',
+    haiku: {tokens:'~1.5K',time:'2–3s',iter:2,conf:68,quality:'Explica fórmulas simples correctamente, pero pierde el hilo en cálculos con múltiples condiciones o tablas de referencia.'},
+    sonnet:{tokens:'~2.5K',time:'4–6s',iter:1,conf:89,quality:'Explica paso a paso, identifica casos borde (empleado nuevo, ausencia parcial, prorrateo) y traduce la lógica a lenguaje comprensible.'},
+    opus:  {tokens:'~3K',  time:'6–9s',iter:1,conf:95,quality:'Explica la lógica completa, detecta posibles errores en la propia fórmula y sugiere mejoras. Útil para auditar rutinas heredadas.'}
+  },
+  cruces:{
+    title:'Cruces de información entre sistemas',
+    desc:'Necesitás comparar totales de liquidación contra sistema contable, RRHH u otro origen para detectar diferencias, conciliar o validar antes del cierre.',
+    chips:['Auto-verifica la lógica del cruce','No inventa datos cuando faltan','Mejor rendimiento con 3+ sistemas'],
+    verdict:'Sonnet para cruces entre dos sistemas. Opus 4.7 si tenés tres o más fuentes con reglas de negocio distintas, o si el cruce necesita distinguir diferencias de timing de errores reales.',
+    haiku: {tokens:'~2K',  time:'3–4s',iter:3,conf:65,quality:'Compara tablas simples correctamente, pero pierde el hilo con 3+ fuentes o condiciones complejas. Genera falsos positivos en cruces con excepciones.'},
+    sonnet:{tokens:'~3.5K',time:'5–7s',iter:1,conf:90,quality:'Detecta inconsistencias, agrupa por tipo de diferencia, sugiere causas probables y propone plan de acción por prioridad.'},
+    opus:  {tokens:'~4.5K',time:'7–11s',iter:1,conf:96,quality:'Para cruces multi-sistema con reglas de negocio específicas. Auto-verifica la lógica de comparación y distingue diferencias de timing de errores reales.'}
+  },
+  stats:{
+    title:'Análisis de estadísticas salariales',
+    desc:'Datos de variaciones salariales, ausentismo, rotación o costos de nómina. Detectar anomalías, calcular tendencias e identificar patrones para tomar decisiones o reportar.',
+    chips:['No inventa datos faltantes (benchmark GDPval-AA)','Insights listos para dirección','Detecta correlaciones de largo plazo'],
+    verdict:'Sonnet para análisis operativos y reportes al jefe. Opus 4.7 para análisis que van a dirección o cuando los datos tienen muchos vacíos — fue mejorado específicamente para no inventar valores cuando faltan datos.',
+    haiku: {tokens:'~1.8K',time:'3–5s',iter:2,conf:70,quality:'Calcula estadísticas básicas correctamente, pero pierde outliers y no genera insights cualitativos. Pivot incompleto.'},
+    sonnet:{tokens:'~2.8K',time:'5–7s',iter:1,conf:90,quality:'Análisis completo con anomalías, tendencias, segmentación por concepto y visualización lista para presentar al jefe.'},
+    opus:  {tokens:'~3.5K',time:'7–10s',iter:0,conf:97,quality:'Reporta explícitamente cuando faltan datos en vez de inventar valores (benchmark GDPval-AA). Detecta correlaciones no obvias. Ideal para presentar a dirección.'}
+  },
+  comunicacion:{
+    title:'Redacción de comunicaciones',
+    desc:'Emails a clientes, vendors o equipos de IT explicando problemas, solicitando acciones o respondiendo escalaciones. Tono profesional, claro y con propuesta de resolución.',
+    chips:['Mayor calidad y creatividad en 4.7','Memoria entre sesiones','Anticipa objeciones del destinatario'],
+    verdict:'Sonnet para comunicaciones de rutina. Opus 4.7 para escalaciones críticas, propuestas de alto valor o situaciones donde el tono y la precisión son determinantes.',
+    haiku: {tokens:'~1.2K',time:'2–3s',iter:4,conf:45,quality:'Draft plano con estructura desorganizada y tono inconsistente. Requiere reescritura completa. Solo útil para avisos internos muy simples.'},
+    sonnet:{tokens:'~2K',  time:'4–6s',iter:1,conf:88,quality:'Draft profesional listo para enviar en el primer intento. Tono adecuado, estructura clara y detalles técnicos bien presentados.'},
+    opus:  {tokens:'~2.5K',time:'6–9s',iter:0,conf:95,quality:'Mayor calidad y creatividad documentada en 4.7. Anticipa preguntas del destinatario, gestiona el tono con más precisión y propone timeline concreto.'}
+  },
+  reportes:{
+    title:'Armado de reportes e informes',
+    desc:'Informe de cierre de mes, reporte de variaciones, informe ejecutivo o presentación para dirección. Necesitás narrativa, análisis de datos y recomendaciones accionables.',
+    chips:['Mejor calidad para slides y docs en 4.7','Anticipa preguntas de directorio','Razonamiento financiero mejorado'],
+    verdict:'Sonnet para reportes al jefe y cierres mensuales. Opus 4.7 para informes de directorio, presentaciones a stakeholders externos o cuando los datos son ambiguos.',
+    haiku: {tokens:'~1.5K',time:'2–4s',iter:3,conf:55,quality:'Estructura básica sin análisis real. Presenta datos sin contexto ni recomendaciones. No apto para reportes de dirección.'},
+    sonnet:{tokens:'~2.5K',time:'4–7s',iter:1,conf:88,quality:'Informe completo con narrativa, datos clave y recomendaciones concretas. Listo para entregar al jefe o management.'},
+    opus:  {tokens:'~3K',  time:'7–10s',iter:0,conf:96,quality:'Informe ejecutivo de alta calidad. Anticipa preguntas de directorio, propone acciones con impacto estimado y mayor calidad de presentación.'}
+  },
+  decisiones:{
+    title:'Toma de decisiones estratégicas',
+    desc:'Evaluar opciones para cambiar un proceso, implementar un sistema, gestionar un escalamiento o definir una estrategia. Necesitás análisis de impacto, riesgos y recomendaciones.',
+    chips:['Razonamiento estratégico profundo','Identifica supuestos ocultos','Anticipa consecuencias de segundo orden'],
+    verdict:'Sonnet para decisiones operativas con impacto acotado. Opus 4.7 para decisiones estratégicas — cambio de sistema, definición de procesos críticos o evaluaciones con alto impacto organizacional o financiero.',
+    haiku: {tokens:'~1.5K',time:'3–5s',iter:3,conf:48,quality:'Lista genérica de pros y contras sin ponderación ni contexto. No útil para decisiones con variables múltiples.'},
+    sonnet:{tokens:'~2.5K',time:'5–7s',iter:1,conf:85,quality:'Marco de decisión estructurado con criterios ponderados, escenarios y análisis de riesgos. Sólido para decisiones operativas.'},
+    opus:  {tokens:'~3.5K',time:'8–12s',iter:0,conf:95,quality:'Anticipa consecuencias de segundo orden, identifica supuestos ocultos y propone métricas de éxito. Ideal para decisiones de alto impacto.'}
+  },
+  documentacion:{
+    title:'Documentación de procesos',
+    desc:'Documentar flujos de liquidación, guías de operación, manuales para auditoría o wikis internas. Necesitás claridad, completitud y un formato que se pueda mantener en el tiempo.',
+    chips:['Mayor calidad visual en docs en 4.7','Coherencia en documentos largos','Apta para auditoría y partners externos'],
+    verdict:'Sonnet para documentación interna del equipo. Opus 4.7 si el destino es externo — auditor, partner o cliente — o si necesitás que la documentación resista una revisión formal.',
+    haiku: {tokens:'~1.4K',time:'2–4s',iter:3,conf:52,quality:'Estructura base superficial. Omite casos de error, excepciones y detalles de proceso. No apto para documentación formal.'},
+    sonnet:{tokens:'~2.5K',time:'4–7s',iter:1,conf:87,quality:'Documentación completa con flujos, excepciones, casos de error y guía de troubleshooting. Lista para wiki interna del equipo.'},
+    opus:  {tokens:'~3K',  time:'6–9s',iter:0,conf:96,quality:'Documentación enterprise-grade. Incluye SLA esperado, guía de troubleshooting y disaster recovery. Apta para auditoría y onboarding.'}
+  }
+};
 
-      const c = cases[caseKey];
-      const confColors = { haiku: '#e07a50', sonnet: '#2e78c7', opus: '#6255c7' };
+const barColors={haiku:'#c0511f',sonnet:'#1450a0',opus:'#483eac'};
+let currentProfile='liquidador',currentCase='debug',currentView='tasks';
 
-      let html = `
-        <div class="case-header">
-          <div class="case-title">${c.title}</div>
-          <div class="case-desc">${c.desc}</div>
+/* ============ DATOS DE ARTIFACTS VISUALES ============ */
+const categories=[
+  {id:'diagrams',  label:'Diagramas estáticos',     items:['mermaid','viz_svg','svg_file']},
+  {id:'interactive',label:'Aplicaciones interactivas',items:['viz_html','html_file','react']},
+  {id:'documents', label:'Documentos editables',     items:['markdown','xlsx','office']},
+  {id:'special',   label:'Conectores y búsqueda',    items:['monday','image_search']}
+];
+
+const artifacts={
+  mermaid:{
+    name:'Mermaid', type:'Artifact descargable (.mermaid)', tokens:'150–300',
+    prompt:'"hacé un diagrama mermaid del flujo del recálculo SIRADIG"',
+    pros:'Flujos secuenciales, árboles de decisión y organigramas simples',
+    cons:'Ilustraciones custom o cuando necesitás interactividad',
+    example:'Flujo de fases del recálculo SIRADIG por cliente',
+    limit:'Sintaxis declarativa, pocas variantes visuales',
+    recommendedFor:['liquidador','jefe']
+  },
+  viz_svg:{
+    name:'Visualizer SVG', type:'Inline en chat', tokens:'800–1.500',
+    prompt:'"mostrame un diagrama visual de la estructura del recibo"',
+    pros:'Diagramas únicos en chat, ilustraciones rápidas para explicar',
+    cons:'Cuando querés descargarlo como archivo independiente',
+    example:'Estructura visual de un recibo de sueldo',
+    limit:'Solo aparece inline, no se descarga',
+    recommendedFor:['liquidador','jefe']
+  },
+  svg_file:{
+    name:'SVG (.svg)', type:'Artifact descargable', tokens:'500–3.000',
+    prompt:'"creame un archivo SVG del organigrama del equipo"',
+    pros:'Gráficos vectoriales para insertar en slides o documentos',
+    cons:'Cuando no necesitás portabilidad o querés interactividad',
+    example:'Organigrama del equipo de Payroll',
+    limit:'Estático, sin interactividad ni datos dinámicos',
+    recommendedFor:['jefe','gerente']
+  },
+  viz_html:{
+    name:'Visualizer HTML interactivo', type:'Inline en chat', tokens:'2.500–4.500',
+    prompt:'"mostrame un widget interactivo para simular ganancias"',
+    pros:'Simuladores de un solo uso, calculadoras, demos rápidas',
+    cons:'Cuando necesitás guardar el archivo o compartirlo fuera del chat',
+    example:'Simulador interactivo de retención de ganancias',
+    limit:'No persiste — se pierde al cerrar la conversación',
+    recommendedFor:['liquidador','jefe']
+  },
+  html_file:{
+    name:'HTML (.html)', type:'Artifact descargable', tokens:'1.500–4.500',
+    prompt:'"armame un archivo HTML con el dashboard de KPIs del cierre"',
+    pros:'Dashboards estáticos, one-pagers, guías como esta misma',
+    cons:'Cuando necesitás integrar datos en vivo desde un sistema',
+    example:'Dashboard de KPIs del cierre mensual de payroll',
+    limit:'Sin backend, los datos quedan hardcoded en el archivo',
+    recommendedFor:['jefe','gerente']
+  },
+  react:{
+    name:'React (.jsx)', type:'Artifact descargable', tokens:'2.500–7.000+',
+    prompt:'"creame un artifact en React con filtros por cliente y fase"',
+    pros:'Apps complejas con estado, filtros, gráficos y múltiples vistas',
+    cons:'Para algo simple — es sobreingeniería y consume más cupo',
+    example:'Tablero del recálculo SIRADIG con filtros y avance por fase',
+    limit:'Sin localStorage/sessionStorage, librerías acotadas',
+    recommendedFor:['gerente']
+  },
+  markdown:{
+    name:'Markdown (.md)', type:'Artifact descargable', tokens:'300–3.000',
+    prompt:'"armame un documento markdown del manual del proceso SIRADIG"',
+    pros:'Manuales técnicos, READMEs, documentación interna mantenible',
+    cons:'Cuando necesitás formato corporativo (logo, márgenes, headers)',
+    example:'Manual interno del proceso de recálculo anual',
+    limit:'Formato simple, sin estilos custom ni imágenes embebidas complejas',
+    recommendedFor:['liquidador','jefe']
+  },
+  xlsx:{
+    name:'XLSX', type:'Archivo descargable', tokens:'1.500–2.500',
+    prompt:'"creame un Excel con la tabla de control de recálculo cliente x fase"',
+    pros:'Datos tabulares con fórmulas para seguir trabajando en Excel',
+    cons:'Cuando solo necesitás visualizar los datos sin editarlos',
+    example:'Plantilla de control del recálculo SIRADIG por cliente y fase',
+    limit:'Se descarga, no se previsualiza inline en el chat',
+    recommendedFor:['liquidador','jefe','gerente']
+  },
+  office:{
+    name:'DOCX / PPTX / PDF', type:'Archivo descargable', tokens:'2.000–4.000',
+    prompt:'"armame un PowerPoint del informe ejecutivo de cierre del cliente X"',
+    pros:'Entregables formales para clientes, partners externos o auditoría',
+    cons:'Para borradores rápidos o documentos internos que cambian seguido',
+    example:'Informe ejecutivo de cierre de mes para cliente externo',
+    limit:'Generación más lenta, se descarga sin previsualización',
+    recommendedFor:['jefe','gerente']
+  },
+  image_search:{
+    name:'Búsqueda de imágenes', type:'Inline en chat', tokens:'~100',
+    prompt:'"buscame imágenes de oficinas corporativas en Buenos Aires"',
+    pros:'Necesitás imágenes reales de productos, lugares u objetos',
+    cons:'Si querés gráficos generados, diagramas custom o ilustraciones',
+    example:'Imágenes ilustrativas para una comunicación corporativa',
+    limit:'Solo busca en la web — no genera imágenes nuevas con IA',
+    recommendedFor:['jefe','gerente']
+  },
+  monday:{
+    name:'Widgets Monday.com', type:'Inline en chat', tokens:'200–800',
+    prompt:'"mostrame el board del Validador Novedades como tabla"',
+    pros:'Cuando los datos ya están vivos en un board de Monday',
+    cons:'Para datos que no están en Monday — usá XLSX o HTML en su lugar',
+    example:'Visualizar el avance del board del Validador Novedades',
+    limit:'Requiere conector activo y permisos en el board correspondiente',
+    recommendedFor:['liquidador','jefe','gerente']
+  }
+};
+
+/* ============ FUNCIONES DE VISTA ============ */
+function switchView(v){
+  currentView=v;
+  document.getElementById('tab-tasks').classList.toggle('active',v==='tasks');
+  document.getElementById('tab-artifacts').classList.toggle('active',v==='artifacts');
+  document.getElementById('view-tasks').classList.toggle('view-hidden',v!=='tasks');
+  document.getElementById('view-artifacts').classList.toggle('view-hidden',v!=='artifacts');
+  if(v==='artifacts')renderArtifacts();
+}
+
+function renderArtifacts(){
+  let html='';
+  categories.forEach(cat=>{
+    html+=`<div class="category-header">${cat.label}</div>`;
+    html+='<div class="artifacts-grid">';
+    cat.items.forEach((id,idx)=>{
+      const a=artifacts[id];
+      const isRec=a.recommendedFor.includes(currentProfile);
+      html+=`<div class="artifact-card${isRec?' recommended':''}">
+        <div class="artifact-head">
+          <div class="artifact-head-left">
+            <div class="artifact-num">${cat.id.toUpperCase()} · ${idx+1}</div>
+            <div class="artifact-name">${a.name}</div>
+            <div class="artifact-type">${a.type}</div>
+          </div>
+          <span class="artifact-tokens">${a.tokens} tokens</span>
         </div>
-        <div class="models-comparison">
-      `;
-
-      ['haiku', 'sonnet', 'opus'].forEach(model => {
-        const m = c.models[model];
-        const modelLabel = model === 'haiku' ? 'Haiku 4.5' : model === 'sonnet' ? 'Sonnet 4.6' : 'Opus 4.7';
-        const upgraded = m.upgraded ? 'upgraded' : '';
-        const badge = m.upgraded ? '<span class="new-badge">Actualizado</span>' : '';
-        const pct = m.confidence;
-
-        html += `
-          <div class="model-card ${upgraded}">
-            ${badge}
-            <div class="model-name ${model}">
-              <span>${modelLabel}</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">Tokens consumidos</span>
-              <span class="metric-value tokens-val">${m.tokens}</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">Tiempo respuesta</span>
-              <span class="metric-value time-val">${m.time}</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">Iteraciones requeridas</span>
-              <span class="metric-value iter-val">${m.iterations}</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">Confianza resolución</span>
-              <span class="metric-value conf-val">${pct}%</span>
-            </div>
-            <div class="conf-bar-wrap">
-              <div class="conf-bar-bg">
-                <div class="conf-bar-fill" style="width:${pct}%;background:${m.barColor};"></div>
-              </div>
-            </div>
-            <div class="quality-section">
-              <div class="quality-title">Calidad de respuesta</div>
-              <div class="quality-text">${m.quality}</div>
-            </div>
-          </div>
-        `;
-      });
-
-      html += `</div>`;
-
-      // Score comparison strip
-      html += `
-        <div class="metric-comparison">
-          <div class="comparison-box">
-            <div class="comparison-label">Costo-eficiencia</div>
-            <div class="comparison-model haiku-val">Haiku 4.5</div>
-            <div class="comparison-value haiku-val">${c.models.haiku.tokens}</div>
-          </div>
-          <div class="comparison-box">
-            <div class="comparison-label">Balance óptimo</div>
-            <div class="comparison-model sonnet-val">Sonnet 4.6</div>
-            <div class="comparison-value sonnet-val">${c.models.sonnet.iterations}× iteración</div>
-          </div>
-          <div class="comparison-box">
-            <div class="comparison-label">Mayor confianza</div>
-            <div class="comparison-model opus-val">Opus 4.7 🆕</div>
-            <div class="comparison-value opus-val">${c.models.opus.confidence}%</div>
-          </div>
+        <div class="artifact-prompt">
+          <div class="artifact-prompt-label">Cómo pedirlo</div>
+          <div class="artifact-prompt-text">${a.prompt}</div>
         </div>
-      `;
-
-      // Opus 4.7 upgrade block
-      html += `
-        <div class="upgrade-block">
-          <div class="upgrade-block-title">🆕 ¿Por qué Opus 4.7 y no Opus 4.6?</div>
-          <div class="upgrade-grid">
-            ${c.upgradeItems.map(item => `
-              <div class="upgrade-item">
-                <span class="upgrade-item-icon">${item.icon}</span>
-                <span>${item.text}</span>
-              </div>
-            `).join('')}
-          </div>
+        <div class="artifact-points">
+          <div class="artifact-point"><span class="artifact-point-icon">✅</span><span class="artifact-point-text"><strong>Conviene:</strong> ${a.pros}</span></div>
+          <div class="artifact-point"><span class="artifact-point-icon">❌</span><span class="artifact-point-text"><strong>No conviene:</strong> ${a.cons}</span></div>
+          <div class="artifact-point"><span class="artifact-point-icon">💡</span><span class="artifact-point-text"><strong>Ejemplo Payroll:</strong> ${a.example}</span></div>
+          <div class="artifact-point"><span class="artifact-point-icon">⚙️</span><span class="artifact-point-text"><strong>Limitación:</strong> ${a.limit}</span></div>
         </div>
-      `;
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('artifacts-content').innerHTML=html;
+}
 
-      // Verdict
-      html += `
-        <div class="verdict-box">
-          <div class="verdict-title">📍 Recomendación</div>
-          <div class="verdict-text">${c.verdict}</div>
-        </div>
-      `;
+function selectProfile(p){
+  currentProfile=p;
+  document.querySelectorAll('.profile-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('p-'+p).classList.add('active');
+  currentCase=profiles[p].cases[0];
+  renderNav(); renderCase();
+  if(currentView==='artifacts')renderArtifacts();
+}
+function selectCase(k){currentCase=k;renderNav();renderCase();}
 
-      document.getElementById('case-content').innerHTML = html;
-    }
+function renderNav(){
+  document.getElementById('case-nav').innerHTML=profiles[currentProfile].cases
+    .map(k=>`<button class="case-tab${k===currentCase?' active':''}" onclick="selectCase('${k}')">${caseLabels[k]}</button>`)
+    .join('');
+}
 
-    loadCase('sql');
-  </script>
+function renderCase(){
+  const c=cases[currentCase];
+  const pLabel=profiles[currentProfile].label;
+  const card=(model,cls)=>{
+    const m=c[model];
+    const names={haiku:'Haiku 4.5',sonnet:'Sonnet 4.6',opus:'Opus 4.7'};
+    const isOpus=model==='opus';
+    return `<div class="model-card${isOpus?' is-opus':''}">
+      <div class="model-header ${cls}">
+        <span class="model-label ${cls}">${names[model]}</span>
+        ${isOpus?'<span class="v47-tag">4.7 HOY</span>':''}
+      </div>
+      <div class="metric"><span class="m-label">Tokens</span><span class="m-val c-green">${m.tokens}</span></div>
+      <div class="metric"><span class="m-label">Tiempo</span><span class="m-val c-amber">${m.time}</span></div>
+      <div class="metric"><span class="m-label">Iteraciones</span><span class="m-val c-blue">${m.iter}</span></div>
+      <div class="metric"><span class="m-label">Confianza</span><span class="m-val c-purple">${m.conf}%</span></div>
+      <div class="conf-track"><div class="conf-fill" style="width:${m.conf}%;background:${barColors[model]}"></div></div>
+      <div class="quality-block">
+        <div class="q-label">Calidad de respuesta</div>
+        <div class="q-text">${m.quality}</div>
+      </div>
+    </div>`;
+  };
+  document.getElementById('case-content').innerHTML=`
+    <div class="case-header">
+      <div class="case-tag">${pLabel}</div>
+      <div class="case-title">${c.title}</div>
+      <div class="case-desc">${c.desc}</div>
+    </div>
+    <div class="models-grid">${card('haiku','haiku')}${card('sonnet','sonnet')}${card('opus','opus')}</div>
+    <div class="opus-strip">
+      <span class="os-label">Opus 4.7 vs 4.6</span>
+      ${c.chips.map(ch=>`<span class="os-chip">${ch}</span>`).join('')}
+    </div>
+    <div class="verdict">
+      <div class="v-title">Recomendación</div>
+      <div class="v-text">${c.verdict}</div>
+    </div>`;
+}
+selectProfile('liquidador');
+</script>
 </body>
 </html>
