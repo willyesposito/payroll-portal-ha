@@ -393,6 +393,39 @@
   .scrollable::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
   .scrollable::-webkit-scrollbar-thumb:hover { background: var(--text2); }
 
+  /* ── BARRA DE PROGRESO ─────────────────────────────── */
+  .progress-wrap {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 220px; gap: 18px; padding: 32px 24px;
+  }
+  .progress-title {
+    font-size: 15px; font-weight: 600; color: var(--text); text-align: center;
+  }
+  .progress-sub {
+    font-size: 12px; color: var(--muted); text-align: center; min-height: 18px;
+  }
+  .progress-bar-outer {
+    width: 100%; max-width: 420px; height: 10px;
+    background: var(--surface2); border-radius: 99px; overflow: hidden;
+  }
+  .progress-bar-inner {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent, #3b82f6), #60a5fa);
+    transition: width 0.25s ease;
+    width: 0%;
+  }
+  .progress-bar-inner.indeterminate {
+    width: 40% !important;
+    animation: indeterminate 1.4s ease-in-out infinite;
+  }
+  @keyframes indeterminate {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+  }
+  .progress-pct {
+    font-size: 13px; font-weight: 700; color: var(--accent, #3b82f6); min-height: 20px;
+  }
+
   .masiva-search { display:flex; gap:8px; margin-bottom:12px; }
   .masiva-search input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); padding:7px 12px; font-size:13px; outline:none; transition:border-color .15s; }
   .masiva-search input:focus { border-color:var(--accent); }
@@ -3476,21 +3509,62 @@ function validar() {
   renderResults(errores, advertencias, oks, infos, lines, crossResults);
 }
 
+// Cede el hilo al browser para que pueda repintar antes de continuar
+function yieldToUI() { return new Promise(r => setTimeout(r, 0)); }
+
+function showProgress(titulo, subtitulo, pct) {
+  const container = document.getElementById('resultsContainer');
+  const indeterminate = pct === null;
+  container.innerHTML = `
+    <div class="progress-wrap">
+      <div class="progress-title">${titulo}</div>
+      <div class="progress-bar-outer">
+        <div class="progress-bar-inner${indeterminate ? ' indeterminate' : ''}" id="progBarInner"
+             style="width:${indeterminate ? '40' : pct}%"></div>
+      </div>
+      <div class="progress-pct" id="progPct">${indeterminate ? '' : pct + '%'}</div>
+      <div class="progress-sub" id="progSub">${subtitulo || ''}</div>
+    </div>`;
+}
+
+function updateProgress(pct, subtitulo) {
+  const bar = document.getElementById('progBarInner');
+  const pctEl = document.getElementById('progPct');
+  const sub = document.getElementById('progSub');
+  if (bar) { bar.classList.remove('indeterminate'); bar.style.width = pct + '%'; }
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (sub && subtitulo !== undefined) sub.textContent = subtitulo;
+}
+
 async function validarMasiva() {
   const anio = parseInt(document.getElementById('anio').value);
   const tipoEsperado = document.getElementById('tipoPres').value;
   const topes = TOPES[anio] || TOPES[2025];
-  const lines = fileContent.split(/\r?\n/).filter(l => l.trim().length > 0);
-  const container = document.getElementById('resultsContainer');
 
-  // 1. Parsear TXT completo
+  // Bloquear botón mientras procesa
+  const btnVal = document.getElementById('btnValidar');
+  const textoOriginal = btnVal ? btnVal.textContent.trim() : 'Validar nómina';
+  if (btnVal) { btnVal.disabled = true; btnVal.textContent = '⏳ Procesando...'; }
+
+  // Fase 1 — Dividir TXT en líneas
+  showProgress('Leyendo archivo TXT…', '', null);
+  await yieldToUI();
+
+  const lines = fileContent.split(/\r?\n/).filter(l => l.trim().length > 0);
+
+  // Fase 2 — Parsear estructura TXT (sincrónico pero yield antes para mostrar UI)
+  showProgress('Analizando estructura del TXT…', `${lines.length.toLocaleString('es-AR')} líneas`, null);
+  await yieldToUI();
+
   const errores = [], advertencias = [], oks = [], infos = [];
   const trabajadores = [];
   _parseTxtMasiva(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores);
 
-  // 2. Parsear Excel si existe
+  // Fase 3 — Parsear Excel
   let excelRows = null, excelMeta = null;
   if (excelContent) {
+    showProgress('Procesando Excel de liquidaciones…', '', null);
+    await yieldToUI();
     try {
       excelMeta = parseExcelMeta4(excelContent);
       excelRows = excelMeta.rows;
@@ -3499,59 +3573,67 @@ async function validarMasiva() {
     }
   }
 
-  // 3. Cruzar por CUIL (o por posición si no hay CUIL)
+  // Armar mapas de búsqueda rápida
   const cuilMap = new Map();
-  if (excelRows) {
-    excelRows.forEach(r => { if (r.cuil && r.cuil.length === 11) cuilMap.set(r.cuil, r); });
-  }
-
-  // 3b. Mapa de nómina por CUIL
+  if (excelRows) excelRows.forEach(r => { if (r.cuil && r.cuil.length === 11) cuilMap.set(r.cuil, r); });
   const nominaMap = new Map();
-  if (window._nominaData) {
-    window._nominaData.forEach(n => { if (n.cuil) nominaMap.set(n.cuil, n); });
-  }
+  if (window._nominaData) window._nominaData.forEach(n => { if (n.cuil) nominaMap.set(n.cuil, n); });
 
-  // 4. Validar cada trabajador
+  // Fase 4 — Validar empleado por empleado en batches
+  const total = trabajadores.length;
+  const BATCH = 50;
   const resultados = [];
   const software = document.getElementById('softwareLiqMasiva').value;
 
-  for (let i = 0; i < trabajadores.length; i++) {
+  showProgress('Cruzando datos por empleado…', `0 de ${total.toLocaleString('es-AR')} empleados`, 0);
+  await yieldToUI();
+
+  for (let i = 0; i < total; i++) {
     const t = trabajadores[i];
     const cuil = t.lines['02'] ? str(t.lines['02'], 3, 11).replace(/\D/g, '') : `#${i+1}`;
 
-    // Errores de formato de este trabajador
     const tErr  = errores.filter(e => e._tidx === i);
     const tWarn = advertencias.filter(e => e._tidx === i);
 
-    // Cruce con Excel Meta4
     let crossResults = null;
     let excelRow = cuilMap.get(cuil);
-    if (!excelRow && excelRows && excelRows[i]) excelRow = excelRows[i]; // fallback posición
-    if (excelRow && software === 'meta4') {
-      crossResults = crossValidar(excelRow.rd, [t]);
-    }
+    if (!excelRow && excelRows && excelRows[i]) excelRow = excelRows[i];
+    if (excelRow && software === 'meta4') crossResults = crossValidar(excelRow.rd, [t]);
 
     const crossErr  = crossResults ? crossResults.filter(r => r.status === 'mismatch').length : 0;
     const crossWarn = crossResults ? crossResults.filter(r => r.status === 'shifted').length  : 0;
     const crossOk   = crossResults ? crossResults.filter(r => r.status === 'ok').length       : 0;
 
-    // Datos de nómina
-    const nominaRow   = nominaMap.get(cuil) || null;
-    const legajo      = nominaRow?.legajo || '';
+    const nominaRow    = nominaMap.get(cuil) || null;
+    const legajo       = nominaRow?.legajo || '';
     const nombreNomina = nominaRow ? `${nominaRow.apellido || ''}${nominaRow.apellido && nominaRow.nombre ? ', ' : ''}${nominaRow.nombre || ''}`.trim() : '';
-    const empresa     = nominaRow?.empresa || '';
-    const sinNomina   = window._nominaData != null && !nominaRow;
+    const empresa      = nominaRow?.empresa || '';
+    const sinNomina    = window._nominaData != null && !nominaRow;
 
     resultados.push({ t, cuil, nombre: excelRow?.nombre || '', legajo, nombreNomina, empresa, sinNomina, tErr, tWarn, crossResults, crossErr, crossWarn, crossOk, idx: i });
+
+    // Ceder hilo al browser cada BATCH empleados para actualizar la barra
+    if ((i + 1) % BATCH === 0 || i === total - 1) {
+      const pct = Math.round(((i + 1) / total) * 100);
+      updateProgress(pct, `${(i + 1).toLocaleString('es-AR')} de ${total.toLocaleString('es-AR')} empleados`);
+      await yieldToUI();
+    }
   }
 
-  // 5. Empleados en nómina pero sin TXT
+  // Fase 5 — Empleados en nómina pero sin TXT
+  showProgress('Generando resultados…', '', null);
+  await yieldToUI();
+
   const cuilesTxt = new Set(resultados.map(r => r.cuil));
   const sinTxt = window._nominaData
     ? window._nominaData.filter(n => n.cuil && !cuilesTxt.has(n.cuil))
     : [];
 
   window._lastResultadosMasiva = { resultados, sinTxt };
+
+  // Restaurar botón
+  if (btnVal) { btnVal.disabled = false; btnVal.textContent = textoOriginal; }
+
   renderResultsMasiva(resultados, errores, advertencias, oks, infos, excelMeta, sinTxt);
 }
 
