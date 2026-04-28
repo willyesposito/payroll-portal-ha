@@ -3475,7 +3475,7 @@ function parseExcelMeta4(arrayBuffer) {
 }
 
 // ── VALIDACIÓN MASIVA ─────────────────────────────────────
-function validar() {
+async function validar() {
   if (!fileContent) return;
   if (currentMode === 'masiva') { validarMasiva(); return; }
 
@@ -3493,7 +3493,7 @@ function validar() {
   }
 
   const trabajadores = [];
-  _parseTxt(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores);
+  await _parseTxt(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores);
 
   const reporteTexto = document.getElementById('reporteTexto').value.trim();
   const software = document.getElementById('softwareLiq').value;
@@ -3552,13 +3552,28 @@ async function validarMasiva() {
 
   const lines = fileContent.split(/\r?\n/).filter(l => l.trim().length > 0);
 
-  // Fase 2 — Parsear estructura TXT (sincrónico pero yield antes para mostrar UI)
-  showProgress('Analizando estructura del TXT…', `${lines.length.toLocaleString('es-AR')} líneas`, null);
+  // Fase 2 — Parsear estructura TXT (chunked async con progreso 0–50%)
+  showProgress('Analizando estructura del TXT…', `${lines.length.toLocaleString('es-AR')} líneas`, 0);
   await yieldToUI();
 
   const errores = [], advertencias = [], oks = [], infos = [];
   const trabajadores = [];
-  _parseTxtMasiva(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores);
+  window._onParseTxtProgress = (phase, done, total) => {
+    let pct = 0, msg = '';
+    if (phase === 'pass1') {
+      pct = Math.round((done / total) * 15); // 0-15%
+      msg = `Leyendo estructura · línea ${done.toLocaleString('es-AR')} de ${total.toLocaleString('es-AR')}`;
+    } else if (phase === 'pass2') {
+      pct = 15 + Math.round((done / total) * 30); // 15-45%
+      msg = `Validando trabajador ${done.toLocaleString('es-AR')} de ${total.toLocaleString('es-AR')}`;
+    } else if (phase === 'pass3') {
+      pct = 45 + Math.round((done / total) * 5); // 45-50%
+      msg = `Verificando caracteres · línea ${done.toLocaleString('es-AR')} de ${total.toLocaleString('es-AR')}`;
+    }
+    updateProgress(pct, msg);
+  };
+  await _parseTxtMasiva(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores);
+  window._onParseTxtProgress = null;
 
   // Fase 3 — Parsear Excel
   let excelRows = null, excelMeta = null;
@@ -3585,15 +3600,29 @@ async function validarMasiva() {
   const resultados = [];
   const software = document.getElementById('softwareLiqMasiva').value;
 
-  showProgress('Cruzando datos por empleado…', `0 de ${total.toLocaleString('es-AR')} empleados`, 0);
+  showProgress('Cruzando datos por empleado…', `0 de ${total.toLocaleString('es-AR')} empleados`, 50);
   await yieldToUI();
+
+  // Pre-indexar errores y advertencias por _tidx (evita O(N×M) filter por trabajador)
+  const errPorTidx = new Map();
+  const warnPorTidx = new Map();
+  for (const e of errores) {
+    if (e._tidx === undefined) continue;
+    if (!errPorTidx.has(e._tidx)) errPorTidx.set(e._tidx, []);
+    errPorTidx.get(e._tidx).push(e);
+  }
+  for (const w of advertencias) {
+    if (w._tidx === undefined) continue;
+    if (!warnPorTidx.has(w._tidx)) warnPorTidx.set(w._tidx, []);
+    warnPorTidx.get(w._tidx).push(w);
+  }
 
   for (let i = 0; i < total; i++) {
     const t = trabajadores[i];
     const cuil = t.lines['02'] ? str(t.lines['02'], 3, 11).replace(/\D/g, '') : `#${i+1}`;
 
-    const tErr  = errores.filter(e => e._tidx === i);
-    const tWarn = advertencias.filter(e => e._tidx === i);
+    const tErr  = errPorTidx.get(i) || [];
+    const tWarn = warnPorTidx.get(i) || [];
 
     let crossResults = null;
     let excelRow = cuilMap.get(cuil);
@@ -3614,8 +3643,8 @@ async function validarMasiva() {
 
     // Ceder hilo al browser cada BATCH empleados para actualizar la barra
     if ((i + 1) % BATCH === 0 || i === total - 1) {
-      const pct = Math.round(((i + 1) / total) * 100);
-      updateProgress(pct, `${(i + 1).toLocaleString('es-AR')} de ${total.toLocaleString('es-AR')} empleados`);
+      const pct = 50 + Math.round(((i + 1) / total) * 50);
+      updateProgress(pct, `Cruzando con Excel · ${(i + 1).toLocaleString('es-AR')} de ${total.toLocaleString('es-AR')} empleados`);
       await yieldToUI();
     }
   }
@@ -3893,7 +3922,7 @@ function exportErrorsExcel() {
 
 // ── PARSEO TXT — núcleo compartido por individual y masiva ────────────────
 // masiva=true → agrega _tidx a errores/advertencias por trabajador
-function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores, masiva) {
+async function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores, masiva) {
   let currentTidx = undefined; // undefined = error global (sin trabajador)
 
   // Helpers: pushean con o sin _tidx según contexto
@@ -3901,8 +3930,10 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
   const pw  = (obj) => advertencias.push(masiva && currentTidx !== undefined ? { ...obj, _tidx: currentTidx } : obj);
   const pok = (obj) => oks.push(obj);
   const pi  = (obj) => infos.push(obj);
+  const fmt = v => v.toLocaleString('es-AR', { minimumFractionDigits: 2 });
 
   let reg01 = null, nTrabajadores = 0, currentTrabajador = null, reg01Count = 0;
+  const _BATCH_LINES = 2000;
 
   // ── Primer paso: recorrer líneas ─────────────────────────
   for (let i = 0; i < lines.length; i++) {
@@ -3979,6 +4010,14 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
         }
       }
     }
+
+    // Yield cada _BATCH_LINES líneas para desbloquear UI
+    if ((i + 1) % _BATCH_LINES === 0 || i === lines.length - 1) {
+      if (typeof window._onParseTxtProgress === 'function') {
+        window._onParseTxtProgress('pass1', i + 1, lines.length);
+      }
+      await yieldToUI();
+    }
   }
 
   // ── Post-loop: validaciones globales ─────────────────────
@@ -3998,7 +4037,9 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
 
   // ── Post-loop: validaciones por trabajador ───────────────
   const tipoPres = reg01 && reg01.length === 38 ? str(reg01, 33, 1) : null;
-  for (const t of trabajadores) {
+  const _BATCH_PARSE = 100;
+  for (let _ti = 0; _ti < trabajadores.length; _ti++) {
+    const t = trabajadores[_ti];
     currentTidx = t.idx - 1;
     const idx = t.idx;
     const reqs = ['02','03','04','05','06','07','08'];
@@ -4179,6 +4220,14 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
         }
       }
     }
+
+    // Yield cada _BATCH_PARSE trabajadores para desbloquear la UI
+    if ((_ti + 1) % _BATCH_PARSE === 0 || _ti === trabajadores.length - 1) {
+      if (typeof window._onParseTxtProgress === 'function') {
+        window._onParseTxtProgress('pass2', _ti + 1, trabajadores.length);
+      }
+      await yieldToUI();
+    }
   }
 
   // ── Segundo paso: caracteres y formatos especiales ────────
@@ -4211,6 +4260,14 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
         invalidChars.push(`posición ${j+1} (código ${code})`);
     }
     if (invalidChars.length > 0) pe({ msg: `Línea ${i+1}: caracteres de control no permitidos en ${invalidChars.slice(0,3).join(', ')}${invalidChars.length>3?'...':''}`, rec: `Línea ${i+1}` });
+
+    // Yield cada _BATCH_LINES líneas para desbloquear UI
+    if ((i + 1) % _BATCH_LINES === 0 || i === lines.length - 1) {
+      if (typeof window._onParseTxtProgress === 'function') {
+        window._onParseTxtProgress('pass3', i + 1, lines.length);
+      }
+      await yieldToUI();
+    }
   }
 
   // ── Verificación de timing (global) ──────────────────────
@@ -4246,12 +4303,12 @@ function _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsper
   }
 }
 
-function _parseTxt(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores) {
-  _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores, false);
+async function _parseTxt(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores) {
+  await _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores, false);
 }
 
-function _parseTxtMasiva(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores) {
-  _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores, true);
+async function _parseTxtMasiva(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores) {
+  await _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores, true);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
