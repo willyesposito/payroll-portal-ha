@@ -6,6 +6,7 @@
 <title>Validador F.1359 — Ganancias 4ta. Categoría</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230099cc'/><text x='16' y='22' font-family='Arial,sans-serif' font-size='13' font-weight='bold' fill='white' text-anchor='middle'>HA</text></svg>">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
@@ -1172,6 +1173,9 @@
 
     <button class="btn-validate" id="btnValidar" onclick="validar()" disabled>
       Validar
+    </button>
+    <button class="btn-validate" id="btnExportPdf" onclick="exportF1359Pdf()" style="display:none;margin-top:8px;background:var(--accent2,#2a6dd9);font-size:13px;padding:10px 18px;">
+      📄 PDF F.1359
     </button>
   </div>
 
@@ -3552,6 +3556,10 @@ async function validarMasiva() {
 }
 
 function renderResultsMasiva(resultados, errores, advertencias, oks, infos, excelMeta, sinTxt = []) {
+  // Modo masiva: ocultar botón PDF F.1359 (solo aplica a modo individual)
+  const btnPdfMas = document.getElementById('btnExportPdf');
+  if (btnPdfMas) btnPdfMas.style.display = 'none';
+
   const container = document.getElementById('resultsContainer');
   const total        = resultados.length;
   const conErrTxt    = resultados.filter(r => r.tErr.length > 0).length;
@@ -3680,6 +3688,10 @@ function renderResultsMasiva(resultados, errores, advertencias, oks, infos, exce
   // Mostrar botón de exportar errores
   const btnExp = document.getElementById('btnExportErrors');
   if (btnExp) btnExp.style.display = '';
+
+  // Mostrar botón PDF F.1359 si hay trabajador parseado
+  const btnPdf = document.getElementById('btnExportPdf');
+  if (btnPdf) btnPdf.style.display = (window._lastTrabajadores && window._lastTrabajadores.length > 0) ? '' : 'none';
 
   // Colapsar panel de config al mostrar resultados
   collapseConfig();
@@ -4158,6 +4170,377 @@ function _parseTxt(lines, errores, advertencias, oks, infos, anio, tipoEsperado,
 
 function _parseTxtMasiva(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores) {
   _parseTxtCore(lines, errores, advertencias, oks, infos, anio, tipoEsperado, topes, trabajadores, true);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// EXPORT PDF F.1359 — facsímil del formulario oficial (v2.5)
+// ════════════════════════════════════════════════════════════════════════════
+function exportF1359Pdf() {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('La librería jsPDF no se cargó. Verificá la conexión a internet y recargá la página.');
+    return;
+  }
+  const trab = window._lastTrabajadores && window._lastTrabajadores[0];
+  if (!trab) { alert('No hay trabajador parseado. Validá un archivo TXT primero.'); return; }
+
+  // Re-extraer Reg.01 desde fileContent
+  let reg01Line = '';
+  if (fileContent) {
+    const lines = fileContent.split(/\r?\n/);
+    reg01Line = lines.find(l => l && l.substr(0, 2) === '01') || '';
+  }
+
+  // Helpers de extracción (posiciones 1-based, igual que el manual)
+  const slice = (line, from, len) => (line || '').substr(from - 1, len);
+  const numAt = (line, from, len) => {
+    const s = slice(line, from, len).trim();
+    const n = parseInt(s, 10);
+    return isNaN(n) ? 0 : n;
+  };
+  // Importes están en centavos enteros → dividir entre 100
+  const fmtMoney = (cents) => {
+    if (cents === 0) return '$ 0,00';
+    return '$ ' + (cents / 100).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  // ─── Lectura de campos ──────────────────────────────────────────────
+  const r01 = reg01Line;
+  const r02 = trab.lines['02'] || '';
+  const r03 = trab.lines['03'] || '';
+  const r04 = trab.lines['04'] || '';
+  const r05 = trab.lines['05'] || '';
+  const r06 = trab.lines['06'] || '';
+  const r07 = trab.lines['07'] || '';
+  const r08 = trab.lines['08'] || '';
+
+  const cuit = slice(r01, 3, 11);
+  const periodoRaw = slice(r01, 14, 6);
+  const tipoPres = slice(r01, 33, 1);
+  const tipoDesc = { '1':'Anual', '2':'Final', '3':'Informativa', '4':'Anual/Distracto' }[tipoPres] || '';
+  const anio = periodoRaw.substr(0, 4);
+  const mes = periodoRaw.substr(4, 2);
+  const periodoFmt = mes === '00' ? `${anio} (Anual)` : `${mes}/${anio}`;
+  const cuil = slice(r02, 3, 11);
+
+  // Reg.03 — Remuneraciones Gravadas
+  const r03_remBruta     = numAt(r03,  14, 15);
+  const r03_retNoHab     = numAt(r03,  29, 15);
+  const r03_sac1         = numAt(r03,  44, 15);
+  const r03_sac2         = numAt(r03,  59, 15);
+  const r03_oRemBruta    = numAt(r03,  74, 15);
+  const r03_oRetNoHab    = numAt(r03,  89, 15);
+  const r03_oSac1        = numAt(r03, 104, 15);
+  const r03_oSac2        = numAt(r03, 119, 15);
+  const r03_ajustes      = numAt(r03, 134, 15);
+  const r03_oAjustes     = numAt(r03, 149, 15);
+  const r03_total        = numAt(r03, 164, 15);
+
+  // Reg.04 — Exentas
+  const r04_asigFam      = numAt(r04,  14, 15);
+  const r04_intPrest     = numAt(r04,  29, 15);
+  const r04_indemn       = numAt(r04,  44, 15);
+  const r04_tdf          = numAt(r04,  59, 15);
+  const r04_petr         = numAt(r04,  74, 15);
+  const r04_cursos       = numAt(r04,  89, 15);
+  const r04_indum        = numAt(r04, 104, 15);
+  const r04_ajustes      = numAt(r04, 119, 15);
+  const r04_oAsigFam     = numAt(r04, 134, 15);
+  const r04_oIntPrest    = numAt(r04, 149, 15);
+  const r04_oIndemn      = numAt(r04, 164, 15);
+  const r04_oTdf         = numAt(r04, 179, 15);
+  const r04_oPetr        = numAt(r04, 194, 15);
+  const r04_oCursos      = numAt(r04, 209, 15);
+  const r04_oIndum       = numAt(r04, 224, 15);
+  const r04_oAjustes     = numAt(r04, 239, 15);
+  const r04_totalExentas = numAt(r04, 254, 15);
+  const r04_totalRem     = numAt(r04, 269, 15);
+  const r04_pjud         = numAt(r04, 284, 15);
+  const r04_oPjud        = numAt(r04, 299, 15);
+
+  // Reg.05 — Deducciones Generales
+  const R05 = (from) => numAt(r05, from, 15);
+  const r05_anses        = R05( 14);
+  const r05_oAnses       = R05( 29);
+  const r05_cajas        = R05( 44);
+  const r05_oCajas       = R05( 59);
+  const r05_obraSoc      = R05( 74);
+  const r05_oObraSoc     = R05( 89);
+  const r05_sind         = R05(104);
+  const r05_oSind        = R05(119);
+  const r05_medAsist     = R05(134);
+  const r05_segMuerte    = R05(149);
+  const r05_segMixto     = R05(164);
+  const r05_fci          = R05(179);
+  const r05_sepelio      = R05(194);
+  const r05_rodados      = R05(209);
+  const r05_donac        = R05(224);
+  const r05_alq40        = R05(239);
+  const r05_descObl      = R05(254);
+  const r05_honMed       = R05(269);
+  const r05_intHip       = R05(284);
+  const r05_sgr          = R05(299);
+  const r05_domest       = R05(314);
+  const r05_cajComp      = R05(329);
+  const r05_fondComp     = R05(344);
+  const r05_otrosJub     = R05(359);
+  const r05_segRet       = R05(374);
+  const r05_indumEmp     = R05(389);
+  const r05_servEduc     = R05(404);
+  const r05_alq10        = R05(419);
+  const r05_antart       = R05(434);
+  const r05_actores      = R05(449);
+  const r05_totalDed     = R05(464);
+
+  // Reg.06 — Deducciones Personales
+  const r06_gni          = numAt(r06,  14, 15);
+  const r06_conyuge      = numAt(r06,  29, 15);
+  const r06_hijos        = numAt(r06,  48, 15);
+  const r06_hijosInc     = numAt(r06,  67, 15);
+  const r06_cargasFam    = numAt(r06,  82, 15);
+  const r06_dedEsp       = numAt(r06,  97, 15);
+  const r06_dedEspAdic   = numAt(r06, 112, 15);
+  const r06_dedEspec     = numAt(r06, 127, 15);
+  const r06_totalDedPers = numAt(r06, 142, 15);
+
+  // Reg.07 — Pagos a Cuenta
+  const r07_total        = numAt(r07, 164, 15);
+
+  // Reg.08 — Cálculo del Impuesto
+  const r08_remSujeta    = numAt(r08,  14, 15);
+  const r08_alicCod      = slice(r08,  29, 2);
+  const r08_impDeterm    = numAt(r08,  31, 15);
+  const r08_impRetenido  = numAt(r08,  46, 15);
+  const r08_subtotal     = numAt(r08,  61, 15);
+  const r08_autoRet      = numAt(r08,  76, 15);
+  const r08_saldo        = numAt(r08,  91, 15);
+
+  const ALIC = {'00':'0%','01':'5%','02':'9%','03':'12%','04':'15%','05':'19%','06':'23%','07':'27%','08':'31%','09':'35%'};
+  const alicTexto = ALIC[r08_alicCod] !== undefined ? `${r08_alicCod} (${ALIC[r08_alicCod]})` : (r08_alicCod || '—');
+
+  // ─── Construcción del PDF ───────────────────────────────────────────
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  const PAGE_W = 210, PAGE_H = 297;
+  const MARGIN_L = 15, MARGIN_R = 15, MARGIN_TOP = 15, MARGIN_BOT = 15;
+  const CONTENT_W = PAGE_W - MARGIN_L - MARGIN_R;
+  const COL_LABEL_W = 130;
+  const COL_VAL_W   = CONTENT_W - COL_LABEL_W;
+  const ROW_H = 5;
+  const SECT_H = 6.5;
+
+  let y = MARGIN_TOP;
+  let pageNum = 1;
+  const totalPages = { val: 1 }; // se actualiza al final
+
+  const drawHeader = () => {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    const fechaHoy = new Date().toLocaleDateString('es-AR');
+    let yh = MARGIN_TOP;
+    doc.text('Fecha:', MARGIN_L, yh);
+    doc.setFont('helvetica', 'normal');
+    doc.text(fechaHoy, MARGIN_L + 18, yh);
+    yh += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Beneficiario:', MARGIN_L, yh);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`CUIL ${cuil}`, MARGIN_L + 25, yh);
+    yh += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Agente de Retención:', MARGIN_L, yh);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`CUIT ${cuit}`, MARGIN_L + 38, yh);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Período Fiscal:', PAGE_W / 2 + 15, yh);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${periodoFmt}${tipoDesc ? ' · ' + tipoDesc : ''}`, PAGE_W / 2 + 45, yh);
+    yh += 4;
+    return yh;
+  };
+
+  const ensureSpace = (need) => {
+    if (y + need > PAGE_H - MARGIN_BOT) {
+      doc.addPage();
+      pageNum++;
+      totalPages.val = pageNum;
+      y = drawHeader() + 2;
+    }
+  };
+
+  const drawSection = (title) => {
+    ensureSpace(SECT_H);
+    doc.setFillColor(220, 220, 220);
+    doc.setDrawColor(80, 80, 80);
+    doc.rect(MARGIN_L, y, CONTENT_W, SECT_H, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.text(title, MARGIN_L + 2, y + SECT_H - 1.8);
+    y += SECT_H;
+  };
+
+  const drawSubHeader = (text) => {
+    ensureSpace(ROW_H);
+    doc.setFillColor(245, 245, 245);
+    doc.setDrawColor(120, 120, 120);
+    doc.rect(MARGIN_L, y, CONTENT_W, ROW_H, 'FD');
+    doc.setFont('helvetica', 'bolditalic');
+    doc.setFontSize(8);
+    doc.text(text, MARGIN_L + 2, y + ROW_H - 1.5);
+    y += ROW_H;
+  };
+
+  const drawRow = (label, value, opts = {}) => {
+    ensureSpace(ROW_H);
+    const isTotal = !!opts.total;
+    if (isTotal) doc.setFillColor(235, 235, 235);
+    else doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(120, 120, 120);
+    doc.rect(MARGIN_L, y, COL_LABEL_W, ROW_H, 'FD');
+    doc.rect(MARGIN_L + COL_LABEL_W, y, COL_VAL_W, ROW_H, 'FD');
+    doc.setFont('helvetica', isTotal ? 'bold' : 'normal');
+    doc.setFontSize(7.8);
+    doc.setTextColor(0, 0, 0);
+    // Label con wrap si es muy largo
+    const maxLabelW = COL_LABEL_W - 4;
+    const lines = doc.splitTextToSize(label, maxLabelW);
+    if (lines.length > 1) {
+      // ajustar alto
+      const newH = ROW_H + (lines.length - 1) * 3;
+      // redibujar fondo
+      doc.setFillColor(isTotal ? 235 : 255, isTotal ? 235 : 255, isTotal ? 235 : 255);
+      doc.rect(MARGIN_L, y, COL_LABEL_W, newH, 'FD');
+      doc.rect(MARGIN_L + COL_LABEL_W, y, COL_VAL_W, newH, 'FD');
+      doc.text(lines, MARGIN_L + 2, y + 3.5);
+      doc.text(value, MARGIN_L + CONTENT_W - 2, y + newH / 2 + 1, { align: 'right' });
+      y += newH;
+    } else {
+      doc.text(label, MARGIN_L + 2, y + ROW_H - 1.7);
+      doc.text(value, MARGIN_L + CONTENT_W - 2, y + ROW_H - 1.7, { align: 'right' });
+      y += ROW_H;
+    }
+  };
+
+  // ─── Página 1: Header ───────────────────────────────────────────────
+  y = drawHeader() + 2;
+
+  // ─── Remuneraciones Gravadas ────────────────────────────────────────
+  drawSection('REMUNERACIONES GRAVADAS');
+  drawSubHeader('Abonadas por el agente de Retención:');
+  drawRow('Remuneración bruta gravada y no habituales', fmtMoney(r03_remBruta + r03_retNoHab));
+  drawRow('SAC', fmtMoney(r03_sac1 + r03_sac2));
+  drawRow('Ajustes períodos anteriores - Remuneración gravada', fmtMoney(r03_ajustes));
+  drawSubHeader('Otros Empleos:');
+  drawRow('Remuneración bruta gravada y no habituales', fmtMoney(r03_oRemBruta + r03_oRetNoHab));
+  drawRow('SAC', fmtMoney(r03_oSac1 + r03_oSac2));
+  drawRow('Ajustes períodos anteriores - Remuneración gravada', fmtMoney(r03_oAjustes));
+  drawRow('TOTAL REMUNERACIÓN GRAVADA', fmtMoney(r03_total), { total: true });
+
+  // ─── Remuneraciones Exentas ─────────────────────────────────────────
+  drawSection('REMUNERACIONES EXENTAS o NO ALCANZADAS');
+  drawSubHeader('Abonadas por el agente de retención');
+  drawRow('Asignaciones Familiares', fmtMoney(r04_asigFam));
+  drawRow('Intereses por préstamos al empleador', fmtMoney(r04_intPrest));
+  drawRow('Indemnizaciones inc. c), d) y e) - Anexo II RG 4003/2017', fmtMoney(r04_indemn));
+  drawRow('Remuneraciones bajo Art. 1° Ley N° 19.640 (Tierra del Fuego)', fmtMoney(r04_tdf));
+  drawRow('Remuneraciones CCT 396/2004 Petroleros - Ley N° 26.176', fmtMoney(r04_petr));
+  drawRow('Cursos y Seminarios inc. o) - Anexo II RG 4003/2017', fmtMoney(r04_cursos));
+  drawRow('Indumentaria y equipamiento provistos por el empleador', fmtMoney(r04_indum));
+  drawRow('Ajustes períodos anteriores - Remuneración no alcanzada o exenta', fmtMoney(r04_ajustes));
+  drawRow('Remuneraciones del Poder Judicial (2do párr. Inc a) Art. 82 LIG)', fmtMoney(r04_pjud));
+  drawSubHeader('Otros Empleos');
+  drawRow('Asignaciones Familiares', fmtMoney(r04_oAsigFam));
+  drawRow('Intereses por préstamos al empleador', fmtMoney(r04_oIntPrest));
+  drawRow('Indemnizaciones inc. c), d) y e) - Anexo II RG 4003/2017', fmtMoney(r04_oIndemn));
+  drawRow('Remuneraciones bajo Art. 1° Ley N° 19.640 (Tierra del Fuego)', fmtMoney(r04_oTdf));
+  drawRow('Remuneraciones CCT 396/2004 Petroleros - Ley N° 26.176', fmtMoney(r04_oPetr));
+  drawRow('Cursos y Seminarios inc. o) - Anexo II RG 4003/2017', fmtMoney(r04_oCursos));
+  drawRow('Indumentaria y equipamiento provistos por el empleador', fmtMoney(r04_oIndum));
+  drawRow('Ajustes períodos anteriores - Remuneración no alcanzada o exenta', fmtMoney(r04_oAjustes));
+  drawRow('Remuneraciones del Poder Judicial (2do párr. Inc a) Art. 82 LIG)', fmtMoney(r04_oPjud));
+  drawRow('TOTAL REMUNERACIÓN NO ALCANZADA O EXENTA', fmtMoney(r04_totalExentas), { total: true });
+  drawRow('TOTAL REMUNERACIONES', fmtMoney(r04_totalRem), { total: true });
+
+  // ─── Deducciones Generales ──────────────────────────────────────────
+  drawSection('DEDUCCIONES GENERALES');
+  drawRow('Aportes para fondos de Jubilaciones, retiros, pensiones o subsidios - ANSES', fmtMoney(r05_anses));
+  drawRow('Otros Empleos - Aportes ANSES', fmtMoney(r05_oAnses));
+  drawRow('Aportes Cajas Previsionales Provinciales, Municipales o para Profesionales', fmtMoney(r05_cajas));
+  drawRow('Otros Empleos - Aportes Cajas Previsionales Provinciales/Municipales/Profesionales', fmtMoney(r05_oCajas));
+  drawRow('Aportes a obras sociales', fmtMoney(r05_obraSoc));
+  drawRow('Aportes a obras sociales por otros empleos', fmtMoney(r05_oObraSoc));
+  drawRow('Cuota sindical', fmtMoney(r05_sind));
+  drawRow('Cuota sindical por otros empleos', fmtMoney(r05_oSind));
+  drawRow('Cuotas médico asistenciales', fmtMoney(r05_medAsist));
+  drawRow('Primas de seguro para el caso de muerte', fmtMoney(r05_segMuerte));
+  drawRow('Seguro de Muerte/Mixtos sujetos al control de la SSN', fmtMoney(r05_segMixto));
+  drawRow('Adquisición de Cuotapartes de FCI con fines de Retiro', fmtMoney(r05_fci));
+  drawRow('Gastos de sepelio', fmtMoney(r05_sepelio));
+  drawRow('Amortización Impositiva e Intereses por Rodados (Corredores y Viajantes de Comercio)', fmtMoney(r05_rodados));
+  drawRow('Donaciones a Fiscos Nac./Prov./Mun./Inst. - Art. 26 inc e) y f) LIG', fmtMoney(r05_donac));
+  drawRow('Alquileres Casa-Habitación Inquilinos No Propietarios 40% - Art. 85 inc. h)', fmtMoney(r05_alq40));
+  drawRow('Descuentos obligatorios establecidos por ley nacional, provincial o municipal', fmtMoney(r05_descObl));
+  drawRow('Honorarios por servicios de asistencia sanitaria, médica y paramédica', fmtMoney(r05_honMed));
+  drawRow('Intereses de créditos hipotecarios', fmtMoney(r05_intHip));
+  drawRow('Aportes al capital social o fondo de riesgo - Sociedades de Garantía Recíproca', fmtMoney(r05_sgr));
+  drawRow('Empleados del servicio doméstico', fmtMoney(r05_domest));
+  drawRow('Cajas Complementarias de Previsión', fmtMoney(r05_cajComp));
+  drawRow('Fondos Compensadores de Previsión', fmtMoney(r05_fondComp));
+  drawRow('Otros Aportes para Jubilaciones - incluido ANSES Autónomos', fmtMoney(r05_otrosJub));
+  drawRow('Seguros de Retiro Privados sujetos al control de la SSN', fmtMoney(r05_segRet));
+  drawRow('Indumentaria/Equipamiento - Uso exclusivo y obligatorio - adquiridos por empleado', fmtMoney(r05_indumEmp));
+  drawRow('Servicios y Herramientas con Fines Educativos para Cargas de Familia', fmtMoney(r05_servEduc));
+  drawRow('Alquileres Casa-Habitación Inquilinos y Propietarios 10% - Art. 85 inc. k)', fmtMoney(r05_alq10));
+  drawRow('Antártida Argentina - Adicional remunerativo personal civil y militar', fmtMoney(r05_antart));
+  drawRow('Actores - Retribución pagada a los representantes - RG 2442/08', fmtMoney(r05_actores));
+  drawRow('TOTAL DEDUCCIONES GENERALES', fmtMoney(r05_totalDed), { total: true });
+
+  // ─── Deducciones Personales ─────────────────────────────────────────
+  drawSection('DEDUCCIONES PERSONALES');
+  drawRow('Ganancia no imponible (2)', fmtMoney(r06_gni));
+  drawRow('Deducción especial (2)', fmtMoney(r06_dedEsp));
+  drawRow('Deducción específica', fmtMoney(r06_dedEspec));
+  drawRow('Cargas de familia (2)', fmtMoney(r06_cargasFam));
+  drawRow('Deducción especial 2do párrafo artículo 30 de la ley del gravamen (12° parte)', fmtMoney(r06_dedEspAdic));
+  drawRow('TOTAL DEDUCCIONES PERSONALES', fmtMoney(r06_totalDedPers), { total: true });
+
+  // ─── Determinación del Impuesto ─────────────────────────────────────
+  drawSection('DETERMINACIÓN DEL IMPUESTO');
+  drawRow('REMUNERACIÓN SUJETA A IMPUESTO', fmtMoney(r08_remSujeta), { total: true });
+  drawRow('Alícuota aplicable Artículo 94 Ley de Impuesto a las Ganancias', alicTexto);
+  drawRow('IMPUESTO DETERMINADO', fmtMoney(r08_impDeterm), { total: true });
+  drawRow('Impuesto retenido', fmtMoney(r08_impRetenido));
+  drawRow('Impuesto Autorretenido - RG 5683', fmtMoney(r08_autoRet));
+  drawRow('Pagos a cuenta', fmtMoney(r07_total));
+  const saldoAbs = Math.abs(r08_saldo);
+  const saldoLabel = r08_saldo < 0 ? 'SALDO A FAVOR DEL CONTRIBUYENTE' : 'SALDO A PAGAR';
+  drawRow(saldoLabel, fmtMoney(saldoAbs), { total: true });
+
+  // ─── Pie de página: nota legal y referencias ────────────────────────
+  ensureSpace(15);
+  y += 3;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7);
+  doc.setTextColor(90, 90, 90);
+  doc.text('(2) Sujetas a tope legal según Tabla 4 - Resolución General ARCA.', MARGIN_L, y);
+  y += 3.5;
+  doc.text('Documento generado por el Validador F.1359 (Hidalgo y Asociados) a partir del archivo TXT presentado a ARCA.', MARGIN_L, y);
+  y += 3.5;
+  doc.text('Este reporte refleja los valores informados en el TXT — no constituye liquidación oficial.', MARGIN_L, y);
+
+  // ─── Numerar páginas (Página X de N) ────────────────────────────────
+  const N = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= N; p++) {
+    doc.setPage(p);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Página: ${p} de ${N}`, PAGE_W - MARGIN_R, MARGIN_TOP - 7, { align: 'right' });
+  }
+
+  // ─── Guardar ────────────────────────────────────────────────────────
+  const fname = `F1359_${cuit || 'sincuit'}_${cuil || 'sincuil'}_${periodoRaw || 'periodo'}.pdf`;
+  doc.save(fname);
 }
 </script>
 </body>
