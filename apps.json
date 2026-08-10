@@ -2,9 +2,9 @@
   "meta": {
     "titulo": "Portal Hidalgo & Asociados",
     "subtitulo": "Herramientas internas del equipo",
-    "version": "1.3",
-    "ultimaActualizacion": "2026-08-06",
-    "ultimaRevision": "2026-08-06",
+    "version": "1.4",
+    "ultimaActualizacion": "2026-08-10",
+    "ultimaRevision": "2026-08-10",
     "diasReciente": 7,
     "repoDefecto": "bhidalgo-ar/payroll-portal-ha"
   },
@@ -27,7 +27,7 @@
       "descripcion": "Cruza txt de 1359 contra Impgan y reglas de ARCA",
       "url": "https://bhidalgo-ar.github.io/payroll-portal-ha/validador-f1359.html",
       "icono": "📊",
-      "version": "2.4",
+      "version": "2.5.2",
       "categoria": "Reportes",
       "estado": "productivo",
       "agregado": "2026-04-09",
@@ -87,7 +87,7 @@
       "descripcion": "Cruza la liquidación de sueldos contra los recibos de haberes",
       "url": "https://bhidalgo-ar.github.io/validadorrecibos/",
       "icono": "🧾",
-      "version": "1.0",
+      "version": "1.0.0",
       "categoria": "Nómina",
       "estado": "beta",
       "repo": "bhidalgo-ar/validadorrecibos",
@@ -106,7 +106,34 @@
       "estado": "beta",
       "repo": "bhidalgo-ar/Controles-Varios",
       "agregado": "2026-08-04",
-      "actualizado": "2026-08-04"
+      "actualizado": "2026-08-07"
+    },
+    {
+      "id": 9,
+      "nombre": "Migrador Meta4 → AXTON",
+      "descripcion": "Convierte el Excel de nómina de Meta4 al formato del importador de legajos de AXTON",
+      "url": "https://bhidalgo-ar.github.io/migrador-meta4-axton/",
+      "icono": "🔄",
+      "version": "1.0.0",
+      "categoria": "Nómina",
+      "estado": "beta",
+      "repo": "bhidalgo-ar/migrador-meta4-axton",
+      "path": "docs",
+      "agregado": "2026-08-10",
+      "actualizado": "2026-08-10"
+    },
+    {
+      "id": 10,
+      "nombre": "Controles Contables",
+      "descripcion": "Valida la provisión de vacaciones y otros cálculos contables contra el asiento del ERP",
+      "url": "https://bhidalgo-ar.github.io/controles-contables/",
+      "icono": "💰",
+      "version": "0.1.0",
+      "categoria": "Nómina",
+      "estado": "beta",
+      "repo": "bhidalgo-ar/controles-contables",
+      "agregado": "2026-08-10",
+      "actualizado": "2026-08-10"
     }
   ]
 }

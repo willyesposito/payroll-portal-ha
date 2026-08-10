@@ -20,8 +20,9 @@ const CATEGORIAS = ['Nómina', 'Reportes', 'Herramientas'];
 const OBLIGATORIOS = ['id', 'nombre', 'descripcion', 'url', 'icono', 'version',
   'categoria', 'estado', 'agregado', 'actualizado'];
 
-// Decisión del equipo (2026-08-04): estos repos no se publican. Ver CLAUDE.md §6.
-const NO_PUBLICAR = ['brandinghya', 'siradig-f572-2025-tasa', 'siradig-f572-2025-tpa', 'toyota-kpis'];
+// Decisión del equipo: estos repos no se publican. Ver CLAUDE.md §6.
+const NO_PUBLICAR = ['brandinghya', 'siradig-f572-2025-tasa', 'siradig-f572-2025-tpa', 'toyota-kpis',
+  'planmigracion', 'distribucion-cuentas-10062026'];
 
 const errores = [];
 const avisos = [];
