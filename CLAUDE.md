@@ -153,7 +153,7 @@ requests y servir React desde `npm install react@18.3.1 react-dom@18.3.1`.
 
 ## 6. Inventario de repos de la organización
 
-Estado al 2026-08-04. Actualizar en cada revisión semanal.
+Estado al 2026-08-10. Actualizar en cada revisión semanal.
 
 ### Publicados en el portal
 
@@ -162,22 +162,23 @@ Estado al 2026-08-04. Actualizar en cada revisión semanal.
 | `bhidalgo-ar/payroll-portal-ha` | ids 1-6 (las herramientas viven en este mismo repo) |
 | `bhidalgo-ar/validadorrecibos` | id 7 — Validador de Recibos |
 | `bhidalgo-ar/controles-varios` | id 8 — Controles Nómina |
+| `bhidalgo-ar/migrador-meta4-axton` | id 9 — Migrador Meta4 → AXTON |
+| `bhidalgo-ar/controles-contables` | id 10 — Controles Contables |
 
-### NO publicar (decisión del equipo, 2026-08-04)
+### NO publicar (decisión del equipo)
 
 No proponer estos repos en la revisión semanal:
 
-- `bhidalgo-ar/brandinghya`
-- `bhidalgo-ar/siradig-f572-2025-TASA`
-- `bhidalgo-ar/siradig-f572-2025-TPA`
-- `bhidalgo-ar/toyota-kpis`
+- `bhidalgo-ar/brandinghya` (2026-08-04)
+- `bhidalgo-ar/siradig-f572-2025-TASA` (2026-08-04)
+- `bhidalgo-ar/siradig-f572-2025-TPA` (2026-08-04)
+- `bhidalgo-ar/toyota-kpis` (2026-08-04)
+- `bhidalgo-ar/planmigracion` (2026-08-10 — no es para compartir con todo el equipo)
+- `bhidalgo-ar/distribucion-cuentas-10062026` (2026-08-10 — ídem)
 
 ### Sin decidir — preguntar en la revisión semanal
 
-- `bhidalgo-ar/planmigracion`
-- `bhidalgo-ar/migrador-meta4-axton`
-- `bhidalgo-ar/controles-contables`
-- `bhidalgo-ar/distribucion-cuentas-10062026`
+Ninguno pendiente al 2026-08-10.
 
 Antes de sumar cualquier repo hay que verificar que **GitHub Pages esté publicado**:
 en este entorno las URLs `*.github.io` suelen estar bloqueadas, así que se comprueba
